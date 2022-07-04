@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 import openjij as oj
 import jijzept as jz

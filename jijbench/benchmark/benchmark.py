@@ -1,6 +1,10 @@
-import os
-import inspect
-import itertools
+from __future__ import annotations
+
+import inspect, itertools, os
+
+from typing import Callable, Dict, List, Optional, Tuple, Union
+
+import jijmodeling as jm
 import jijzept as jz
 import numpy as np
 import pandas as pd
