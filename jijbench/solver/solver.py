@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import inspect
-import openjij as oj
+
+from typing import Callable, Optional
+
 import jijzept as jz
-from typing import Callable
+
+__all__ = []
 
 
 class CallableSolver:
@@ -62,18 +65,9 @@ class CallableSolver:
 
 
 class DefaultSolver:
-    jijzept_config = None
-    dwave_config = None
-    openjij_sampler_names = ["SASampler", "SQASampler"]
+    jijzept_config: Optional[str] = None
+    dwave_config: Optional[str] = None
     jijzept_sampler_names = ["JijSASampler", "JijSQASampler", "JijSwapMovingSampler"]
-
-    @property
-    def SASampler(self):
-        return self.openjij_sa_sampler_sample
-
-    @property
-    def SQASampler(self):
-        return self.openjij_sqa_sampler_sample
 
     @property
     def JijSASampler(self):
@@ -88,19 +82,7 @@ class DefaultSolver:
         return self.jijzept_swapmoving_sampler_sample_model
 
     @classmethod
-    def openjij_sa_sampler_sample(cls, problem, ph_value, feed_dict=None, **kwargs):
-        return cls._sample_by_openjij(
-            oj.SASampler, problem, ph_value, feed_dict, **kwargs
-        )
-
-    @classmethod
-    def openjij_sqa_sampler_sample(cls, problem, ph_value, feed_dict=None, **kwargs):
-        return cls._sample_by_openjij(
-            oj.SQASampler, problem, ph_value, feed_dict, **kwargs
-        )
-
-    @classmethod
-    def jijzept_sa_sampler_sample_model(cls, problem, ph_value, **kwargs):
+    def jijzept_sa_sampler_sample_model(cls, problem, instance_data, **kwargs):
         return cls._sample_by_jijzept(
             jz.JijSASampler,
             problem,
@@ -127,18 +109,7 @@ class DefaultSolver:
         )
 
     @staticmethod
-    def _sample_by_openjij(sampler, problem, ph_value, feed_dict, **kwargs):
-        if feed_dict is None:
-            feed_dict = {const_name: 5.0 for const_name in problem.constraints}
-        parameters = inspect.signature(sampler).parameters
-        kwargs = {k: w for k, w in kwargs.items() if k in parameters}
-        bqm = problem.to_pyqubo(ph_value).compile().to_bqm(feed_dict=feed_dict)
-        response = sampler(**kwargs).sample(bqm)
-        decoded = problem.decode(response, ph_value=ph_value)
-        return response, decoded
-
-    @staticmethod
-    def _sample_by_jijzept(sampler, problem, ph_value, sync=True, **kwargs):
+    def _sample_by_jijzept(sampler, problem, instance_data, sync=True, **kwargs):
         sampler = sampler(config=DefaultSolver.jijzept_config)
         if sync:
             parameters = inspect.signature(sampler.sample_model).parameters
@@ -146,5 +117,4 @@ class DefaultSolver:
             response = sampler.sample_model(problem, ph_value, sync=sync, **kwargs)
         else:
             response = sampler.get_result(solution_id=kwargs["solution_id"])
-        decoded = problem.decode(response, ph_value=ph_value)
-        return response, decoded
+        return response

@@ -10,10 +10,7 @@ import numpy as np
 import pandas as pd
 
 from jijbench.components import ID, Artifact, Dir, ExperimentResultDefaultDir, Table
-from jijbench.experiment._parser import (
-    _parse_dimod_sampleset,
-    _parse_jm_problem_decodedsamples,
-)
+from jijbench.experiment._parser import _parse_dimod_sampleset, _parse_jm_sampleset
 
 np.set_printoptions(threshold=np.inf)
 
@@ -200,8 +197,8 @@ class Experiment:
                 columns, values = _parse_dimod_sampleset(self, v)
                 for new_k, new_v in zip(columns, values):
                     _update_record()
-            elif isinstance(v, jm.DecodedSamples):
-                columns, values = _parse_jm_problem_decodedsamples(self, v)
+            elif isinstance(v, jm.SampleSet):
+                columns, values = _parse_jm_sampleset(self, v)
                 for new_k, new_v in zip(columns, values):
                     _update_record()
             else:
