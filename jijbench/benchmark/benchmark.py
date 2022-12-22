@@ -44,6 +44,9 @@ class Benchmark:
         self._table = Table()
         self._artifact = Artifact()
 
+        if solver_return_name is not None:
+            self.name_solver_ret(solver_return_name)
+
         DefaultSolver.jijzept_config = jijzept_config
         DefaultSolver.dwave_config = dwave_config
 
@@ -75,10 +78,25 @@ class Benchmark:
     def artifact(self):
         return self._artifact.data
 
-    def run(self, show_solver_ret_columns=True, sync=True):
-        for target in self.targets:
-            for problem, instance in target.parse():
-                for solver in self.solvers:
+    def run(self, sync=True):
+        """run benchmark
+
+        Args:
+            sync (bool, optional): True -> sync mode, False -> async mode. Defaults to True. Note that sync=False is not supported when using your custom solver.
+        """
+        if self._problem is None:
+            problem = [None]
+        else:
+            problem = self._problem
+
+        if self._instance_data is None:
+            instance_data = [[None]]
+        else:
+            instance_data = self._instance_data
+
+        for solver in self.solver:
+            for problem_i, instance_data_i in zip(problem, instance_data):
+                for instance_data_ij in instance_data_i:
                     if sync:
                         self._run_by_sync(solver, problem, instance)
                     else:
@@ -110,7 +128,9 @@ class Benchmark:
                         ).solution_id
                         args_map[(i, solution_id)] = args
 
-                    experiment = Experiment(benchmark_id=self._id.benchmark_id)
+                    experiment = Experiment(
+                        benchmark_id=self._id.benchmark_id, save_dir=self.save_dir
+                    )
                     for (i, solution_id), args in args_map.items():
                         solver_args, record = self._setup_experiment(
                             solver, problem, instance, False
@@ -135,9 +155,13 @@ class Benchmark:
             self._artifact.data |= experiment.artifact
             self._experiments.append(experiment)
 
-    def _run_by_sync(self, solver, problem, instance):
-        experiment = Experiment(benchmark_id=self._id.benchmark_id)
-        solver_args, record = self._setup_experiment(solver, problem, instance, True)
+    def _run_by_sync(self, solver, problem, instance_data):
+        experiment = Experiment(
+            benchmark_id=self._id.benchmark_id, save_dir=self.save_dir
+        )
+        solver_args, record = self._setup_experiment(
+            solver, problem, instance_data, True
+        )
         for r in itertools.product(*self.params.values()):
             with experiment:
                 solver_args |= dict([(k, v) for k, v in zip(self.params.keys(), r)])
@@ -173,7 +197,9 @@ class Benchmark:
         metrics = pd.DataFrame()
         for experiment in self._experiments:
             evaluator = Evaluator(experiment)
-            opt_value = experiment.table["opt_value"][0]
+            opt_value = (
+                experiment.table["opt_value"][0] if opt_value is None else opt_value
+            )
             metrics = pd.concat(
                 [
                     metrics,
