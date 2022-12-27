@@ -246,6 +246,13 @@ class Experiment:
         df.to_csv(file_name, mode="a", header=not os.path.exists(file_name))
 
     def log_artifact(self):
+        def _is_picklable(obj):
+            try:
+                pickle.dumps(obj)
+                return True
+            except Exception:
+                return False
+
         run_id = self.run_id
         if run_id in self._artifact.data.keys():
             save_dir = f"{self._dir.artifact_dir}/{run_id}"

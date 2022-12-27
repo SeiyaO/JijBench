@@ -84,6 +84,12 @@ class Benchmark:
         Args:
             sync (bool, optional): True -> sync mode, False -> async mode. Defaults to True. Note that sync=False is not supported when using your custom solver.
         """
+        if concurrent:
+            for solver in self.solver:
+                if solver.is_jijzept_sampler is False:
+                    raise ConcurrentFailedError(
+                        "sync=False is not supported using your custom solver."
+                    )
         if self._problem is None:
             problem = [None]
         else:
