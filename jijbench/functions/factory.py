@@ -7,34 +7,37 @@ import jijmodeling as jm
 import typing as tp
 import warnings
 
-from jijbench.node.base import FunctionNode, DNodeIT_co, DNodeOT_co
-from jijbench.node.base import DataNode
-from jijbench.data.mapping import Artifact, Table
-from jijbench.data.record import Record
+from jijbench.node.base import DataNode, FunctionNode
 from jijbench.data.elements.array import Array
 from jijbench.data.elements.values import Number
+from jijbench.typing import DataNodeIT_co, DataNodeOT_co
+
+if tp.TYPE_CHECKING:
+    from jijbench.data.mapping import Artifact, Record, Table
 
 
-class Factory(FunctionNode[DNodeIT_co, DNodeOT_co]):
+class Factory(FunctionNode[DataNodeIT_co, DataNodeOT_co]):
     @abc.abstractmethod
     def create(
-        self, inputs: list[DNodeIT_co], name: str | None = None
-    ) -> DNodeOT_co:
+        self, inputs: list[DataNodeIT_co], name: str | None = None
+    ) -> DataNodeOT_co:
         pass
 
     def operate(
-        self, inputs: list[DNodeIT_co], name: str | None = None, **kwargs: tp.Any
-    ) -> DNodeOT_co:
+        self, inputs: list[DataNodeIT_co], name: str | None = None, **kwargs: tp.Any
+    ) -> DataNodeOT_co:
         return self.create(inputs, name, **kwargs)
 
 
-class RecordFactory(Factory[DataNode, Record]):
+class RecordFactory(Factory[DataNode, "Record"]):
     def create(
         self,
         inputs: list[DataNode],
         name: str = "",
         is_parsed_sampleset: bool = True,
     ) -> Record:
+        from jijbench.data.mapping import Record
+
         data = {}
         for node in inputs:
             if isinstance(node.data, jm.SampleSet) and is_parsed_sampleset:
@@ -84,19 +87,23 @@ class RecordFactory(Factory[DataNode, Record]):
         return data
 
 
-class ArtifactFactory(Factory[Record, Artifact]):
+class ArtifactFactory(Factory["Record", "Artifact"]):
     def create(self, inputs: list[Record], name: str = "") -> Artifact:
+        from jijbench.data.mapping import Artifact
+
         data = {node.name: node.data.to_dict() for node in inputs}
         return Artifact(data, name)
 
 
-class TableFactory(Factory[Record, Table]):
+class TableFactory(Factory["Record", "Table"]):
     def create(
         self,
         inputs: list[Record],
         name: str = "",
         index_name: str | None = None,
     ) -> Table:
+        from jijbench.data.mapping import Table
+
         data = pd.DataFrame({node.name: node.data for node in inputs}).T
         data.index.name = index_name
         return Table(data, name)
