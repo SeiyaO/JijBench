@@ -8,7 +8,13 @@ import pathlib
 from dataclasses import dataclass, field
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.data.mapping import Artifact, Mapping, Table
+from jijbench.functions.concat import Concat
+from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.data.elements.id import ID
+
+
+if tp.TYPE_CHECKING:
+    from jijbench.data.mapping import Record
 
 
 @dataclass
@@ -19,6 +25,8 @@ class Experiment(Mapping):
     savedir: str | pathlib.Path = DEFAULT_RESULT_DIR
 
     def __post_init__(self):
+        super().__post_init__()
+
         if self.name is None:
             self.name = ID().data
 
@@ -30,23 +38,6 @@ class Experiment(Mapping):
 
         if isinstance(self.savedir, str):
             self.savedir = pathlib.Path(self.savedir)
-
-    @property
-    def artifact(self) -> dict:
-        return self.data[0].data
-
-    @property
-    def table(self) -> pd.DataFrame:
-        t = self.data[1].data
-        if t.empty:
-            return t
-        else:
-            is_tuple_index = all([isinstance(i, tuple) for i in t.index])
-            if is_tuple_index:
-                names = t.index.names if len(t.index.names) >= 2 else None
-                index = pd.MultiIndex.from_tuples(t.index, names=names)
-                t.index = index
-            return t
 
     def __enter__(self) -> Experiment:
         p = tp.cast("pathlib.Path", self.savedir) / str(self.name)
@@ -61,16 +52,48 @@ class Experiment(Mapping):
         if self.autosave:
             self.save()
 
-    # def concat(self, experiment: Experiment) -> None:
-    #    from jijbench.functions.concat import Concat
-    #
-    #    concat = Concat()
-    #
-    #    artifact = concat([self.data[0], experiment.data[0]])
-    #    table = concat([self.data[1], experiment.data[1]])
-    #
-    #    self.data = (artifact, table)
-    #    self.operator = concat
+    @property
+    def artifact(self) -> dict:
+        return self.view("artifact")
+
+    @property
+    def table(self) -> pd.DataFrame:
+        return self.view("table")
+
+    @tp.overload
+    def view(self, kind: tp.Literal["artifact"]) -> dict:
+        ...
+
+    @tp.overload
+    def view(self, kind: tp.Literal["table"]) -> pd.DataFrame:
+        ...
+
+    def view(self, kind: tp.Literal["artifact", "table"]) -> dict | pd.DataFrame:
+        if kind == "artifact":
+            artifact = self.data[0].data
+            return {
+                k: {name: node.data for name, node in v.items()}
+                for k, v in artifact.items()
+            }
+        else:
+            table = self.data[1].data
+            if table.empty:
+                return table
+            else:
+                is_tuple_index = all([isinstance(i, tuple) for i in table.index])
+                if is_tuple_index:
+                    names = table.index.names if len(table.index.names) >= 2 else None
+                    index = pd.MultiIndex.from_tuples(table.index, names=names)
+                    table.index = index
+                return table.applymap(lambda x: x.data)
+
+    def append(self, record: Record) -> None:
+        concat: Concat[Experiment] = Concat()
+        data = (ArtifactFactory()([record]), TableFactory()([record]))
+        other = type(self)(data, self.name, self.autosave, self.savedir)
+        node = self.apply(concat, [other])
+        self.data = node.data
+        self.operator = node.operator
 
     def save(self):
         def is_dillable(obj: tp.Any):
