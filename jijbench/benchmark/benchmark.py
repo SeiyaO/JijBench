@@ -48,8 +48,22 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
+        """_summary_
+
+        Args:
+            inputs (list[Experiment] | None, optional): _description_. Defaults to None.
+            concurrent (bool, optional): _description_. Defaults to False.
+            is_parsed_sampleset (bool, optional): _description_. Defaults to True.
+            autosave (bool, optional): _description_. Defaults to True.
+            savedir (str | pathlib.Path, optional): _description_. Defaults to DEFAULT_RESULT_DIR.
+
+        Returns:
+            Experiment: _description_
+        """
+        savedir = savedir if isinstance(savedir, pathlib.Path) else pathlib.Path(savedir)
+        savedir /= self.name
         if inputs is None:
-            inputs = [Experiment(name=ID().data, autosave=autosave, savedir=savedir)]
+            inputs = [Experiment(autosave=autosave, savedir=savedir)]
 
         return super().__call__(
             inputs,
