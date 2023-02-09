@@ -6,18 +6,87 @@ from typing import Callable, Optional
 
 import jijzept as jz
 
-__all__ = []
+@dataclass
+class Parameter(Element[tp.Any]):
+    """A parameter for a solver function.
+
+    Attributes:
+        data (Any): The data in the node.
+        name (str): The name of the parameter.
+    """
+
+    @classmethod
+    def validate_data(cls, data: tp.Any) -> tp.Any:
+        """A class method to validate the data before setting it.
+
+        Args:
+            data (Any): The data to be validated.
+
+        Returns:
+            Any: The validated data.
+        """
+        return data
 
 
-class CallableSolver:
-    def __init__(self, solver):
-        self.function = self._parse_solver(solver)
-        self._name = self.function.__name__
-        self._ret_names = (
-            ["response", "decoded"] if solver in dir(DefaultSolver) else None
-        )
+@dataclass
+class Return(Element[tp.Any]):
+    """A return value of a solver function.
 
-    def __call__(self, **kwargs):
+    Attributes:
+        data (Any): The data in the node.
+        name (str): The name of the return value.
+    """
+
+    @classmethod
+    def validate_data(cls, data: tp.Any) -> tp.Any:
+        """A class method to validate the data before setting it.
+
+        Args:
+            data (Any): The data to be validated.
+
+        Returns:
+            Any: The validated data.
+        """
+        return data
+
+
+class Solver(FunctionNode[Parameter, Record]):
+    """A solver function that takes a list of Parameter and returns a Record.
+
+    Attributes:
+        name (str): The name of the solver function.
+        function (Callable): The actual function to be executed.
+    """
+
+    def __init__(self, function: tp.Callable, name: str | None = None) -> None:
+        """The constructor of the `Solver` class.
+
+        Args:
+            function (Callable): The actual function to be executed.
+            name (str, optional): The name of the solver function. Defaults to None.
+        """
+        if name is None:
+            name = function.__name__
+        super().__init__(name)
+        self.function = function
+
+    def operate(
+        self,
+        inputs: list[Parameter],
+        is_parsed_sampleset: bool = True,
+    ) -> Record:
+        """The main operation of the solver function.
+
+        Args:
+            inputs (list[Parameter]): The list of input `Parameter` for the solver function.
+            is_parsed_sampleset (bool, optional): Whether the sample set is parsed. Defaults to True.
+
+        Raises:
+            SolverFailedError: If an error occurs inside the solver function.
+
+        Returns:
+            Record: The result of the solver function as a `Record`.
+        """
         parameters = inspect.signature(self.function).parameters
         kwargs = (
             kwargs
