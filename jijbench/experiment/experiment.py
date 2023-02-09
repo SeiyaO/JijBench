@@ -11,7 +11,10 @@ from jijbench.data.mapping import Artifact, Mapping, Table
 from jijbench.data.elements.values import Callable, Parameter, Return
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
-from jijbench.data.elements.id import ID
+from jijbench.io.io import save
+from jijbench.mappings.mappings import Artifact, Mapping, Table
+from jijbench.solver.base import Parameter, Return
+from jijbench.typing import ExperimentDataType
 
 
 if tp.TYPE_CHECKING:
@@ -90,7 +93,9 @@ class Experiment(Mapping):
             data (ExperimentDataType): The data to validate.
 
         Raises:
-            TypeError: If data is not an instance of ExperimentDataType or if the first element of data is not an instance of Artifact or if the second element of data is not an instance of Table.
+            TypeError: If data is not an instance of ExperimentDataType or
+            if the first element of data is not an instance of Artifact or
+            if the second element of data is not an instance of Table.
 
         Returns:
             ExperimentDataType: The validated data.
@@ -128,7 +133,7 @@ class Experiment(Mapping):
             autosave=self.autosave,
             savedir=self.savedir,
         )
-        self.__init__(**node.__dict__)
+        self._init_attrs(node)
 
     def save(self):
         """Save the experiment."""

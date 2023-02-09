@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+import typing as tp
 import inspect
 
-from typing import Callable, Optional
+from dataclasses import dataclass
+from jijbench.elements.base import Element
+from jijbench.exceptions.exceptions import SolverFailedError
+from jijbench.node.base import FunctionNode
+from jijbench.mappings.mappings import Record
+from jijbench.functions.factory import RecordFactory
+from jijbench.typing import T
 
 import jijzept as jz
 
 @dataclass
-class Parameter(Element[tp.Any]):
+class Parameter(Element[T]):
     """A parameter for a solver function.
 
     Attributes:
@@ -29,7 +36,7 @@ class Parameter(Element[tp.Any]):
 
 
 @dataclass
-class Return(Element[tp.Any]):
+class Return(Element[T]):
     """A return value of a solver function.
 
     Attributes:
