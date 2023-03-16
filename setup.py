@@ -1,103 +1,17 @@
-import os, sys
+import os
 
-
-from setuptools import find_namespace_packages, setup
-
-setup_requires = [
-    "setuptools_scm[toml]",
-]
-
-if any(arg in sys.argv for arg in ("pytest", "test")):
-    setup_requires.append("pytest-runner")
-
-try:
-    from Cython.Compiler import Options
-    from Cython.Distutils.build_ext import build_ext as build_ext
-
-    Options.embed_pos_in_docstring = True
-    Options.cimport_from_pyx = True
-    Options.annotate = True
-
-    def get_export_symbols_fixed(self, ext):
-        names = ext.name.split(".")
-        if names[-1] != "__init__":
-            initfunc_name = "PyInit_" + names[-1]
-        else:
-            # take name of the package if it is an __init__-file
-            initfunc_name = "PyInit_" + names[-2]
-        if initfunc_name not in ext.export_symbols:
-            ext.export_symbols.append(initfunc_name)
-        return ext.export_symbols
-
-    if os.name == "nt":
-        build_ext.get_export_symbols = get_export_symbols_fixed
-except ImportError:
-    from setuptools.command.build_ext import build_ext as build_ext
-
-    setup_requires.append("Cython")
-
-
-def cython_extension():
-
-    try:
-        from Cython.Distutils.extension import Extension
-
-        if os.name == "nt":
-            extra_compile_args_cfg = ["/EHsc"]
-        else:
-            extra_compile_args_cfg = []
-
-        extensions = [
-            Extension(
-                "jijbench.__marker__",
-                [os.path.join("jijbench", "__marker__.py")],
-                extra_compile_args=extra_compile_args_cfg,
-                define_macros=[("CYTHON_TRACE", "1")],
-            )
-        ]
-
-    except ImportError:
-        from setuptools import Extension
-
-    compiler_directives_cfg = {
-        "language_level": 3,
-        "embedsignature": True,
-        "binding": True,
-        "profile": True,
-        "linetrace": True,
-        "emit_code_comments": True,
-        "remove_unreachable": False,
-    }
-
-    try:
-        from Cython.Build import cythonize
-
-        cy_ext_module = cythonize(
-            extensions,
-            compiler_directives=compiler_directives_cfg,
-            annotate=True,
-        )
-    except ImportError:
-
-        cy_ext_module = list()
-    return cy_ext_module
-
+from setuptools import Extension, find_namespace_packages, setup
 
 setup(
-    name="jijbench",
-    python_requires=">=3.8, <3.11",
-    packages=["jijbench", "jijbench.problems"],
-    version_config={
-         "template": "{tag}",
-         "dirty_template": "{tag}",
+    packages=find_namespace_packages(include=["jijbench*"]),
+    ext_modules=[
+        Extension(
+            "jijbench.__marker__",
+            [os.path.join("jijbench", "__marker__.c")],
+        )
+    ],
+    package_data={
+        "": ["*.json", "*.JSON"],
     },
-    setup_requires=[
-        'setuptools-git-versioning',
-    ],
-    install_requires=[
-        "openjij",
-        "numpy",
-        "pandas",
-        "matplotlib",
-    ],
+    include_package_data=True,
 )

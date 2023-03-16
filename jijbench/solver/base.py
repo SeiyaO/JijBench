@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import typing as tp
 import inspect
+import jijmodeling as jm
 
 from dataclasses import dataclass
 from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.node.base import DataNode, FunctionNode
-from jijbench.mappings.mappings import Record
+from jijbench.containers.containers import Record
 from jijbench.functions.factory import RecordFactory
 from jijbench.typing import T
 
-import jijzept as jz
 
 @dataclass
 class Parameter(DataNode[T]):
@@ -83,7 +83,6 @@ class Solver(FunctionNode[Parameter, Record]):
     def operate(
         self,
         inputs: list[Parameter],
-        is_parsed_sampleset: bool = True,
     ) -> Record:
         """The main operation of the solver function.
 
@@ -97,6 +96,8 @@ class Solver(FunctionNode[Parameter, Record]):
         Returns:
             Record: The result of the solver function as a `Record`.
         """
+        from jijbench.solver.jijzept import SampleSet
+
         parameters = inspect.signature(self.function).parameters
         solver_args = {
             node.name: node.data for node in inputs if node.name in parameters
@@ -111,6 +112,11 @@ class Solver(FunctionNode[Parameter, Record]):
 
         solver_return_names = [f"{self.name}_return[{i}]" for i in range(len(rets))]
 
-        rets = [Response(data, name) for data, name in zip(rets, solver_return_names)]
+        rets = [
+            SampleSet(data, name)
+            if isinstance(data, jm.SampleSet)
+            else Response(data, name)
+            for data, name in zip(rets, solver_return_names)
+        ]
         factory = RecordFactory()
-        return factory(rets, is_parsed_sampleset=is_parsed_sampleset)
+        return factory(rets)
