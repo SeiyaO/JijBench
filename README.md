@@ -1,127 +1,63 @@
-# JijBench
 
-[![Test](https://github.com/Jij-Inc/JijBenchmark/actions/workflows/python-test.yml/badge.svg)](https://github.com/Jij-Inc/JijBenchmark/actions/workflows/python-test.yml)
-[![codecov](https://codecov.io/gh/Jij-Inc/JijBenchmark/branch/main/graph/badge.svg?token=55341HSOIB)](https://codecov.io/gh/Jij-Inc/JijBenchmark)
+# JijBench: An Experiment and Benchmark Management Library for Mathematical Optimization
 
-## Coverage Graph
+JijBench is a Python library designed for developers working on research and development or proof-of-concept experiments using mathematical optimization. Positioned similarly to mlflow in the machine learning field, JijBench provides features such as saving optimization results, automatically computing benchmark metrics, and offering visualization tools for the results.
 
-| **Sunburst**                                                                                                                                                                   | **Grid**                                                                                                                                                                   | **Icicle**                                                                                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a href="https://codecov.io/gh/Jij-Inc/JijBenchmark"><img src="https://codecov.io/gh/Jij-Inc/JijBenchmark/branch/main/graphs/sunburst.svg?token=55341HSOIB" width="100%"/></a> | <a href="https://codecov.io/gh/Jij-Inc/JijBenchmark"><img src="https://codecov.io/gh/Jij-Inc/JijBenchmark/branch/main/graphs/tree.svg?token=55341HSOIB" width="100%"/></a> | <a href="https://codecov.io/gh/Jij-Inc/JijBenchmark"><img src="https://codecov.io/gh/Jij-Inc/JijBenchmark/branch/main/graphs/icicle.svg?token=55341HSOIB" width="100%"/></a> |
+Primarily supporting Ising optimization problems, JijBench plans to extend its support to a wide range of optimization problems, such as MIP solvers, in the future.
 
-# How to use
+## Installation
+JijBench can be easily installed using pip.
 
-## For Contributor
-
-Use `pre-commit` for auto chech before git commit.
-`.pre-commit-config.yaml`
-
+``` shell
+pip install jijbench
 ```
-# pipx install pre-commit 
-# or 
-# pip install pre-commit
+
+## Documentation and Support
+Tutorials and sample code will be provided in the future. Stay tuned!
+
+
+
+## How to Contribute
+
+> *Development Environment Policy*:  
+> Our policy is to establish a simple development environment that allows everyone to easily contribute to the project. With this in mind, we carefully select the necessary commands for setting up the environment to be as minimal as possible. Based on this policy, we have adopted an environment using `poetry` in this project.
+
+### Setup environment with `poetry`
+
+1: Setup poetry
+```
+pip install -U pip
+pip install poetry
+poetry self add "poetry-dynamic-versioning[plugin]"
+poetry install
+```
+
+2: Setup `pre-commit`
+```
 pre-commit install
 ```
 
-### Local Install
-
-1. Load up a new Python [`venv`](https://docs.python.org/3.9/library/venv.html)
-
-```sh
-# Create a new virtual environment.
-python -m venv .venv --upgrade-deps
-```
-
-```sh
-# Activate the environment.
-source .venv/bin/activate
-```
-
-```sh
-# Alternatively you could use this command, for activate the environment.
-. .venv/bin/activate
-```
-
-https://www.gnu.org/savannah-checkouts/gnu/bash/manual/bash.html#Bourne-Shell-Builtins
-
-2. Install Dependency
-
-Use [`pip-tools`](https://github.com/jazzband/pip-tools).
-
-```sh
-pip install pip-tools
-pip-compile setup.cfg
-pip-compile build-requirements.in 
-pip-compile test-requirements.in 
-pip-compile dev-requirements.in 
-pip-sync requirements.txt build-requirements.txt dev-requirements.txt test-requirements.txt 
-```
-
-4. Install the module
-
-```sh
-python -m pip install .
-```
-
-https://pip.pypa.io/en/stable/cli/pip_install/\
-OR
-
-```sh
-python setup.py install
-```
-
-https://docs.python.org/3.9/distutils/introduction.html
-
-### Test Python
-
-This test runs with [pytest](https://docs.pytest.org/en/7.1.x/) and [pytest-runner](https://github.com/pytest-dev/pytest-runner/)
-
-```sh
-pip install pip-tools
-pip-compile setup.cfg
-pip-compile build-requirements.in 
-pip-compile test-requirements.in 
-pip-sync requirements.txt build-requirements.txt test-requirements.txt 
-python setup.py test
-```
-
-### Lint & Format Python
-
-```sh
-pip install pip-tools
-pip-compile setup.cfg
-pip-compile build-requirements.in 
-pip-compile test-requirements.in 
-pip-compile dev-requirements.in 
-pip-compile format-requirement.in
-pip-sync requirements.txt build-requirements.txt test-requirements.txt dev-requirements.txt format-requirements.txt 
-```
-
-Format
+3: Check tests
 
 ```
-# jijcloudsolverapi
-python -m isort --force-single-line-imports --verbose ./jijbench
-python -m autoflake --in-place --recursive --remove-all-unused-imports --ignore-init-module-imports --remove-unused-variables ./jijbench
-python -m autopep8 --in-place --aggressive --aggressive  --recursive ./jijbench
-python -m isort ./jijbench
-python -m black ./jijbench
-# tests-python
-python -m isort --force-single-line-imports --verbose ./tests
-python -m autoflake --in-place --recursive --remove-all-unused-imports --ignore-init-module-imports --remove-unused-variables ./tests
-python -m autopep8 --in-place --aggressive --aggressive  --recursive ./tests
-python -m isort ./tests
-python -m black ./tests
+poetry shell
+python -m pytest tests
 ```
 
-Lint
+### When you want add a dependency
 
+**Standard dependency**
 ```
-python -m flake8
-python -m mypy jijbench
-python -m pyright jijbench
-python -m lizard --verbose -l python jijbench
+poetry add ...
 ```
 
-You could use Pylight.
-https://github.com/microsoft/pyright
+**Depencency for test**
+```
+poetry add ... -G tests
+```
+
+**Depencency for dev**
+```
+poetry add ... -G dev
+```
+
