@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import typing as tp
-
 import numpy as np
+import typing as tp
 
 from jijbench.elements.base import Number
 from jijbench.node.base import FunctionNode
@@ -31,7 +30,7 @@ class Min(FunctionNode["Array", Number]):
         Returns:
             Number: The result of the calculation as a `Number` object.
         """
-        return _operate_array(inputs, np.min)
+        return _operate_array(inputs, np.min, "min")
 
 
 class Max(FunctionNode["Array", Number]):
@@ -54,7 +53,7 @@ class Max(FunctionNode["Array", Number]):
         Returns:
             Number: The result of the calculation as a `Number` object.
         """
-        return _operate_array(inputs, np.max)
+        return _operate_array(inputs, np.max, "max")
 
 
 class Mean(FunctionNode["Array", Number]):
@@ -103,11 +102,14 @@ class Std(FunctionNode["Array", Number]):
         return _operate_array(inputs, np.std)
 
 
-def _operate_array(inputs: list[Array], f: tp.Callable) -> Number:
+def _operate_array(inputs: list[Array], f: tp.Callable, f_name: str | None = None) -> Number:
     data = f(inputs[0].data)
     if "int" in str(data.dtype):
         data = int(data)
     else:
         data = float(data)
-    name = inputs[0].name + f"{f.__name__}"
+
+    if f_name is None:
+        f_name = f.__name__
+    name = f"{inputs[0].name}_{f_name}"
     return Number(data, name)

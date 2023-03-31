@@ -1,17 +1,21 @@
 from __future__ import annotations
 
+
+import numpy as np
 import pandas as pd
 
-from jijbench.containers.containers import Artifact, Table
+
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
 from jijbench.functions.metrics import (
+    TimeToSolution,
+    SuccessProbability,
     FeasibleRate,
     ResidualEnergy,
-    SuccessProbability,
-    TimeToSolution,
 )
+from jijbench.containers.containers import Artifact, Table
+from jijbench.elements.array import Array
 from jijbench.node.base import FunctionNode
 from jijbench.solver.jijzept import SampleSet
 
@@ -25,7 +29,7 @@ class Evaluation(FunctionNode[Experiment, Experiment]):
         opt_value: float | None = None,
         pr: float = 0.99,
     ) -> Experiment:
-        return super().__call__(inputs, opt_value=opt_value, pr=pr)
+        return super().__call__(inputs, opt_value=opt_value or np.nan, pr=pr)
 
     def operate(
         self,
@@ -54,6 +58,7 @@ class Evaluation(FunctionNode[Experiment, Experiment]):
         def f(x: pd.Series, opt_value: float, pr: float) -> pd.Series:
             inputs: list[SampleSet] = x.tolist()
             node = Concat()(inputs)
+            arrays = [Array(v, k) for k, v in Table._extract(node.data).items() if isinstance(v, np.ndarray) and k != "num_occurrences"]
             metrics = [
                 SuccessProbability()([node], opt_value=opt_value),
                 FeasibleRate()([node]),
@@ -62,6 +67,7 @@ class Evaluation(FunctionNode[Experiment, Experiment]):
                 TimeToSolution()([node], pr=pr, base="feasible"),
                 TimeToSolution()([node], pr=pr, base="derived"),
             ]
+            metrics += sum([[array.min(), array.max(), array.mean(), array.std()] for array in arrays], [])
             record = RecordFactory()(metrics)
             return record.data
 
@@ -74,10 +80,10 @@ class Evaluation(FunctionNode[Experiment, Experiment]):
             for col in table.columns
             if all(map(lambda x: isinstance(x, SampleSet), table.data[col]))
         ]
-
         data = table.data[sampleset_columns].apply(
             f, opt_value=opt_value, pr=pr, axis=1
         )
+
         metrics_artifact = Artifact(data.to_dict("index"))
         artifact = Concat()([artifact, metrics_artifact])
 
