@@ -35,5 +35,7 @@ ContainerTypes: TypeAlias = tp.Union["Artifact", "Experiment", "Record", "Table"
 ContainerListTypes: TypeAlias = tp.Union[
     tp.List["Artifact"], tp.List["Experiment"], tp.List["Record"], tp.List["Table"]
 ]
-ArtifactDataType: TypeAlias = tp.Dict[tp.Hashable, tp.Dict[tp.Hashable, "DataNode[tp.Any]"]]
+ArtifactDataType: TypeAlias = tp.Dict[
+    tp.Hashable, tp.Dict[tp.Hashable, "DataNode[tp.Any]"]
+]
 ExperimentDataType: TypeAlias = tp.Tuple["Artifact", "Table"]

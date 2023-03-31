@@ -7,6 +7,7 @@ import dill
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.containers.containers import Artifact, Table
+from jijbench.elements.base import Any
 from jijbench.functions.concat import Concat
 
 if tp.TYPE_CHECKING:
@@ -75,6 +76,23 @@ def save(
         except Exception:
             return False
 
+    def to_dillable(obj: Artifact | Table) -> Artifact | Table:
+        if isinstance(obj, Artifact):
+            data = {}
+            for k, v in obj.data.items():
+                data[k] = {}
+                for name, node in v.items():
+                    if is_dillable(node.data):
+                        data[k].update({name: node})
+                    else:
+                        data[k].update({name: Any(str(node.data), node.name)})
+            return Artifact(data, obj.name)
+        else:
+            data = obj.data.applymap(
+                lambda x: x if is_dillable(x) else Any(str(x.data), x.name)
+            )
+            return Table(data, obj.name)
+
     if mode not in ["a", "w"]:
         raise ValueError("Argument mode must be 'a' or 'w'.")
 
@@ -85,9 +103,8 @@ def save(
     if isinstance(obj, Artifact):
         p = savedir / "artifact.dill"
         concat_a: Concat[Artifact] = Concat()
-        if not is_dillable(obj):
-            raise IOError(f"Cannot save object: {obj}.")
 
+        obj = to_dillable(obj)
         if mode == "a":
             if p.exists():
                 obj = concat_a(
@@ -124,6 +141,8 @@ def save(
         p_dill = savedir / "table.dill"
         p_meta = savedir / "meta.dill"
         concat_t: Concat[Table] = Concat()
+
+        obj = to_dillable(obj)
         if mode == "a":
             if p_csv.exists() and p_meta.exists():
                 obj = concat_t(

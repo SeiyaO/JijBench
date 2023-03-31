@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import typing as tp
 import inspect
+import typing as tp
+from dataclasses import dataclass
+
 import jijmodeling as jm
 
-from dataclasses import dataclass
-from jijbench.exceptions.exceptions import SolverFailedError
-from jijbench.node.base import DataNode, FunctionNode
 from jijbench.containers.containers import Record
+from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.functions.factory import RecordFactory
+from jijbench.node.base import DataNode, FunctionNode
 from jijbench.typing import T
 
 
@@ -101,13 +102,11 @@ class Solver(FunctionNode[Parameter, Record]):
         parameters = inspect.signature(self.function).parameters
         has_kwargs = any([p.kind == 4 for p in parameters.values()])
         if has_kwargs:
-            solver_args = {
-            node.name: node.data for node in inputs
-        }
+            solver_args = {node.name: node.data for node in inputs}
         else:
             solver_args = {
-            node.name: node.data for node in inputs if node.name in parameters
-        }
+                node.name: node.data for node in inputs if node.name in parameters
+            }
         try:
             rets = self.function(**solver_args)
             if not isinstance(rets, tuple):
