@@ -1,23 +1,22 @@
 from __future__ import annotations
 
 import abc
+import pandas as pd
 import pathlib
 import typing as tp
 import uuid
 import warnings
+
 from dataclasses import dataclass, field
-
-import pandas as pd
-
 from jijbench.consts.path import DEFAULT_RESULT_DIR
-from jijbench.containers.containers import Artifact, Container, Record, Table
 from jijbench.elements.base import Callable
 from jijbench.elements.id import ID
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.io.io import save
+from jijbench.containers.containers import Artifact, Container, Record, Table
 from jijbench.solver.base import Parameter, Response
-from jijbench.typing import ExperimentDataType
+from jijbench.typing import ArtifactDataType, ExperimentDataType
 
 
 @dataclass
@@ -29,22 +28,6 @@ class Experiment(Container[ExperimentDataType]):
 
     def __post_init__(self):
         super().__post_init__()
-
-        if not isinstance(self.data, tuple):
-            raise TypeError(f"Data must be a tuple, got {type(self.data)}.")
-
-        if len(self.data) != 2:
-            raise ValueError(f"Data must be a tuple of length 2, got {len(self.data)}.")
-
-        if not isinstance(self.data[0], Artifact):
-            raise TypeError(
-                f"First element of data must be an Artifact, got {type(self.data[0])}."
-            )
-
-        if not isinstance(self.data[1], Table):
-            raise TypeError(
-                f"Second element of data must be a Table, got {type(self.data[1])}."
-            )
 
         if self.data[0].name is None:
             self.data[0].name = self.name
@@ -69,8 +52,7 @@ class Experiment(Container[ExperimentDataType]):
 
     def __enter__(self) -> Experiment:
         """Set up Experiment.
-        Automatically makes a directory for saving the experiment, if it doesn't exist.
-        """
+        Automatically makes a directory for saving the experiment, if it doesn't exist."""
 
         setattr(self, "state", _Running(self.name))
         pathlib.Path(self.savedir).mkdir(parents=True, exist_ok=True)
@@ -86,7 +68,7 @@ class Experiment(Container[ExperimentDataType]):
         setattr(self, "state", _Waiting(self.name))
 
     @property
-    def artifact(self) -> dict:
+    def artifact(self) -> ArtifactDataType:
         """Return the artifact of the experiment as a dictionary."""
         return self.data[0].view()
 
@@ -129,6 +111,13 @@ class Experiment(Container[ExperimentDataType]):
         Returns:
             ExperimentDataType: The validated data.
         """
+
+        if not isinstance(data, tuple):
+            raise TypeError(f"Data must be a tuple, got {type(data)}.")
+
+        if len(data) != 2:
+            raise ValueError(f"Data must be a tuple of length 2, got {len(data)}.")
+
         artifact, table = data
         if not isinstance(artifact, Artifact):
             raise TypeError(

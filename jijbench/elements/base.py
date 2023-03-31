@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import typing as tp
-from dataclasses import dataclass
 
+import typing as tp
+
+from dataclasses import dataclass
 from jijbench.node.base import DataNode
 from jijbench.typing import NumberTypes
 
@@ -13,7 +14,7 @@ class Number(DataNode[NumberTypes]):
 
     Attributes:
         data (NumberTypes): The int or float object.
-        name (str): The name of the element.
+        name (Hashable): The name of the element.
     """
 
     @classmethod
@@ -38,7 +39,7 @@ class String(DataNode[str]):
 
     Attributes:
         data (str): The string object.
-        name (str): The name of the element.
+        name (Hashable): The name of the element.
     """
 
     @classmethod
@@ -63,7 +64,7 @@ class Callable(DataNode[tp.Callable]):
 
     Attributes:
         data (Callable): The callable object.
-        name (str): The name of the element.
+        name (Hashable): The name of the element.
     """
 
     @classmethod
@@ -81,3 +82,25 @@ class Callable(DataNode[tp.Callable]):
 
         """
         return cls._validate_dtype(data, (tp.Callable,))
+
+
+@dataclass
+class Any(DataNode[tp.Any]):
+    """A class representing a any element.
+
+    Args:
+        data (Any): The any object.
+        name (Hashable): The name of the element.
+    """
+
+    @classmethod
+    def validate_data(cls, data: tp.Any) -> tp.Any:
+        """Validate the data to be any.
+
+        Args:
+            data (Any): The data to be validated.
+
+        Returns:
+            Any: The validated data.
+        """
+        return data

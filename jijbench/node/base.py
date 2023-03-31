@@ -5,7 +5,7 @@ import copy
 import typing as tp
 from dataclasses import dataclass
 
-from jijbench.typing import DataNodeT, DataNodeT2, T
+from jijbench.typing import DataNodeInT, DataNodeOutT, DataNodeT, T
 
 
 @dataclass
@@ -22,7 +22,7 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
     name: tp.Hashable
 
     def __post_init__(self) -> None:
-        self.operator: FunctionNode | None = None
+        self.operator: FunctionNode[DataNode[tp.Any], DataNode[tp.Any]] | None = None
         setattr(self, "state", None)
 
     def __setattr__(self, name: str, value: tp.Any) -> None:
@@ -57,7 +57,7 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
         pass
 
     @classmethod
-    def _validate_dtype(cls, data: T, cls_tuple: tuple) -> T:
+    def _validate_dtype(cls, data: T, cls_tuple: tuple[type]) -> T:
         if isinstance(data, cls_tuple):
             return data
         else:
@@ -71,7 +71,7 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
                 f"Attribute data of class {cls.__name__} must be type {dtype_str}."
             )
 
-    def _init_attrs(self, node: DataNode) -> None:
+    def _init_attrs(self, node: DataNode[tp.Any]) -> None:
         """Refresh the attributes in DataNode object.
 
         Args:
@@ -85,10 +85,10 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
 
     def apply(
         self,
-        f: FunctionNode[DataNodeT, DataNodeT2],
-        others: list[DataNodeT] | None = None,
+        f: FunctionNode[DataNodeInT, DataNodeOutT],
+        others: list[DataNodeInT] | None = None,
         **kwargs: tp.Any,
-    ) -> DataNodeT2:
+    ) -> DataNodeOutT:
         """Apply a function `f` on the data stored in the `DataNode` instance and other input `DataNode` instances.
 
         Args:
@@ -99,14 +99,14 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
         Returns:
             DataNodeT2: The result of applying the function on the data.
         """
-        inputs = [tp.cast("DataNodeT", copy.copy(self))] + (others if others else [])
+        inputs = [tp.cast("DataNodeInT", copy.copy(self))] + (others if others else [])
         node = f(inputs, **kwargs)
         node.operator = f
         setattr(node, "state", getattr(self, "state"))
         return node
 
 
-class FunctionNode(tp.Generic[DataNodeT, DataNodeT2], metaclass=abc.ABCMeta):
+class FunctionNode(tp.Generic[DataNodeInT, DataNodeOutT], metaclass=abc.ABCMeta):
     """A base class for all function nodes to operate DataNode objects.
 
     Attributes:
@@ -123,9 +123,9 @@ class FunctionNode(tp.Generic[DataNodeT, DataNodeT2], metaclass=abc.ABCMeta):
         if name is None:
             name = self.__class__.__name__
         self._name = name
-        self.inputs: list[DataNodeT] = []
+        self.inputs: list[DataNodeInT] = []
 
-    def __call__(self, inputs: list[DataNodeT], **kwargs: tp.Any) -> DataNodeT2:
+    def __call__(self, inputs: list[DataNodeInT], **kwargs: tp.Any) -> DataNodeOutT:
         """Operate the inputs to produce a new `DataNode` object.
 
         Args:
@@ -159,7 +159,7 @@ class FunctionNode(tp.Generic[DataNodeT, DataNodeT2], metaclass=abc.ABCMeta):
         self._name = name
 
     @abc.abstractmethod
-    def operate(self, inputs: list[DataNodeT], **kwargs: tp.Any) -> DataNodeT2:
+    def operate(self, inputs: list[DataNodeInT], **kwargs: tp.Any) -> DataNodeOutT:
         """Perform the operation on the inputs.
         This method must be implemented by subclasses.
 

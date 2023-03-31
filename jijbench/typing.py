@@ -13,13 +13,13 @@ if tp.TYPE_CHECKING:
     from jijbench.node.base import DataNode
 
 T = tp.TypeVar("T")
-T_co = tp.TypeVar("T_co")
+
 
 # node
-DataNodeT = tp.TypeVar("DataNodeT", bound="DataNode")
-DataNodeT2 = tp.TypeVar("DataNodeT2", bound="DataNode")
-DataNodeT_co = tp.TypeVar("DataNodeT_co", bound="DataNode", covariant=True)
-DataNodeT2_co = tp.TypeVar("DataNodeT2_co", bound="DataNode", covariant=True)
+DataNodeT = tp.TypeVar("DataNodeT", bound="DataNode[tp.Any]")
+DataNodeInT = tp.TypeVar("DataNodeInT", bound="DataNode[tp.Any]")
+DataNodeOutT = tp.TypeVar("DataNodeOutT", bound="DataNode[tp.Any]")
+
 
 # element
 DateTypes: TypeAlias = tp.Union[str, datetime.datetime, pd.Timestamp]
@@ -30,10 +30,10 @@ ModelType: TypeAlias = tp.Tuple[jm.Problem, jm.PH_VALUES_INTERFACE]
 
 
 # mapping
-MappingT = tp.TypeVar("MappingT", "Artifact", "Experiment", "Record", "Table")
-MappingTypes: TypeAlias = tp.Union["Artifact", "Experiment", "Record", "Table"]
-MappingListTypes: TypeAlias = tp.Union[
+ContainerT = tp.TypeVar("ContainerT", "Artifact", "Experiment", "Record", "Table")
+ContainerTypes: TypeAlias = tp.Union["Artifact", "Experiment", "Record", "Table"]
+ContainerListTypes: TypeAlias = tp.Union[
     tp.List["Artifact"], tp.List["Experiment"], tp.List["Record"], tp.List["Table"]
 ]
-ArtifactDataType: TypeAlias = tp.Dict[tp.Hashable, tp.Dict[tp.Hashable, "DataNode"]]
+ArtifactDataType: TypeAlias = tp.Dict[tp.Hashable, tp.Dict[tp.Hashable, "DataNode[tp.Any]"]]
 ExperimentDataType: TypeAlias = tp.Tuple["Artifact", "Table"]

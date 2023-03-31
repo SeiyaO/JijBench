@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import jijmodeling as jm
 import numpy as np
-from jijmodeling.expression.extract import extract_vars_from_problem
 
+from dataclasses import dataclass
 from jijbench.solver.base import Parameter, Response
 from jijbench.typing import ModelType
+from jijmodeling.expression.extract import extract_vars_from_problem
 
 
 @dataclass
@@ -85,7 +84,7 @@ class UserDefinedModel(Parameter[ModelType]):
         ph_labels = [
             v.label
             for v in extract_vars_from_problem(problem)
-            if isinstance(v, jm.Placeholder)
+            if isinstance(v, jm.Placeholder) and not v.children()
         ]
 
         is_in_labels = list(map(lambda x: x in keys, ph_labels))
