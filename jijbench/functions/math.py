@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import numpy as np
 import typing as tp
+
+import numpy as np
 
 from jijbench.elements.base import Number
 from jijbench.node.base import FunctionNode
@@ -102,7 +103,9 @@ class Std(FunctionNode["Array", Number]):
         return _operate_array(inputs, np.std)
 
 
-def _operate_array(inputs: list[Array], f: tp.Callable, f_name: str | None = None) -> Number:
+def _operate_array(
+    inputs: list[Array], f: tp.Callable, f_name: str | None = None
+) -> Number:
     data = f(inputs[0].data)
     if "int" in str(data.dtype):
         data = int(data)

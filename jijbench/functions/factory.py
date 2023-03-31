@@ -22,7 +22,9 @@ class Factory(FunctionNode[DataNodeInT, DataNodeOutT]):
     """
 
     @abc.abstractmethod
-    def create(self, inputs: list[DataNodeInT], name: str | None = None) -> DataNodeOutT:
+    def create(
+        self, inputs: list[DataNodeInT], name: str | None = None
+    ) -> DataNodeOutT:
         """Abstract method to create a new data node.
         Subclasses must implement this method.
 

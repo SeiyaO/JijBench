@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import jijmodeling as jm
 import numpy as np
+from jijmodeling.expression.extract import extract_vars_from_problem
 
-from dataclasses import dataclass
 from jijbench.solver.base import Parameter, Response
 from jijbench.typing import ModelType
-from jijmodeling.expression.extract import extract_vars_from_problem
 
 
 @dataclass

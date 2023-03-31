@@ -1,21 +1,19 @@
 from __future__ import annotations
 
-
 import numpy as np
 import pandas as pd
 
-
+from jijbench.containers.containers import Artifact, Table
+from jijbench.elements.array import Array
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
 from jijbench.functions.metrics import (
-    TimeToSolution,
-    SuccessProbability,
     FeasibleRate,
     ResidualEnergy,
+    SuccessProbability,
+    TimeToSolution,
 )
-from jijbench.containers.containers import Artifact, Table
-from jijbench.elements.array import Array
 from jijbench.node.base import FunctionNode
 from jijbench.solver.jijzept import SampleSet
 
@@ -58,7 +56,11 @@ class Evaluation(FunctionNode[Experiment, Experiment]):
         def f(x: pd.Series, opt_value: float, pr: float) -> pd.Series:
             inputs: list[SampleSet] = x.tolist()
             node = Concat()(inputs)
-            arrays = [Array(v, k) for k, v in Table._extract(node.data).items() if isinstance(v, np.ndarray) and k != "num_occurrences"]
+            arrays = [
+                Array(v, k)
+                for k, v in Table._extract(node.data).items()
+                if isinstance(v, np.ndarray) and k != "num_occurrences"
+            ]
             metrics = [
                 SuccessProbability()([node], opt_value=opt_value),
                 FeasibleRate()([node]),
@@ -67,7 +69,13 @@ class Evaluation(FunctionNode[Experiment, Experiment]):
                 TimeToSolution()([node], pr=pr, base="feasible"),
                 TimeToSolution()([node], pr=pr, base="derived"),
             ]
-            metrics += sum([[array.min(), array.max(), array.mean(), array.std()] for array in arrays], [])
+            metrics += sum(
+                [
+                    [array.min(), array.max(), array.mean(), array.std()]
+                    for array in arrays
+                ],
+                [],
+            )
             record = RecordFactory()(metrics)
             return record.data
 

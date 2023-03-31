@@ -3,10 +3,10 @@ from pkgutil import extend_path
 __path__ = extend_path(__path__, __name__)
 
 
-from jijbench.datasets.problem import (  # get_problem,
+from jijbench.datasets.problem import (
     TSP,
     TSPTW,
-    BinPacking,
+    BinPacking,  # get_problem,
     Knapsack,
     NurseScheduling,
 )
