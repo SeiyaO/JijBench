@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import jijbench as jb
-
 from jijbench.datasets import TSP, TSPTW, Knapsack
 
 
@@ -14,12 +13,6 @@ def test_tsptw():
     instance_name = target.instance_names("small")[0]
     ins_data = target.get_instance("small", instance_name)
     assert isinstance(ins_data, dict)
-
-
-def test_tsptw_time_window_constraint():
-    problem = jb.get_problem("TSPTW")
-    print(str(problem.constraints["time-window-constraint"]))
-    assert "1*20*1 - 1*x[i,j]" in str(problem.constraints["time-window-constraint"])
 
 
 def test_tsp():

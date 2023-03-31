@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import dill
 import pathlib
 import typing as tp
+
+import dill
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.containers.containers import Artifact, Table

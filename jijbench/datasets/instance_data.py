@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from jijbench import datasets
 from jijmodeling.type_annotations import PH_VALUES_INTERFACE
 
+from jijbench import datasets
 
 __all__ = []
 

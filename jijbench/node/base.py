@@ -3,9 +3,9 @@ from __future__ import annotations
 import abc
 import copy
 import typing as tp
-
 from dataclasses import dataclass
-from jijbench.typing import T, DataNodeT, DataNodeT2
+
+from jijbench.typing import DataNodeT, DataNodeT2, T
 
 
 @dataclass

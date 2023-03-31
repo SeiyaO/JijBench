@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from enum import Enum, auto
+from typing import cast
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy.typing as npt
-from typing import cast
 
 from jijbench.visualization.figure.interface import Figure
 

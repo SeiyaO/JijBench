@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import numpy as np
 import typing as tp
+
+import numpy as np
 
 from jijbench.elements.base import Number
 from jijbench.node.base import FunctionNode

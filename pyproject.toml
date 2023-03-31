@@ -1,110 +1,56 @@
+[tool.poetry]
+name = "jijbench"
+version = "0.0.0"
+description = "Experiment management and benchmark tools for mathematical optimization"
+authors = ["Jij  Inc."]
+license = "MIT"
+readme = "README.md"
+include = ["jijbench/*.py", "jijbench/*.json", "jijbench/*.JSON"]
+classifiers =[
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3 :: Only",
+        "Operating System :: POSIX",
+        "Operating System :: Unix",
+        "Operating System :: MacOS"]
+
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.11"
+numpy = "^1.24.2"
+pandas = "^1.5.3"
+plotly = "^5.14.0"
+matplotlib = "^3.7.1"
+nbformat = "^5.8.0"
+networkx = "^3.0"
+dill = "^0.3.6"
+jijmodeling = "^0.10.21"
+jijzept = "^1.14.0"
+
+
+[tool.poetry.group.tests.dependencies]
+pytest = "^7.2.2"
+pytest-cov = "^4.0.0"
+pytest-mock = "^3.10.0"
+pytest-html = "^3.2.0"
+pytest-runner = "^6.0.0"
+pytest-randomly = "^3.12.0"
+pytest-spec = "^3.2.0"
+pytest-asyncio = "^0.21.0"
+coverage = "^7.2.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.2.1"
+black = "^23.3.0"
+isort = "^5.12.0"
+
 [build-system]
-requires = [
-   'setuptools-git-versioning', 
-   'setuptools',
-   'wheel',
-   'build',
-   ]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
-[tool.setuptools-git-versioning]
-enabled = true
-dev_template = "{tag}" 
-dirty_template = "{tag}" 
-version_file = "jijbench/_version.py"
-
-[tool.pytest.ini_options]
-addopts = "-vv --doctest-modules --color=yes --code-highlight=yes --cov-context=test --cov --cov-append --cov-report term  --junit-xml=result.xml --randomly-seed=last"
-testpaths = [
-    "tests",
-]
-spec_header_format = "{module_path}:"
-spec_test_format = "{result} {name}"
-log_level = "INFO"
-console_output_style = "count"
-log_auto_indent = true
-junit_logging = "all"
-asyncio_mode = "auto"
-
-[tool.flake8] 
-show-source = true
-statistics = true
-doctests = true
-max-complexity = 10
-max-line-length = 999 
-
-[tool.isort]
-profile= "black"
-multi_line_output = 3
-force_grid_wrap = 0
-include_trailing_comma = false
-ensure_newline_before_comments = true
-use_parentheses = true 
-balanced_wrapping = false
-lines_between_types = 1
-#order_by_type = true 
-combine_as_imports = true
-combine_star = true
-combine_straight_imports = true
-group_by_package = true
-auto_identify_namespace_packages = true
-src_paths = ["jijbench", "tests"]
-
-[tool.black]
-target-version = ['py39', 'py310']
-
-[tool.mypy]
-plugins = [
-  "pydantic.mypy"
-]
-ignore_missing_imports = true
-#show_traceback = true
-warn_return_any = true
-warn_unused_configs = true
-warn_unreachable = true
-namespace_packages = true
-explicit_package_bases = true
-follow_imports = "silent"
-warn_redundant_casts = true
-warn_unused_ignores = true
-disallow_any_generics = true
-check_untyped_defs = true
-no_implicit_reexport = true
-# for strict mypy: (this is the tricky one :-))
-disallow_untyped_defs = true
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
-warn_required_dynamic_aliases = true
-warn_untyped_fields = true
-
-[tool.pyright]
-pythonVersion = "3.9"
-typeCheckingMode = "basic"
-include = [
-    "jijbench", 
-    "tests",
-  ]
-ignore = [ 
-  "*.c", 
-  "*.so",
-]
-reportImportCycles = 'warning'
-reportUnusedImport = 'warning'
-reportUnusedVariable =  'warning'
-reportDuplicateImport = 'warning'
-
-[tool.cibuildwheel]
-build-verbosity = 1
-#dependency-versions = "latest"
-build = ["cp38-*", "cp39-*"]
-skip = ["pp*", "*musllinux_x86_64", "*musllinux_aarch64"]
-
-[tool.cibuildwheel.linux]
-build-frontend = "build"
-
-[tool.cibuildwheel.macos]
-build-frontend = "build"
-
-[tool.cibuildwheel.windows]
+[tool.poetry-dynamic-versioning]
+enable = true

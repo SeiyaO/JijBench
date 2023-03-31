@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import typing as tp
 import inspect
+import typing as tp
+from dataclasses import dataclass
+
 import jijmodeling as jm
 
-from dataclasses import dataclass
-from jijbench.exceptions.exceptions import SolverFailedError
-from jijbench.node.base import DataNode, FunctionNode
 from jijbench.containers.containers import Record
+from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.functions.factory import RecordFactory
+from jijbench.node.base import DataNode, FunctionNode
 from jijbench.typing import T
 
 

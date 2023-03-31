@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import abc
-import numpy as np
-import pandas as pd
-import jijmodeling as jm
 import typing as tp
 import warnings
-
 from dataclasses import dataclass, field
+
+import jijmodeling as jm
+import numpy as np
+import pandas as pd
+
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.node.base import DataNode
-from jijbench.typing import T, ArtifactDataType
+from jijbench.typing import ArtifactDataType, T
 
 
 @dataclass

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import datetime
+from dataclasses import dataclass, field
+
 import pandas as pd
 
-
-from dataclasses import dataclass, field
 from jijbench.node.base import DataNode
 from jijbench.typing import DateTypes
 
