@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import datetime
-import jijmodeling as jm
-import pandas as pd
 import typing as tp
 
+import jijmodeling as jm
+import pandas as pd
 from typing_extensions import TypeAlias
 
 if tp.TYPE_CHECKING:

@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-import jijmodeling as jm
-import pandas as pd
 import pathlib
 import typing as tp
+
+import jijmodeling as jm
+import pandas as pd
+from typing_extensions import TypeGuard
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.elements.id import ID
 from jijbench.node.base import DataNode, FunctionNode
 from jijbench.typing import DataNodeT
-from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
-    from jijbench.experiment.experiment import Experiment
     from jijbench.containers.containers import Artifact, Record, Table
+    from jijbench.experiment.experiment import Experiment
     from jijbench.solver.jijzept import SampleSet
 
 

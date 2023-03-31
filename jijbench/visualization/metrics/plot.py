@@ -1,25 +1,24 @@
 from __future__ import annotations
 
-from matplotlib import axes, figure
+import re
+from numbers import Number
+from typing import Callable, Literal, cast
 
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
-from numbers import Number
 import numpy as np
 import pandas as pd
-import re
-
 import plotly
 import plotly.express as px
-from typing import Callable, cast, Literal
+from matplotlib import axes, figure
+from matplotlib.ticker import MaxNLocator
 
 import jijbench as jb
 from jijbench.exceptions.exceptions import UserFunctionFailedError
 from jijbench.visualization.metrics.utils import (
     _create_fig_title_list,
-    _df_has_valid_multipliers_column,
     _df_has_number_array_column_target_name,
     _df_has_number_column_target_name,
+    _df_has_valid_multipliers_column,
 )
 
 AXIS_LABEL_POS = Literal["top", "bottom"]

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-import json, os, pathlib
+import json
+import os
+import pathlib
+from typing import Dict, List, Tuple, Union
+
 import jijmodeling as jm
 
 from jijbench import datasets
-
-from typing import Dict, List, Tuple, Union
-
 
 __all__ = []
 
@@ -160,20 +161,38 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         # シフトtの次の日に働ないtypeのシフト R = [type1, type2, type3, ... ] = [[1, 2], [0, ], [], ...]
         R = jm.Placeholder("R", dim=2)
         l = jm.Placeholder("l", shape=(I,))  # シフトtの労働時間
-        m_max = jm.Placeholder("m_max", shape=(I, T)).set_latex("\mathrm{m\_max}")  # 従業員にシフトtを割当てられる最大回数
-        b_min = jm.Placeholder("b_min", shape=(I,)).set_latex("\mathrm{b\_min}")  # 各従業員の労働時間の最小値
-        b_max = jm.Placeholder("b_max", shape=(I,)).set_latex("\mathrm{b\_max}")  # 各従業員の労働時間の最大値
-        c_min = jm.Placeholder("c_min", shape=(I,)).set_latex("\mathrm{c\_min}")  # 各従業員の最小連続勤務数
-        c_max = jm.Placeholder("c_max", shape=(I,)).set_latex("\mathrm{c\_max}")  # 各従業員の最大連続勤務数
-        o_min = jm.Placeholder("o_min", shape=(I,)).set_latex("\mathrm{o\_min}")  # 各従業員の連続最低休日日数
-        a_max = jm.Placeholder("a_max", shape=(I,)).set_latex("\mathrm{a\_max}")  # 各従業員の週末働ける最大の回数
+        m_max = jm.Placeholder("m_max", shape=(I, T)).set_latex(
+            "\mathrm{m\_max}"
+        )  # 従業員にシフトtを割当てられる最大回数
+        b_min = jm.Placeholder("b_min", shape=(I,)).set_latex(
+            "\mathrm{b\_min}"
+        )  # 各従業員の労働時間の最小値
+        b_max = jm.Placeholder("b_max", shape=(I,)).set_latex(
+            "\mathrm{b\_max}"
+        )  # 各従業員の労働時間の最大値
+        c_min = jm.Placeholder("c_min", shape=(I,)).set_latex(
+            "\mathrm{c\_min}"
+        )  # 各従業員の最小連続勤務数
+        c_max = jm.Placeholder("c_max", shape=(I,)).set_latex(
+            "\mathrm{c\_max}"
+        )  # 各従業員の最大連続勤務数
+        o_min = jm.Placeholder("o_min", shape=(I,)).set_latex(
+            "\mathrm{o\_min}"
+        )  # 各従業員の連続最低休日日数
+        a_max = jm.Placeholder("a_max", shape=(I,)).set_latex(
+            "\mathrm{a\_max}"
+        )  # 各従業員の週末働ける最大の回数
         # q[i, d, t] = 1, 人iは日にちdにtype tの仕事をしたい
         q = jm.Placeholder("q", shape=(I, D, T))
         # p[i, d, t] = 1, 人iは日にちdにtype tの仕事をしたくない
         p = jm.Placeholder("p", shape=(I, D, T))
         u = jm.Placeholder("u", shape=(D, T))  # 日にちd, type tの必要人数
-        v_min = jm.Placeholder("v_min", shape=(D, T)).set_latex("\mathrm{v\_min}")  # 人員不足のペナルティーの重み
-        v_max = jm.Placeholder("v_max", shape=(D, T)).set_latex("\mathrm{v\_max}")  # 人員過剰のペナルティーの重み
+        v_min = jm.Placeholder("v_min", shape=(D, T)).set_latex(
+            "\mathrm{v\_min}"
+        )  # 人員不足のペナルティーの重み
+        v_max = jm.Placeholder("v_max", shape=(D, T)).set_latex(
+            "\mathrm{v\_max}"
+        )  # 人員過剰のペナルティーの重み
 
         len_R = R.shape[0]
 
@@ -287,7 +306,7 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         # Constraint9: 働けない日の制約
         d_o = jm.Element("do", N[i]).set_latex("{\mathrm d\_o}")
         problem += jm.Constraint(
-            "days-off", x[i, d_o, t] == 0, forall=[i, (d_o, d_o!=-1), t] 
+            "days-off", x[i, d_o, t] == 0, forall=[i, (d_o, d_o != -1), t]
         )
 
         # Constraint10: 必要人数に関する制約

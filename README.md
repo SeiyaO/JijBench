@@ -33,8 +33,23 @@ poetry install
 ```
 
 2: Setup `pre-commit`
+
+In this project, we use pre-commit hooks to help maintain code quality. This ensures that predefined checks and formatting are automatically executed before each commit.
+
+`pre-commit` was installed by the above command `poetry install`.
+So, next enable the pre-commit hooks by running the following command in the project's root directory:
+
 ```
 pre-commit install
+```
+
+> **Notes on Using pre-commit:**  
+> With pre-commit enabled, predefined checks and formatting will be automatically executed before each commit. If any errors are detected during this process, the commit will be aborted. You will not be able to commit until the errors are resolved, so please fix the errors and try committing again.
+
+You may need run `black` and `isort` before commit.
+```
+python -m isort ./jijbench
+python -m black ./jijbench
 ```
 
 3: Check tests

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import abc
-import pandas as pd
 import typing as tp
+
+import pandas as pd
 
 from jijbench.node.base import FunctionNode
 from jijbench.typing import DataNodeT, DataNodeT2

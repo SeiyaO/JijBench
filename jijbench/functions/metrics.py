@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import jijmodeling as jm
-import numpy as np
 import typing as tp
 import warnings
 
+import jijmodeling as jm
+import numpy as np
 
 from jijbench.elements.base import Number
 from jijbench.functions.concat import Concat
-from jijbench.solver.jijzept import SampleSet
 from jijbench.node.base import FunctionNode
+from jijbench.solver.jijzept import SampleSet
 
 
 def _is_success_list(sampleset: SampleSet, opt_value: int | float) -> list[bool]:
@@ -259,6 +259,7 @@ class ResidualEnergy(Metrics):
     """Residual energy.
     The residual energy is defined as the mean of the objective function minus the optimal value.
     """
+
     def __call__(self, inputs: list[SampleSet], opt_value: int | float) -> Number:
         return super().__call__(inputs, opt_value=opt_value)
 

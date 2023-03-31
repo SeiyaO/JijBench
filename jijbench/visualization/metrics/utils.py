@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-import jijmodeling as jm
+import typing as tp
 from numbers import Number
+
+import jijmodeling as jm
 import numpy as np
 import pandas as pd
-import typing as tp
 
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
-from jijbench.solver.base import Parameter, Response
 from jijbench.functions.factory import RecordFactory
+from jijbench.solver.base import Parameter, Response
 
 
 def construct_experiment_from_samplesets(

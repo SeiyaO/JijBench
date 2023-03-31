@@ -1,19 +1,17 @@
 from __future__ import annotations
 
-
 import pandas as pd
 
-
+from jijbench.containers.containers import Artifact, Table
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
 from jijbench.functions.metrics import (
-    TimeToSolution,
-    SuccessProbability,
     FeasibleRate,
     ResidualEnergy,
+    SuccessProbability,
+    TimeToSolution,
 )
-from jijbench.containers.containers import Artifact, Table
 from jijbench.node.base import FunctionNode
 from jijbench.solver.jijzept import SampleSet
 

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-
 import typing as tp
-
 from dataclasses import dataclass
+
 from jijbench.node.base import DataNode
 from jijbench.typing import NumberTypes
 

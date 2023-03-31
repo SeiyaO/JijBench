@@ -1,22 +1,23 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 
-
-from dataclasses import dataclass
 from jijbench.elements.base import Number
-from jijbench.functions.math import Min, Max, Mean, Std
+from jijbench.functions.math import Max, Mean, Min, Std
 from jijbench.node.base import DataNode
 
 
 @dataclass
 class Array(DataNode[np.ndarray]):
     """A class representing numpy arrays.
-    
+
     Attributes:
         data (numpy.ndarray): The numpy array.
         name (str): The name of the node.
     """
+
     def min(self) -> Number:
         """Get the minimum value of the numpy array.
 
@@ -55,7 +56,7 @@ class Array(DataNode[np.ndarray]):
 
         Args:
             data (numpyp.ndarray): The numpy array to validate.
-        
+
         Raises:
             TypeError: If the input data is not a numpy array.
 
