@@ -1,20 +1,20 @@
 from __future__ import annotations
 
+import jijmodeling as jm
+import typing as tp
 import inspect
 import itertools
 import pathlib
-import typing as tp
 
-import jijmodeling as jm
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.node.base import FunctionNode
 from jijbench.elements.base import Callable
 from jijbench.elements.date import Date
 from jijbench.elements.id import ID
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
-from jijbench.node.base import FunctionNode
 from jijbench.solver.base import Parameter, Solver
 from jijbench.solver.jijzept import InstanceData, UserDefinedModel
 
@@ -179,7 +179,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
 def construct_benchmark_for(
     sampler: JijZeptBaseSampler,
     models: list[tuple[jm.Problem, jm.PH_VALUES_INTERFACE]],
-    params: dict[str, tp.Iterable],
+    params: dict[str, tp.Iterable[tp.Any]],
     name: str | None = None,
 ) -> Benchmark:
     """Create a Benchmark object.

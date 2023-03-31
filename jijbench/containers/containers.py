@@ -307,7 +307,8 @@ class Table(Container[pd.DataFrame]):
             else:
                 return data
 
-    def _extract(self, sampleset: jm.SampleSet) -> pd.Series:
+    @staticmethod
+    def _extract(sampleset: jm.SampleSet) -> pd.Series:
         """Extract data from jijmodeling.SampleSet object.
 
         This method extracts relevant data from a `jijmodeling.SampleSet`, such as the number of occurrences,
