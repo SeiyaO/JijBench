@@ -30,22 +30,6 @@ class Experiment(Container[ExperimentDataType]):
     def __post_init__(self):
         super().__post_init__()
 
-        if not isinstance(self.data, tuple):
-            raise TypeError(f"Data must be a tuple, got {type(self.data)}.")
-
-        if len(self.data) != 2:
-            raise ValueError(f"Data must be a tuple of length 2, got {len(self.data)}.")
-
-        if not isinstance(self.data[0], Artifact):
-            raise TypeError(
-                f"First element of data must be an Artifact, got {type(self.data[0])}."
-            )
-
-        if not isinstance(self.data[1], Table):
-            raise TypeError(
-                f"Second element of data must be a Table, got {type(self.data[1])}."
-            )
-
         if self.data[0].name is None:
             self.data[0].name = self.name
 
@@ -104,7 +88,6 @@ class Experiment(Container[ExperimentDataType]):
     @property
     def solver_table(self) -> pd.DataFrame:
         """Return the solver table of the experiment as a pandas dataframe."""
-
         bools = self.data[1].data.applymap(lambda x: isinstance(x, Callable))
         return self.table[bools].dropna(axis=1)
 
@@ -130,6 +113,12 @@ class Experiment(Container[ExperimentDataType]):
         Returns:
             ExperimentDataType: The validated data.
         """
+        if not isinstance(data, tuple):
+            raise TypeError(f"Data must be a tuple, got {type(data)}.")
+
+        if len(data) != 2:
+            raise ValueError(f"Data must be a tuple of length 2, got {len(data)}.")
+
         artifact, table = data
         if not isinstance(artifact, Artifact):
             raise TypeError(
