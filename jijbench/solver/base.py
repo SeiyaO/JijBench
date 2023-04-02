@@ -89,7 +89,6 @@ class Solver(FunctionNode[Parameter, Record]):
 
         Args:
             inputs (list[Parameter]): The list of input `Parameter` for the solver function.
-            is_parsed_sampleset (bool, optional): Whether the sample set is parsed. Defaults to True.
 
         Raises:
             SolverFailedError: If an error occurs inside the solver function.

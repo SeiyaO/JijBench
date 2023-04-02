@@ -14,11 +14,10 @@ if tp.TYPE_CHECKING:
 
 class Factory(FunctionNode[DataNodeInT, DataNodeOutT]):
     """An abstract base class for creating a new data node from a list of input nodes.
-
+    
     Attributes:
-        inputs (List[DataNodeInT]): List of input data nodes.
-        name (str or None): Name of the resulting data node.
-
+        inputs (list[`DataNodeInT`]): List of input data nodes.
+        name (Optional[str]): Name of the resulting data node.
     """
 
     @abc.abstractmethod
@@ -30,7 +29,7 @@ class Factory(FunctionNode[DataNodeInT, DataNodeOutT]):
 
         Args:
             inputs (List[DataNodeInT]): List of input data nodes.
-            name (str or None): Name of the resulting data node.
+            name (str | None): Name of the resulting data node.
 
         Returns:
             DataNodeOutT: The resulting data node.
@@ -45,8 +44,8 @@ class Factory(FunctionNode[DataNodeInT, DataNodeOutT]):
         This method calls `create` method to create a new data node from the given inputs.
 
         Args:
-            inputs (List[DataNodeInT]): List of input data nodes.
-            name (str or None, optional): Name of the resulting data node.
+            inputs (list[DataNodeInT]): List of input data nodes.
+            name (str | None, optional): Name of the resulting data node.
             **kwargs: Additional keyword arguments.
 
         Returns:
@@ -73,14 +72,11 @@ class RecordFactory(Factory[DataNodeInT, "Record"]):
         """Create a Record object from the input DataNode objects.
 
         This method takes a list of input DataNode objects, processes them and converts them into a pandas
-        Series. The resulting Series is used to create the Record object. If the input data is a `jijmodeling.SampleSet`
-        and `is_parsed_sampleset` is set to True, the relevant data is extracted from the SampleSet using the
-        `_to_nodes_from_sampleset` helper method.
+        Series. The resulting Series is used to create the Record object.
 
         Args:
             inputs (list[DataNodeInT]): A list of DataNode objects to be processed.
             name (str, optional): A name for the Record object. Defaults to "".
-            is_parsed_sampleset (bool, optional): Whether to extract data from jijmodeling SampleSet objects. Defaults to True.
 
         Returns:
             Record: A Record object created from the processed input DataNode objects.

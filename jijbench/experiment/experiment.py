@@ -123,9 +123,7 @@ class Experiment(Container[ExperimentDataType]):
             data (ExperimentDataType): The data to validate.
 
         Raises:
-            TypeError: If data is not an instance of ExperimentDataType or
-            if the first element of data is not an instance of Artifact or
-            if the second element of data is not an instance of Table.
+            TypeError: If data is not an instance of ExperimentDataType or if the first element of data is not an instance of Artifact or if the second element of data is not an instance of Table.
 
         Returns:
             ExperimentDataType: The validated data.

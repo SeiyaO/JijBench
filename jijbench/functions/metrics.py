@@ -3,7 +3,6 @@ from __future__ import annotations
 import typing as tp
 import warnings
 
-import jijmodeling as jm
 import numpy as np
 
 from jijbench.elements.base import Number
@@ -112,7 +111,7 @@ class TimeToSolution(Metrics):
         Args:
             inputs (list[SampleSet]): A list of SampleSet objects.
             pr (float): The probability of obtaining a solution.
-            opt_value (int or float): The optimal value.
+            opt_value (int | float): The optimal value.
             base (str): The type of time to solution.
 
         Returns:
@@ -156,7 +155,7 @@ class TimeToSolution(Metrics):
         Args:
             inputs (list[SampleSet]): A list of SampleSet objects.
             pr (float): The probability of obtaining a solution.
-            opt_value (int or float): The optimal value.
+            opt_value (int | float): The optimal value.
             base (str): The type of time to solution.
 
         Returns:
@@ -206,7 +205,7 @@ class SuccessProbability(Metrics):
 
         Args:
             inputs (list[SampleSet]): A list of SampleSet objects.
-            opt_value (int or float): The optimal value.
+            opt_value (int | float): The optimal value.
 
         Returns:
             Number: The success probability.
@@ -218,7 +217,7 @@ class SuccessProbability(Metrics):
 
         Args:
             inputs (list[SampleSet]): A list of SampleSet objects.
-            opt_value (int or float): The optimal value.
+            opt_value (int | float): The optimal value.
 
         Returns:
             Number: The success probability.

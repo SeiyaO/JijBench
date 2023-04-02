@@ -87,7 +87,7 @@ class Callable(DataNode[tp.Callable]):
 class Any(DataNode[tp.Any]):
     """A class representing a any element.
 
-    Args:
+    Attributes:
         data (Any): The any object.
         name (Hashable): The name of the element.
     """
