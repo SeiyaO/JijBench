@@ -9,13 +9,7 @@ result.xml
 jijbench/_version.py
 **/_version.py
 python_version.txt
-format-requirements.txt
-test-requirements.txt
-docs-requirements.txt
-requirements.txt 
-result.xml
-build-requirements.txt 
-dev-requirements.txt 
+
 # Distribution / packaging
 .Python
 build/
