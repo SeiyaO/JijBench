@@ -1,0 +1,95 @@
+name: python-test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+env:
+  POETRY_VERSION: 1.4.1
+
+jobs:
+  Python-Test:
+    if: ${{ !contains(github.head_ref, 'dependabot/github_actions') }}
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10' ]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+      - name:  Get Python Version
+        shell: bash
+        run:   |
+          set -eux
+          python --version > python_version.txt
+          cat python_version.txt
+      - name: Get pip cache dir
+        id: pip-cache
+        shell: bash
+        run: |
+          set -eux
+          echo "dir=$(python -m pip cache dir)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v3
+        if: always()
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}
+          restore-keys: ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}
+      - name: Install Poetry
+        shell: bash
+        run:  |
+          set -eux
+          python -m pip install "poetry==${{ env.POETRY_VERSION }}""
+      - name: Poetry Config
+        shell: bash
+        run: |
+          set -eux
+          mkdir cache
+      - name: Poetry lock
+        shell: bash
+        run :
+          set -eux
+          poetry lock
+      - name: Poetry Install
+        shell: bash
+        run:  |
+          set -eux
+          poetry install
+      - name: Test
+        shell: bash
+        run: |
+          set -eux
+          poetry run pytest
+      - name:  Generate Coverage File
+        shell: bash
+        if: always()
+        run: |
+          set -eux
+          poetry run coverage xml
+          poetry run coverage json
+          poetry run coverage lcov
+      - uses:              codecov/codecov-action@v3
+        if: always()
+        continue-on-error: true
+        env:
+          OS: ${{ matrix.os }}
+          PYTHON: ${{ matrix.python-version }}
+          POETRY: ${{env.POETRY_VERSION}}
+        with:
+          token:            ${{ secrets.CODECOV_TOKEN }}
+          env_vars:         OS,PYTHON,POETRY
+          files:            coverage.xml, coverage.json, coverage.lcov
+          fail_ci_if_error: false
+          verbose:          true
