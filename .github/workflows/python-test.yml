@@ -26,12 +26,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      - name:  Get Python Version
-        shell: bash
-        run:   |
-          set -eux
-          python --version > python_version.txt
-          cat python_version.txt
       - name: Install Poetry
         shell: bash
         run:  |
@@ -42,11 +36,6 @@ jobs:
         run :
           set -eux
           poetry lock
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
       - name: Poetry Install
         shell: bash
         run:  |
