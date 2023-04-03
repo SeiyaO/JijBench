@@ -1,0 +1,1 @@
+from jijbench.visualization.metrics.parallelplot.parallelplot import MetricsParallelPlot

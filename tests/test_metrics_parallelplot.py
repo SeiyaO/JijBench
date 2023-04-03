@@ -8,7 +8,7 @@ import pytest
 
 import jijbench as jb
 from jijbench.exceptions.exceptions import UserFunctionFailedError
-from jijbench.visualization.metrics.parallelplot.parallelplot import MetricsParallelPlot
+from jijbench.visualization import MetricsParallelPlot
 
 
 @pytest.fixture(scope="function", autouse=True)

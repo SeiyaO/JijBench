@@ -5,7 +5,7 @@ import pytest
 from matplotlib import axes, figure
 
 import jijbench as jb
-from jijbench.visualization.metrics.baseplot.baseplot import BasePlot
+from jijbench.visualization import BasePlot
 
 
 def solve():

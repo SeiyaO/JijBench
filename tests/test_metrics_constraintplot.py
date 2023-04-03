@@ -5,8 +5,8 @@ import pytest
 from matplotlib import axes, figure
 
 import jijbench as jb
+from jijbench.visualization import ConstraintPlot
 from jijbench.visualization.metrics.constraintplot.constraintplot import (
-    ConstraintPlot,
     _get_violations_dict,
 )
 
