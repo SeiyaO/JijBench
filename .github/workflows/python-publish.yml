@@ -25,20 +25,26 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+      - name: Install poetry
+        run: pipx install poetry
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-      - name: Install Poetry
+          cache: 'poetry'
+      - name: Configure
         shell: bash
         run:  |
           set -eux
-          python -m pip install -r requirements.txt
+          pip install poetry-dynamic-versioning
+      - name: Poetry Install
+        shell: bash
+        run:  |
+          set -eux
+          poetry install
       - name: Publish
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
-          pip install poetry-dynamic-versioning
           poetry config pypi-token.pypi $PYPI_TOKEN
           poetry publish --build
