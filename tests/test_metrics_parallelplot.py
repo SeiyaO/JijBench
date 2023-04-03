@@ -1,13 +1,14 @@
-import os, shutil
-import jijmodeling as jm
+import os
+import shutil
 
+import jijmodeling as jm
 import numpy as np
 import pandas as pd
 import pytest
 
 import jijbench as jb
 from jijbench.exceptions.exceptions import UserFunctionFailedError
-from jijbench.visualization.metrics.plot import MetricsPlot
+from jijbench.visualization.metrics.parallelplot.parallelplot import MetricsParallelPlot
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -148,7 +149,7 @@ def test_metrics_plot_parallelplot_num_feasible(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     expect_value_0 = result.table["num_feasible"].values[0]
@@ -166,7 +167,7 @@ def test_metrics_plot_parallelplot_samplemean_objective(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     def calc_expect_samplemean_objective(result, idx):
@@ -189,7 +190,7 @@ def test_metrics_plot_parallelplot_samplemean_violations(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     def calc_result_samplemean_violations(result, idx, constraint_name):
@@ -222,7 +223,7 @@ def test_metrics_plot_parallelplot_samplemean_violations_no_constraint(mocker):
         solver=[solve_no_constraint],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     # samplemean_total_violationsが含まれていないことを確認する（本テストでは制約がない問題を解く状況を想定しているため）
@@ -247,7 +248,7 @@ def test_metrics_plot_parallelplot_multipliers(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     assert fig_contain_target_data(fig, "onehot1_multiplier", np.array([1, 3]))
@@ -275,7 +276,7 @@ def test_metrics_plot_parallelplot_arg_color_column_default(mocker, solver, expe
         solver=[solver],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
     assert fig.layout.coloraxis.colorbar.title.text == expect
 
@@ -288,7 +289,7 @@ def test_metrics_plot_parallelplot_arg_color_column(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         color_column_name="samplemean_onehot1_violations"
     )
@@ -304,7 +305,7 @@ def test_metrics_plot_parallelplot_arg_color_midpoint(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         color_midpoint=5,
     )
@@ -320,7 +321,7 @@ def test_metrics_plot_parallelplot_arg_color_midpoint_default(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     def calc_mean_total_violaions(x: pd.Series):
@@ -356,7 +357,7 @@ def test_metrics_plot_parallelplot_arg_title(mocker, title, expect):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         title=title,
     )
@@ -383,7 +384,7 @@ def test_metrics_plot_parallelplot_arg_height(mocker, height, expect):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         height=height,
     )
@@ -410,7 +411,7 @@ def test_metrics_plot_parallelplot_arg_width(mocker, width, expect):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         width=width,
     )
@@ -437,7 +438,7 @@ def test_metrics_plot_parallelplot_arg_axis_label_pos(mocker, axis_label_pos, ex
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(axis_label_pos=axis_label_pos)
     assert fig.data[0].labelside == expect
 
@@ -456,7 +457,7 @@ def test_metrics_plot_parallelplot_arg_axis_label_pos_invalid_value(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     with pytest.raises(ValueError) as e:
         mplot.parallelplot_experiment(axis_label_pos="INVALID_VALUE")
 
@@ -479,7 +480,7 @@ def test_metrics_plot_parallelplot_arg_axis_label_fontsize(mocker, fontsize, exp
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(axis_label_fontsize=fontsize)
     assert fig.data[0].labelfont.size == expect
 
@@ -492,7 +493,7 @@ def test_metrics_plot_parallelplot_arg_additional_axes(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         additional_axes=["num_samples"],
     )
@@ -510,7 +511,7 @@ def test_metrics_plot_parallelplot_arg_additional_axes_not_number(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     with pytest.raises(TypeError):
         mplot.parallelplot_experiment(
             additional_axes=["energy"],
@@ -525,7 +526,7 @@ def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function(mocke
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
 
     def get_max_num_occurrences(x: pd.Series) -> float:
         return np.max(x["num_occurrences"])
@@ -577,7 +578,7 @@ def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_retur
     def get_max_num_occurrences_return_not_number(x: pd.Series) -> str:
         return str(np.max(x["num_occurrences"]))
 
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
 
     with pytest.raises(TypeError):
         mplot.parallelplot_experiment(
@@ -601,7 +602,7 @@ def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_error
     def error_func(x: pd.Series) -> str:
         raise RuntimeError
 
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     with pytest.raises(UserFunctionFailedError):
         mplot.parallelplot_experiment(
             additional_axes_created_by_function={"column_name": error_func}
@@ -616,7 +617,7 @@ def test_metrics_plot_parallelplot_arg_display_axes_list(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         display_axes_list=[
             "samplemean_onehot2_violations",
@@ -637,7 +638,7 @@ def test_metrics_plot_parallelplot_property_parallelplot_axes_list(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     expect_name_list = [dimension.label for dimension in fig.data[0].dimensions]
@@ -651,7 +652,7 @@ def test_metrics_plot_parallelplot_property_parallelplot_axes_list_before_call_p
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
 
     assert mplot.parallelplot_axes_list == []
 
@@ -664,7 +665,7 @@ def test_metrics_plot_parallelplot_arg_rename_map(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         rename_map={
             "samplemean_onehot1_violations": "Samplemean Onehot1 Violations",
