@@ -11,9 +11,6 @@ on:
       - reopened
       - synchronize
 
-env:
-  POETRY_VERSION: 1.4.1
-
 jobs:
   Python-Test:
     if: ${{ !contains(github.head_ref, 'dependabot/github_actions') }}
@@ -28,40 +25,28 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
+          cache: 'pip'
       - name:  Get Python Version
         shell: bash
         run:   |
           set -eux
           python --version > python_version.txt
           cat python_version.txt
-      - name: Get pip cache dir
-        id: pip-cache
-        shell: bash
-        run: |
-          set -eux
-          echo "dir=$(python -m pip cache dir)" >> $GITHUB_OUTPUT
-      - uses: actions/cache@v3
-        if: always()
-        with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}
-          restore-keys: ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}
       - name: Install Poetry
         shell: bash
         run:  |
           set -eux
-          python -m pip install "poetry==${{ env.POETRY_VERSION }}""
-      - name: Poetry Config
-        shell: bash
-        run: |
-          set -eux
-          mkdir cache
+          python -m pip install -r requirements.txt
       - name: Poetry lock
         shell: bash
         run :
           set -eux
           poetry lock
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
       - name: Poetry Install
         shell: bash
         run:  |
@@ -86,7 +71,6 @@ jobs:
         env:
           OS: ${{ matrix.os }}
           PYTHON: ${{ matrix.python-version }}
-          POETRY: ${{env.POETRY_VERSION}}
         with:
           token:            ${{ secrets.CODECOV_TOKEN }}
           env_vars:         OS,PYTHON,POETRY
