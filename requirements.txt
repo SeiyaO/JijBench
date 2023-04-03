@@ -1,2 +1,0 @@
-# Install Poetry
-poetry == 1.4.1
