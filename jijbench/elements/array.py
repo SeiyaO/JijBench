@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+import typing as tp
 
 from jijbench.elements.base import Number
 from jijbench.functions.math import Max, Mean, Min, Std
@@ -10,7 +11,7 @@ from jijbench.node.base import DataNode
 
 
 @dataclass
-class Array(DataNode[np.ndarray]):
+class Array(DataNode[np.ndarray[tuple[int, ...], tp.Any]]):
     """A class representing numpy arrays.
 
     Attributes:
@@ -51,7 +52,7 @@ class Array(DataNode[np.ndarray]):
         return self.apply(Std())
 
     @classmethod
-    def validate_data(cls, data: np.ndarray) -> np.ndarray:
+    def validate_data(cls, data: np.ndarray[tuple[int, ...], tp.Any]) -> np.ndarray[tuple[int, ...], tp.Any]:
         """Validate the data to ensure it is a numpy array.
 
         Args:

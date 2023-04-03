@@ -1,37 +1,140 @@
-site_name: JijBenchmark's class reference
+# Copyright (c) 2020-2023 Jij Inc.
 
-nav:
-# rest of the navigation...
-# defer to gen-files + literate-nav
-- Code Reference: reference/  # 
+# Project information
+site_name: JijBench
+site_author: Jij Inc.
+site_description: "JijBench: An Experiment and Benchmark Management Library for Mathematical Optimization"
+# Repository
+repo_name: JijBench
+repo_url: https://github.com/Jij-Inc/JijBench
 
+# Copyright
+copyright: Copyright &copy; 2020-2023 Jij Inc.
 
+# Configuration
 theme:
   name: material
+  custom_dir: docs/overrides
+  features:
+    - announce.dismiss
+    # - content.action.edit
+    # - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    # - content.tabs.link
+    - content.tooltips
+    # - header.autohide
+    # - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    # - navigation.instant
+    # - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    # - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    # - toc.integrate
   palette:
-    primary: indigo
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: assets/favicon.png
+  icon:
+    logo: logo
 
+# Plugins
 plugins:
-  - git-revision-date-localized:
-     locale: ja
-  - search
-  - gen-files:
-      scripts:
-      - docs/gen_ref_pages.py
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - minify:
+      minify_html: true
   - literate-nav:
-      nav_file: SUMMARY.md
-  - section-index:
+      nav_file: docs/reference/SUMMARY.md
+  - section-index
   - mkdocstrings:
-      watch:
-      - jijbench
       default_handler: python
       handlers:
         python:
-          rendering:
-            show_source: false
-          selection:
+          options:
             docstring_style: "google"
+  - gen-files:
+      scripts:
+      - docs/overrides/gen_ref_pages.py
 
+# Customization
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Jij-Inc/JijBench
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/jijbench/
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/Jij_Inc
+
+# Extensions
 markdown_extensions:
-  - pymdownx.superfences
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:materialx.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: squidfunk
+      repo: mkdocs-material
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
   - markdown_katex
+
+# Page tree
+nav:
+  - Home: index.md
+  - Getting started:
+    - Installation: getting-started.md
+    - Changelog: https://github.com/Jij-Inc/JijBench/releases
+  - Reference: reference/

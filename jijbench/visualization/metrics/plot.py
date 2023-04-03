@@ -168,7 +168,7 @@ class MetricsPlot:
             ylabel (str | None): the ylabel of figure. Defaults to None.
             ylabel_size (float | None): the fontsize of the ylabel. The default uses matplotlib's default value.
             yticks (list[int | float] | None): the yticks of figure. Default to only integers by`MaxNLocator(integer=True)`.
-            matplotlib_boxplot_kwargs: the parameter passed to matplotlib.boxplot.
+            **matplotlib_boxplot_kwargs (dict): the parameter passed to matplotlib.boxplot.
 
         Returns:
             tuple[tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]]: A tuple of length equal to the number of rows in result. each element of is a tuple of figure and axes.
@@ -292,12 +292,12 @@ class MetricsPlot:
             figsize (tuple[int | float] | None): the size of figure. The default uses matplotlib's default value.
             title (str | list[str] | None): the title of figure. The default uses the indices of `result.table`.
             title_fontsize (float | None): the fontsize of the title.The default uses matplotlib's default value.
-            constraint_name_size (float | None): the fontsize of the constraint name (i.e. xticklabels). The default uses matplotlib's default value.
-            constraint_name_rotation (float | None): the rotation angle of the constraint name in degree.The default uses matplotlib's default value.
+            constraint_name_fontsize (float | None): the fontsize of the constraint name (i.e. xticklabels). The default uses matplotlib's default value.
+            constraint_name_fontrotation (float | None): the rotation angle of the constraint name in degree.The default uses matplotlib's default value.
             ylabel (str | None): the ylabel of figure. Defaults to "constraint violations".
             ylabel_size (float | None): the fontsize of the ylabel. The default uses matplotlib's default value.
             yticks (list[int | float] | None): the yticks of figure. Default to only integers by`MaxNLocator(integer=True)`.
-            matplotlib_boxplot_kwargs: the parameter passed to matplotlib.boxplot. Defaults to `{showmeans: True, whis: [0, 100]}`.
+            matplotlib_boxplot_kwargs (dict): the parameter passed to matplotlib.boxplot. Defaults to `{showmeans: True, whis: [0, 100]}`.
 
         Returns:
             tuple[tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]]: A tuple of length equal to the number of rows in result. each element of is a tuple of figure and axes.

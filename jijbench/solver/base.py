@@ -7,7 +7,6 @@ from dataclasses import dataclass
 import jijmodeling as jm
 
 from jijbench.containers.containers import Record
-from jijbench.elements.base import Any
 from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.functions.factory import RecordFactory
 from jijbench.node.base import DataNode, FunctionNode
@@ -62,7 +61,7 @@ class Response(DataNode[T]):
         return data
 
 
-class Solver(FunctionNode[Parameter, Record]):
+class Solver(FunctionNode[Parameter[tp.Any], Record]):
     """A solver function that takes a list of Parameter and returns a Record.
 
     Attributes:
@@ -70,7 +69,7 @@ class Solver(FunctionNode[Parameter, Record]):
         function (Callable): The actual function to be executed.
     """
 
-    def __init__(self, function: tp.Callable, name: str | None = None) -> None:
+    def __init__(self, function: tp.Callable[..., tp.Any], name: str | None = None) -> None:
         """The constructor of the `Solver` class.
 
         Args:
@@ -84,13 +83,12 @@ class Solver(FunctionNode[Parameter, Record]):
 
     def operate(
         self,
-        inputs: list[Parameter],
+        inputs: list[Parameter[tp.Any]],
     ) -> Record:
         """The main operation of the solver function.
 
         Args:
             inputs (list[Parameter]): The list of input `Parameter` for the solver function.
-            is_parsed_sampleset (bool, optional): Whether the sample set is parsed. Defaults to True.
 
         Raises:
             SolverFailedError: If an error occurs inside the solver function.

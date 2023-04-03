@@ -60,7 +60,7 @@ def test_benchmark_for_jijzept_sampler(
     assert sample_model.call_count == 2
     assert len(sample_model.call_args_list) == 2
     sample_model.assert_called_with(
-        model=knapsack_problem, feed_dict=knapsack_instance_data
+        model=knapsack_problem, feed_dict=knapsack_instance_data, num_reads=2
     )
 
     table = res.table.reset_index()

@@ -22,6 +22,18 @@ from jijbench.typing import ArtifactDataType, ExperimentDataType
 
 @dataclass
 class Experiment(Container[ExperimentDataType]):
+    """Stores data related to an benchmark.
+
+    The Experiment class stores the results obtained from a benchmark as Artifact and Table objects and assists in managing the benchmark process.
+    With this class, you can add and save experimental results, as well as view them in various formats.
+
+    Attributes:
+        data (tuple[Artifact, Table]): A tuple containing an Artifact object and a Table object.
+        name (str): The name of the experiment.
+        autosave (bool): Whether to automatically save the experiment upon exit.
+        savedir (str | pathlib.Path): The directory where the experiment will be saved.
+    """
+
     data: tuple[Artifact, Table] = field(default_factory=lambda: (Artifact(), Table()))
     name: str = field(default_factory=lambda: str(uuid.uuid4()))
     autosave: bool = field(default=True, repr=False)
