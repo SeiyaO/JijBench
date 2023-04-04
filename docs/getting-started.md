@@ -72,7 +72,7 @@ experiment_result.table
 
 ![](assets/images/getting_started/getting_started1.png)
 
-You can load the saved experiment result using jb.load.
+You can load the saved experiment result using `jb.load`.
 
 ```python
 loaded_result = jb.load('example')
