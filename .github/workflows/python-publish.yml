@@ -9,6 +9,7 @@
 name: Upload Python Package
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
@@ -38,6 +39,7 @@ jobs:
           set -eux
           pip install poetry-dynamic-versioning
       - name: Publish
+        if: ${{github.event_name == 'release'}}
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
