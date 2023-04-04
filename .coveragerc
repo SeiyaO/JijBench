@@ -1,14 +1,30 @@
 [run]
 branch = True
 debug = callers
-source_pkgs = 
+dynamic_context = test_function
+sigterm = True
+timid = True
+concurrency =
+    thread
+    multiprocessing
+source = 
    jijbench
    
 [report]
+include_namespace_packages = False
 show_missing = True
+skip_covered = False
+skip_empty = False
+sort= Name
 
 [html]
 show_contexts = True
 
+[xml]
+package_depth = 99
+
 [json]
 show_contexts = True
+pretty_print = True
+
+[lcov]

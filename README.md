@@ -1,6 +1,10 @@
 
 # JijBench: An Experiment and Benchmark Management Library for Mathematical Optimization
 
+[![Python Test](https://github.com/Jij-Inc/JijBench/actions/workflows/python-test.yml/badge.svg)](https://github.com/Jij-Inc/JijBench/actions/workflows/python-test.yml)
+[![Upload Python Package](https://github.com/Jij-Inc/JijBench/actions/workflows/python-publish.yml/badge.svg)](https://github.com/Jij-Inc/JijBench/actions/workflows/python-publish.yml)
+[![codecov](https://codecov.io/gh/Jij-Inc/JijBench/branch/main/graph/badge.svg?token=pfEmtaSP8Z)](https://codecov.io/gh/Jij-Inc/JijBench)
+
 JijBench is a Python library designed for developers working on research and development or proof-of-concept experiments using mathematical optimization. Positioned similarly to mlflow in the machine learning field, JijBench provides features such as saving optimization results, automatically computing benchmark metrics, and offering visualization tools for the results.
 
 Primarily supporting Ising optimization problems, JijBench plans to extend its support to a wide range of optimization problems, such as MIP solvers, in the future.

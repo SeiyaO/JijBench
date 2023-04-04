@@ -9,13 +9,7 @@ result.xml
 jijbench/_version.py
 **/_version.py
 python_version.txt
-format-requirements.txt
-test-requirements.txt
-docs-requirements.txt
-requirements.txt 
-result.xml
-build-requirements.txt 
-dev-requirements.txt 
+
 # Distribution / packaging
 .Python
 build/
@@ -36,7 +30,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+cache
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -153,4 +147,3 @@ Results/
 __marker__*
 
 notebooks/
-poetry.lock

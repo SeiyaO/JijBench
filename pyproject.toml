@@ -1,11 +1,29 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+style = "pep440"
+
+[tool.pytest.ini_options]
+addopts = "-s -vv --color=yes --randomly-seed=last --code-highlight=yes --cov-context=test --cov --cov-report term  --cov-config .coveragerc"
+testpaths = ["tests"]
+console_output_style = "count"
+log_auto_indent = true
+asyncio_mode = "auto"
+
 [tool.poetry]
 name = "jijbench"
 version = "0.0.0" # using poetry-dynamic-versioning
 description = "Experiment management and benchmark tools for mathematical optimization"
-authors = ["Jij  Inc."]
+authors = ["Jij Inc. <info@j-ij.com>"]
 license = "MIT"
 readme = "README.md"
 include = ["jijbench/*.py", "jijbench/*.json", "jijbench/*.JSON"]
+homepage = "https://www.jijzept.com/"
+repository = "https://github.com/Jij-Inc/JijBench"
+documentation = "https://www.documentation.jijzept.com/docs/jijbench_docs/"
 classifiers =[
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python",
@@ -19,7 +37,7 @@ classifiers =[
 
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.11"
+python = ">=3.8,<3.11"
 numpy = "^1.24.2"
 pandas = "^1.5.3"
 plotly = "^5.14.0"
@@ -35,8 +53,6 @@ jijzept = "^1.14.0"
 pytest = "^7.2.2"
 pytest-cov = "^4.0.0"
 pytest-mock = "^3.10.0"
-pytest-html = "^3.2.0"
-pytest-runner = "^6.0.0"
 pytest-randomly = "^3.12.0"
 pytest-spec = "^3.2.0"
 pytest-asyncio = "^0.21.0"
@@ -54,11 +70,3 @@ mkdocs-gen-files = "^0.4.0"
 mkdocs-literate-nav = "^0.6.0"
 mkdocs-section-index = "^0.3.5"
 mkdocs-minify-plugin = "^0.6.4"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry-dynamic-versioning]
-enable = true
-style = "pep440"
