@@ -37,11 +37,6 @@ jobs:
         run:  |
           set -eux
           pip install poetry-dynamic-versioning
-      - name: Poetry Install
-        shell: bash
-        run:  |
-          set -eux
-          poetry install
       - name: Publish
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
