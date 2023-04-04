@@ -70,7 +70,7 @@ experiment_result.table
 
 ```
 
-![](assets/images/getting_started1.png)
+![](assets/images/getting_started/getting_started1.png)
 
 You can load the saved experiment result using jb.load.
 
@@ -80,4 +80,4 @@ loaded_result.table
 
 ```
 
-![](assets/images/getting_started2.png)
+![](assets/images/getting_started/getting_started2.png)
