@@ -33,11 +33,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
-      - name: Configure
+      - name: poetry self add "poetry-dynamic-versioning[plugin]"
         shell: bash
         run:  |
           set -eux
-          pip install poetry-dynamic-versioning
+          poetry self add "poetry-dynamic-versioning[plugin]"
+      - name: Install
+        shell: bash
+        run: |
+          poetry install
+      - name: build
+        shell: bash
+        run: |
+          set -eux
+          poetry build
       - name: Publish
         if: ${{github.event_name == 'release'}}
         env:

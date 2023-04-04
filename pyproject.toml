@@ -1,10 +1,13 @@
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.5.2", "poetry-dynamic-versioning>=0.21.4"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry-dynamic-versioning]
 enable = true
+vcs = "git"
 style = "pep440"
+full-commit = true
+strict = true
 
 [tool.pytest.ini_options]
 addopts = "-s -vv --color=yes --randomly-seed=last --code-highlight=yes --cov-context=test --cov --cov-report term  --cov-config .coveragerc"
