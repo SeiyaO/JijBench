@@ -76,3 +76,4 @@ poetry add ... -G tests
 poetry add ... -G dev
 ```
 
+Copyright (c) 2023 Jij Inc.
