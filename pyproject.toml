@@ -7,7 +7,6 @@ enable = true
 vcs = "git"
 style = "pep440"
 full-commit = true
-strict = true
 
 [tool.pytest.ini_options]
 addopts = "-s -vv --color=yes --randomly-seed=last --code-highlight=yes --cov-context=test --cov --cov-report term  --cov-config .coveragerc"
