@@ -5,7 +5,7 @@ import pytest
 from matplotlib import axes, figure
 
 import jijbench as jb
-from jijbench.visualization import BasePlot
+from jijbench.visualization import BasePlot, construct_experiment_from_samplesets
 
 
 def solve():

@@ -102,7 +102,7 @@ class MetricsParallelPlot:
             ```python
             from itertools import product
             import jijbench as jb
-            from jijbench.visualization.metrics.parallelplot.parallelplot import MetricsParallelPlot
+            from jijbench.visualization import MetricsParallelPlot
             import jijzept as jz
 
             problem = jb.get_problem("TSP")
@@ -152,7 +152,7 @@ class MetricsParallelPlot:
             import pandas as pd
 
             import jijbench as jb
-            from jijbench.visualization.metrics.parallelplot.parallelplot import MetricsParallelPlot
+            from jijbench.visualization import MetricsParallelPlot
             import jijzept as jz
             from jijzept.sampler.openjij.sa_cpu import JijSAParameters
 

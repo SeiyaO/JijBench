@@ -109,7 +109,7 @@ class ConstraintPlot:
             import jijbench as jb
             import jijzept as jz
             from jijzept.sampler.openjij.sa_cpu import JijSAParameters
-            from jijbench.visualization.metrics.constraintplot.constraintplot import ConstraintPlot
+            from jijbench.visualization import ConstraintPlot
 
             problem = jb.get_problem("TSP")
             instance_data = jb.get_instance_data("TSP")[0][1]
@@ -146,8 +146,8 @@ class ConstraintPlot:
             ```python
             import jijbench as jb
             import jijzept as jz
-            from jijbench.visualization.metrics.constraintplot.constraintplot import ConstraintPlot
-            from jijbench.visualization.metrics.utils import construct_experiment_from_samplesets
+            from jijbench.visualization import ConstraintPlot
+            from jijbench.visualization import construct_experiment_from_samplesets
 
             problem = jb.get_problem("TSP")
             instance_data = jb.get_instance_data("TSP")[0][1]

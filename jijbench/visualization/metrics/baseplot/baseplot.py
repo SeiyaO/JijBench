@@ -62,7 +62,7 @@ class BasePlot:
 
             ```python
             import jijbench as jb
-            from jijbench.visualization.metrics.baseplot.baseplot import  BasePlot
+            from jijbench.visualization import  BasePlot
             import jijzept as jz
             from jijzept.sampler.openjij.sa_cpu import JijSAParameters
             import pandas as pd
@@ -106,8 +106,8 @@ class BasePlot:
             ```python
             import jijbench as jb
             import jijzept as jz
-            from jijbench.visualization.metrics.baseplot.baseplot import  BasePlot
-            from jijbench.visualization.metrics.utils import construct_experiment_from_samplesets
+            from jijbench.visualization import  BasePlot
+            from jijbench.visualization import construct_experiment_from_samplesets
             import pandas as pd
 
             problem = jb.get_problem("TSP")
