@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  deploy:
+  publish-mkdocs:
 
     runs-on: ubuntu-latest
 
@@ -24,7 +24,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry
         poetry install --only=main --only=docs
-        poetry run pip install mkdocs-material
     - name: Docs build
       run: poetry run mkdocs build --verbose --clean --strict
     - name: GitHub Pages Deploy
