@@ -31,6 +31,7 @@ jobs:
     - name: Docs build
       run: |
         echo "Building docs"
+        set -eux
         poetry run mkdocs build --verbose --clean --strict
     - name: GitHub Pages Deploy
       uses: JamesIves/github-pages-deploy-action@v4
