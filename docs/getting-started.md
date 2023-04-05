@@ -29,7 +29,7 @@ You can choose any function to benchmark. For this example, we'll use a function
 
 ```python
 def square(x):
-    return x*x
+    return x * x
 
 ```
 
@@ -38,11 +38,7 @@ The code below sets up the benchmark:
 ```python
 import jijbench as jb
 
-bench = jb.Benchmark(
-    solver=square,
-    params={'x': range(10)},
-    name="example"
-)
+bench = jb.Benchmark(solver=square, params={"x": range(10)}, name="example")
 
 ```
 
