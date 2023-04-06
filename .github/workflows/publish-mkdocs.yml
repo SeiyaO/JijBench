@@ -84,7 +84,7 @@ jobs:
     # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
     concurrency:
       group: ${{ github.workflow }}-Deploy-JijBench-GitHub-Pages
-      cancel-in-progress: false
+      cancel-in-progress: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
