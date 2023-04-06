@@ -61,6 +61,11 @@ theme:
 
 # Plugins
 plugins:
+  - git-revision-date-localized:
+      fallback_to_build_date: true
+      enable_creation_date: true
+      type: iso_datetime
+      locale: en
   - search:
       separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
   - literate-nav:
