@@ -27,8 +27,10 @@ pip install jijbench
 ```
 
 ## Documentation and Support
-Tutorials and sample code will be provided in the future. Stay tuned!
 
+Documentation: https://jij-inc.github.io/JijBench/
+
+Tutorials will be provided in the future. Stay tuned!
 
 
 ## How to Contribute
