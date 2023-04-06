@@ -63,7 +63,6 @@ theme:
 plugins:
   - git-revision-date-localized:
       fallback_to_build_date: true
-      enable_creation_date: true
       type: iso_datetime
       locale: en
   - search:
