@@ -37,6 +37,166 @@ from typing_extensions import TypeGuard
 st.set_page_config(layout="wide")
 
 
+class InstanceDataDir:
+    jijbench_default_problem_names: list[str] = [
+        "BinPacking",
+        "Knapsack",
+        "TSP",
+        "TSPTW",
+        "NurseScheduling",
+    ]
+    base_dir = "./"
+    num_files_to_display = 5
+
+    def __init__(self) -> None:
+        self._problem_names = [
+            "bin-packing",
+            "knapsack",
+            "nurse-scheduling",
+            "travelling-salesman",
+            "travelling-salesman-with-time-windows",
+        ]
+        self._node_map: dict[str, tp.Any] = {}
+        for problem_name in self._problem_names:
+            node: dict[str, tp.Any] = {
+                "label": problem_name,
+                "value": problem_name,
+                "children": [],
+            }
+            for size in ["small", "medium", "large"]:
+                files = glob.glob(
+                    f"{self.base_dir}/{size}/{problem_name}/**/*.json", recursive=True
+                )
+                files.sort()
+                node["children"] += [
+                    {
+                        "label": size,
+                        "value": f"{problem_name}&{size}",
+                        "children": [
+                            {
+                                "label": f"sample-{i + 1:03}",
+                                "value": file,
+                            }
+                            for i, file in enumerate(files[: self.num_files_to_display])
+                        ],
+                    },
+                ]
+            self._node_map[problem_name] = node
+
+    @property
+    def node_map(self) -> dict[str, tp.Any]:
+        return self._node_map
+
+    @node_map.setter
+    def node_map(self, node_map: dict[str, tp.Any]) -> None:
+        self._node_map = node_map
+
+    @property
+    def nodes(self) -> list[dict[str, tp.Any]]:
+        return list(self._node_map.values())
+
+    @property
+    def problem_names(self) -> list[str]:
+        return self._problem_names
+
+    @problem_names.setter
+    def problem_names(self, problem_names: list[str]) -> None:
+        self._problem_names = problem_names
+
+
+class InstanceDataHandler:
+    def __init__(self, base_data_dir: pathlib.Path = DEFAULT_RESULT_DIR) -> None:
+        self.base_data_dir = base_data_dir
+
+    def on_add(self, session: Session) -> None:
+        problem_name = session.state.input_problem_name
+        instance_data_name = session.state.uploaded_instance_data_name
+        instance_data_dir = session.state.instance_data_dir
+
+        file = f"{self.base_data_dir}/{problem_name}/{instance_data_name}"
+        if problem_name in instance_data_dir.node_map:
+            if file not in [
+                child["value"]
+                for child in instance_data_dir.node_map[problem_name]["children"]
+            ]:
+                instance_data_dir.node_map[problem_name]["children"] += [
+                    {"label": instance_data_name, "value": file}
+                ]
+        else:
+            instance_data_dir.node_map[problem_name] = {
+                "label": problem_name,
+                "value": problem_name,
+                "children": [{"label": instance_data_name, "value": file}],
+            }
+
+    def on_load(self, session: Session) -> None:
+        files = session.state.selected_instance_data_files
+        data_map = load_instance_data(files)
+
+        name = session.state.selected_instance_data_name
+        fig_type = session.state.selected_figure_for_instance_data
+        if name:
+            key = name.split("/")[-1]
+            if fig_type == "Histogram":
+                self.on_select_histogram(data_map[key])
+            elif fig_type == "Box":
+                self.on_select_box(data_map[key])
+            elif fig_type == "Violin":
+                self.on_select_violin(data_map[key])
+
+    def on_select_histogram(self, data: dict[str, list[int | float]]) -> None:
+        fig = plot_histogram_for_instance_data(data)
+        with st.container():
+            st.plotly_chart(fig, use_container_width=True)
+
+    def on_select_box(self, data: dict[str, list[int | float]]) -> None:
+        fig = plot_box_for_instance_data(data)
+        with st.container():
+            st.plotly_chart(fig, use_container_width=True)
+
+    def on_select_violin(self, data: dict[str, list[int | float]]) -> None:
+        fig = plot_violin_for_instance_data(data)
+        with st.container():
+            st.plotly_chart(fig, use_container_width=True)
+
+
+class PagingHandler:
+    def on_select_page(self, session: Session) -> None:
+        page = session.state.selected_page
+        if page == "Instance data":
+            self.on_select_instance_data(session)
+        elif page == "Problem":
+            self.on_select_problem(session)
+        elif page == "Solver":
+            self.on_select_solver(session)
+        elif page == "Analysis":
+            self.on_select_result(session)
+
+    def on_select_instance_data(self, session: Session) -> None:
+        session.state.selected_figure_for_instance_data = st.radio(
+            "Fugure",
+            options=["Histogram", "Box", "Violin"],
+            horizontal=True,
+        )
+        options = sum(
+            [
+                [
+                    f"{problem_name}/{pathlib.Path(f).name}"
+                    for f in session.state.selected_instance_data_files
+                    if problem_name in f
+                ]
+                for problem_name in session.state.selected_problem_names
+            ],
+            [],
+        )
+        session.state.selected_instance_data_name = st.radio(
+            "Loaded instance data",
+            options=options,
+            horizontal=True,
+        )
+
+        if session.state.is_instance_data_loaded:
+            session.plot_instance_data()
 
 
 
