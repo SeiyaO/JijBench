@@ -12,7 +12,8 @@ import pandas as pd
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.node.base import DataNode
-from jijbench.typing import ArtifactDataType, ArtifactKeyType, ArtifactValueType, T
+from jijbench.typing import (ArtifactDataType, ArtifactKeyType,
+                             ArtifactValueType, T)
 
 
 @dataclass

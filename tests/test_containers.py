@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import jijbench as jb
 import numpy as np
 import pandas as pd
 import pytest
+
+import jijbench as jb
 
 
 def test_record():
@@ -190,8 +191,9 @@ def test_experiment_append():
 
 
 def test_sample():
-    import jijbench as jb
     import typing as tp
+
+    import jijbench as jb
     from jijbench.node.base import DataNode
 
     a: DataNode[tp.Any] = jb.Artifact({}, "sample")
