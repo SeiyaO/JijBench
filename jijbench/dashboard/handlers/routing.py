@@ -3,25 +3,24 @@ from __future__ import annotations
 import codecs
 import datetime
 import glob
-import pandas as pd
-import plotly.express as px
-import streamlit as st
+import pathlib
 import sys
 import typing as tp
 
-import jijbench as jb
 import numpy as np
-import pathlib
+import pandas as pd
+import plotly.express as px
 import rapidjson
-
-
-from jijbench.consts.path import DEFAULT_RESULT_DIR
+import streamlit as st
 from st_aggrid import AgGrid, GridUpdateMode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from streamlit_ace import st_ace
 from streamlit_elements import editor, elements
 from streamlit_tree_select import tree_select
 from typing_extensions import TypeGuard
+
+import jijbench as jb
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 
 
 class RoutingHandler:
@@ -214,7 +213,8 @@ class RoutingHandler:
             AgGrid(results_table, gridOptions=gridoptions)
 
         st.subheader("Previous bencnmark")
-        results_dir_series = pd.Series(glob.glob(f"{DEFAULT_RESULT_DIR}/*"))
+        # TODO: 後で修正
+        results_dir_series = pd.Series(glob.glob("/home/d/tmp/demo/.jb_results/*"))
         created_time_series = results_dir_series.apply(
             lambda x: str(
                 datetime.datetime.fromtimestamp(pathlib.Path(x).stat().st_ctime)

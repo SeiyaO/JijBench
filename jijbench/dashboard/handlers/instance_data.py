@@ -1,36 +1,18 @@
 from __future__ import annotations
 
-
 import glob
-import streamlit as st
+import pathlib
 import typing as tp
 
+import streamlit as st
 
-import pathlib
-
-
-from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.consts.default import DEFAULT_PROBLEM_NAMES, DEFAULT_RESULT_DIR
 
 
 class InstanceDataDir:
-    jijbench_default_problem_names: list[str] = [
-        "BinPacking",
-        "Knapsack",
-        "TSP",
-        "TSPTW",
-        "NurseScheduling",
-    ]
-    base_dir = "./"
     num_files_to_display = 5
 
     def __init__(self) -> None:
-        self._problem_names = [
-            "bin-packing",
-            "knapsack",
-            "nurse-scheduling",
-            "travelling-salesman",
-            "travelling-salesman-with-time-windows",
-        ]
         self._node_map: dict[str, tp.Any] = {}
         for problem_name in self._problem_names:
             node: dict[str, tp.Any] = {

@@ -8,7 +8,7 @@ import typing as tp
 import jijmodeling as jm
 from typing_extensions import TypeGuard
 
-from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.elements.base import Callable
 from jijbench.elements.date import Date
 from jijbench.elements.id import ID
@@ -17,7 +17,7 @@ from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
 from jijbench.node.base import FunctionNode
 from jijbench.solver.base import Parameter, Solver
-from jijbench.solver.jijzept import InstanceData, UserDefinedModel
+from jijbench.solver.jijzept import InstanceData, Model
 
 if tp.TYPE_CHECKING:
     from jijzept.sampler.base_sampler import JijZeptBaseSampler
@@ -227,7 +227,7 @@ def construct_benchmark_for(
     additional_params: list[list[Parameter[tp.Any]]] = []
     for problem, instance_data in models:
         data = (problem, instance_data)
-        data = UserDefinedModel.validate_data(data)
+        data = Model.validate_data(data)
         additional_params.append(
             [
                 Parameter(data[0], argname_problem),

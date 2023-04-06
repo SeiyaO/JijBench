@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import typing as tp
 
 import streamlit as st
-import typing as tp
+
 from jijbench.dashboard.handlers.instance_data import (
     InstanceDataDir,
     InstanceDataHandler,

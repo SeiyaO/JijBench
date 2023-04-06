@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.containers.containers import Artifact, Container, Record, Table
 from jijbench.elements.base import Callable
 from jijbench.elements.id import ID

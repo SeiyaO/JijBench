@@ -4,7 +4,6 @@ import streamlit as st
 
 from jijbench.dashboard.session import Session
 
-
 st.set_page_config(layout="wide")
 
 
@@ -32,3 +31,7 @@ def main():
     with tab_map["Analysis"]:
         session.state.selected_page = "Analysis"
         session.display_page()
+
+
+if __name__ == "__main__":
+    main()

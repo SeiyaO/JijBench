@@ -53,9 +53,7 @@ class Array(DataNode[ArrayType]):
         return self.apply(Std())
 
     @classmethod
-    def validate_data(
-        cls, data: ArrayType
-    ) -> ArrayType:
+    def validate_data(cls, data: ArrayType) -> ArrayType:
         """Validate the data to ensure it is a numpy array.
 
         Args:
