@@ -1,18 +1,13 @@
 import jijmodeling as jm
-
 import numpy as np
 import pandas as pd
 import pytest
 
 import jijbench as jb
-
 from jijbench.visualization.metrics.utils import (
-    construct_experiment_from_samplesets,
-    _create_fig_title_list,
-    _df_has_valid_multipliers_column,
-    _df_has_number_array_column_target_name,
-    _df_has_number_column_target_name,
-)
+    _create_fig_title_list, _df_has_number_array_column_target_name,
+    _df_has_number_column_target_name, _df_has_valid_multipliers_column,
+    construct_experiment_from_samplesets)
 
 
 def test_construct_experiment_from_samplesets():

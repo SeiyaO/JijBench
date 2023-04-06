@@ -6,6 +6,7 @@ import pathlib
 import typing as tp
 
 import jijmodeling as jm
+from typing_extensions import TypeGuard
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.elements.base import Callable
@@ -17,7 +18,6 @@ from jijbench.functions.factory import RecordFactory
 from jijbench.node.base import FunctionNode
 from jijbench.solver.base import Parameter, Solver
 from jijbench.solver.jijzept import InstanceData, UserDefinedModel
-from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
     from jijzept.sampler.base_sampler import JijZeptBaseSampler

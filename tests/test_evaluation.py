@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import os, shutil
+import os
+import shutil
 
 import jijmodeling as jm
 import pytest

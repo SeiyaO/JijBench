@@ -1,10 +1,11 @@
-import dill
-import jijbench as jb
-import pandas as pd
 import pathlib
-import pytest
 import shutil
 
+import dill
+import pandas as pd
+import pytest
+
+import jijbench as jb
 
 SAVEDIR = "./jb_results"
 
@@ -18,7 +19,7 @@ def pre_post_process():
     # postprocess
     p = pathlib.Path(SAVEDIR)
     if p.exists():
-       shutil.rmtree(p)
+        shutil.rmtree(p)
 
 
 def test_save_artifact_with_mode_w():

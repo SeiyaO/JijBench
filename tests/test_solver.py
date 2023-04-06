@@ -1,10 +1,8 @@
-import pytest
-
-import jijbench as jb
 import jijmodeling as jm
 import numpy as np
 import pytest
 
+import jijbench as jb
 from jijbench.exceptions.exceptions import SolverFailedError
 
 

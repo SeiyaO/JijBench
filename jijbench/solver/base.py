@@ -69,7 +69,9 @@ class Solver(FunctionNode[Parameter[tp.Any], Record]):
         function (Callable): The actual function to be executed.
     """
 
-    def __init__(self, function: tp.Callable[..., tp.Any], name: str | None = None) -> None:
+    def __init__(
+        self, function: tp.Callable[..., tp.Any], name: str | None = None
+    ) -> None:
         """The constructor of the `Solver` class.
 
         Args:

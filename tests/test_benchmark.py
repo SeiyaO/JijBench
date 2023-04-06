@@ -1,11 +1,12 @@
-import os, shutil
+import os
+import shutil
+from unittest.mock import MagicMock
 
 import jijmodeling as jm
 import jijzept as jz
 import pytest
 
 import jijbench as jb
-from unittest.mock import MagicMock
 
 
 @pytest.fixture(scope="function", autouse=True)

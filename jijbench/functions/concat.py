@@ -14,10 +14,11 @@ from jijbench.node.base import DataNode, FunctionNode
 from jijbench.typing import ConcatableT
 
 if tp.TYPE_CHECKING:
+    from typing_extensions import TypeGuard
+
     from jijbench.containers.containers import Artifact, Record, Table
     from jijbench.experiment.experiment import Experiment
     from jijbench.solver.jijzept import SampleSet
-    from typing_extensions import TypeGuard
 
 
 def _is_artifact_list(inputs: list[ConcatableT]) -> TypeGuard[list[Artifact]]:
@@ -331,7 +332,8 @@ class Concat(FunctionNode[ConcatableT, ConcatableT]):
             data = pd.concat([node.data for node in inputs])
             return type(inputs[0])(data, name)
         elif _is_table_list(inputs):
-            data = pd.concat([node.data for node in inputs], axis=axis).fillna(Any(np.nan, "NaN"))
+            data = pd.concat([node.data for node in inputs], axis=axis)
+            data = data.fillna(Any(np.nan, "NaN"))
             data.index.name = index_name
             return type(inputs[0])(data, name)
         elif _is_sampleset_list(inputs):
