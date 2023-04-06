@@ -61,12 +61,10 @@ theme:
 
 # Plugins
 plugins:
-  - i18n:
-      default_language: en
-  - git-revision-date-localized:
-      locale: en
   - search:
       separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - literate-nav:
+      nav_file: docs/reference/SUMMARY.md
   - autorefs
   - tags 
   - section-index
@@ -75,14 +73,11 @@ plugins:
       htmlmin_opts:
           remove_comments: true
       cache_safe: true
-  - literate-nav:
-      nav_file: docs/reference/SUMMARY.md
   - mkdocstrings:
       default_handler: python
       handlers:
         python:
           options:
-            show_submodules: true
             show_source: true
             docstring_style: "google"
   - gen-files:
