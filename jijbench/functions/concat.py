@@ -4,9 +4,11 @@ import pathlib
 import typing as tp
 
 import jijmodeling as jm
+import numpy as np
 import pandas as pd
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.elements.base import Any
 from jijbench.elements.id import ID
 from jijbench.node.base import DataNode, FunctionNode
 from jijbench.typing import ConcatableT
@@ -329,7 +331,7 @@ class Concat(FunctionNode[ConcatableT, ConcatableT]):
             data = pd.concat([node.data for node in inputs])
             return type(inputs[0])(data, name)
         elif _is_table_list(inputs):
-            data = pd.concat([node.data for node in inputs], axis=axis)
+            data = pd.concat([node.data for node in inputs], axis=axis).fillna(Any(np.nan, "NaN"))
             data.index.name = index_name
             return type(inputs[0])(data, name)
         elif _is_sampleset_list(inputs):

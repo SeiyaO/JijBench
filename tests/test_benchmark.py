@@ -53,9 +53,6 @@ def test_benchmark_for_jijzept_sampler(
         {"num_reads": [1, 2]},
     )
     res = bench(autosave=False)
-    
-    from icecream import ic
-    ic(res.response_table)
 
     assert sample_model.call_count == 2
     assert len(sample_model.call_args_list) == 2
@@ -156,8 +153,7 @@ def test_apply_benchmark():
     assert "func_return[0]" in columns
 
     op1 = res.operator
-    # ic()
-    # ic(op1.inputs)
+
     assert op1 is not None
     assert isinstance(op1, jb.Benchmark)
     assert isinstance(op1.inputs[0], jb.Experiment)
