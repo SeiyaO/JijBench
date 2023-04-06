@@ -28,23 +28,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry  
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
           python-version: '3.10'
-      - name: Install poetry
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
+          cache: 'poetry'
       - name : Install dependencies
         run: |
-          echo "Installing dependencies"
           set -eux
+          echo "Installing dependencies"
           python -m poetry install --only=main --only=docs
       - name: Docs build
         run: |
-          echo "Building docs"
           set -eux
+          echo "Building docs"
           poetry run mkdocs build --verbose --clean
       - name: Setup Pages
         uses: actions/configure-pages@v3
