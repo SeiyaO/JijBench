@@ -23,7 +23,7 @@ readme = "README.md"
 include = ["jijbench/*.py", "jijbench/*.json", "jijbench/*.JSON"]
 homepage = "https://www.j-ij.com/"
 repository = "https://github.com/Jij-Inc/JijBench"
-documentation = "https://www.documentation.jijzept.com/docs/jijbench_docs/"
+documentation = "https://jij-inc.github.io/JijBench"
 classifiers =[
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python",
