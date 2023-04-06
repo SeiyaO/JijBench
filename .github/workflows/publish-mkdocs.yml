@@ -61,6 +61,7 @@ jobs:
     name: Upload documentation to gh-pages
     needs: build-mkdocs
     steps: 
+    - uses: actions/checkout@v3
     - uses: actions/download-artifact@v3
       with:
         name: docs 
