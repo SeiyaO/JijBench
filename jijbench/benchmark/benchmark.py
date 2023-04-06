@@ -17,6 +17,7 @@ from jijbench.functions.factory import RecordFactory
 from jijbench.node.base import FunctionNode
 from jijbench.solver.base import Parameter, Solver
 from jijbench.solver.jijzept import InstanceData, UserDefinedModel
+from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
     from jijzept.sampler.base_sampler import JijZeptBaseSampler
@@ -39,7 +40,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
     def __init__(
         self,
         params: dict[str, tp.Iterable[tp.Any]],
-        solver: tp.Callable | list[tp.Callable],
+        solver: tp.Callable[..., tp.Any] | list[tp.Callable[..., tp.Any]],
         name: str | None = None,
     ) -> None:
         """Initializes the benchmark with the given parameters and solvers.
@@ -55,13 +56,17 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         Raises:
             TypeError: If the name is not a string.
         """
+
+        def is_any_parameter(param: tp.Any) -> TypeGuard[Parameter[tp.Any]]:
+            return isinstance(param, Parameter)
+
         if name is None:
             name = ID().data
         super().__init__(name)
 
         self.params = [
             [
-                v if isinstance(v, Parameter) else Parameter(v, k)
+                v if is_any_parameter(v) else Parameter(v, k)
                 for k, v in zip(params.keys(), r)
             ]
             for r in itertools.product(*params.values())
@@ -219,7 +224,7 @@ def construct_benchmark_for(
 
     bench = Benchmark(params, sample_model, name)
 
-    additional_params = []
+    additional_params: list[list[Parameter[tp.Any]]] = []
     for problem, instance_data in models:
         data = (problem, instance_data)
         data = UserDefinedModel.validate_data(data)

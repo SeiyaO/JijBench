@@ -112,3 +112,10 @@ def test_invalid_user_defined_model():
     instance_data: jm.PH_VALUES_INTERFACE = {"a": 1, "c": [1, 2]}
     with pytest.raises(KeyError):
         model = jb.UserDefinedModel((problem, instance_data), "test")
+
+
+def test_parameter():
+    param = jb.Parameter(1, "x")
+    print(param)
+    assert param.name == "x"
+    assert param.data == 1

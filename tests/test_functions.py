@@ -93,9 +93,6 @@ def test_concat_artifact():
 
     artifact = concat([a1, a2])
 
-    print(artifact.data)
-    print(artifact.data.keys())
-
     assert isinstance(artifact, jb.Artifact)
     assert artifact.operator is None
     assert "a" in artifact.data

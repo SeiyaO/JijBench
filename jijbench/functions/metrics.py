@@ -79,31 +79,31 @@ class TimeToSolution(Metrics):
     def __call__(
         self,
         inputs: list[SampleSet],
-        pr: float,
         *,
         opt_value: int | float,
+        pr: float = 0.99,
         base: tp.Literal["optimal"] = "optimal",
     ) -> Number:
         ...
 
     @tp.overload
     def __call__(
-        self, inputs: list[SampleSet], pr: float, *, base: tp.Literal["feasible"]
+        self, inputs: list[SampleSet], *, pr: float = 0.99, base: tp.Literal["feasible"]
     ) -> Number:
         ...
 
     @tp.overload
     def __call__(
-        self, inputs: list[SampleSet], pr: float, *, base: tp.Literal["derived"]
+        self, inputs: list[SampleSet], *, pr: float = 0.99, base: tp.Literal["derived"]
     ) -> Number:
         ...
 
     def __call__(
         self,
         inputs: list[SampleSet],
-        pr: float,
         *,
         opt_value: int | float | None = None,
+        pr: float = 0.99,
         base: tp.Literal["optimal", "feasible", "derived"] = "optimal",
     ) -> Number:
         """Calculate time to solution.
@@ -123,31 +123,31 @@ class TimeToSolution(Metrics):
     def operate(
         self,
         inputs: list[SampleSet],
-        pr: float,
         *,
         opt_value: int | float,
+        pr: float = 0.99,
         base: tp.Literal["optimal"] = "optimal",
     ) -> Number:
         ...
 
     @tp.overload
     def operate(
-        self, inputs: list[SampleSet], pr: float, *, base: tp.Literal["feasible"]
+        self, inputs: list[SampleSet], *, pr: float = 0.99, base: tp.Literal["feasible"]
     ) -> Number:
         ...
 
     @tp.overload
     def operate(
-        self, inputs: list[SampleSet], pr: float, *, base: tp.Literal["derived"]
+        self, inputs: list[SampleSet], *, pr: float = 0.99, base: tp.Literal["derived"]
     ) -> Number:
         ...
 
     def operate(
         self,
         inputs: list[SampleSet],
-        pr: float,
         *,
         opt_value: int | float | None = None,
+        pr: float = 0.99,
         base: tp.Literal["optimal", "feasible", "derived"] = "optimal",
     ) -> Number:
         """Calculate time to solution.
@@ -200,7 +200,9 @@ class SuccessProbability(Metrics):
     The success probability is defined as the probability of obtaining a solution less than or equal to `opt_value`.
     """
 
-    def __call__(self, inputs: list[SampleSet], opt_value: int | float) -> Number:
+    def __call__(
+        self, inputs: list[SampleSet], opt_value: int | float | None = None
+    ) -> Number:
         """Calculate success probability.
 
         Args:
@@ -210,9 +212,11 @@ class SuccessProbability(Metrics):
         Returns:
             Number: The success probability.
         """
-        return super().__call__(inputs, opt_value=opt_value)
+        return super().__call__(inputs, opt_value=opt_value or np.nan)
 
-    def operate(self, inputs: list[SampleSet], opt_value: int | float) -> Number:
+    def operate(
+        self, inputs: list[SampleSet], opt_value: int | float | None = None
+    ) -> Number:
         """Calculate success probability.
 
         Args:
@@ -224,7 +228,7 @@ class SuccessProbability(Metrics):
         """
         node = inputs[0]
         num_occurrences = np.array(node.record.num_occurrences)
-        num_success = sum(_is_success_list(node, opt_value) * num_occurrences)
+        num_success = sum(_is_success_list(node, opt_value or np.nan) * num_occurrences)
         data = num_success / sum(num_occurrences)
         return Number(data, "success_probability")
 
@@ -259,10 +263,14 @@ class ResidualEnergy(Metrics):
     The residual energy is defined as the mean of the objective function minus the optimal value.
     """
 
-    def __call__(self, inputs: list[SampleSet], opt_value: int | float) -> Number:
-        return super().__call__(inputs, opt_value=opt_value)
+    def __call__(
+        self, inputs: list[SampleSet], opt_value: int | float | None = None
+    ) -> Number:
+        return super().__call__(inputs, opt_value=opt_value or np.nan)
 
-    def operate(self, inputs: list[SampleSet], opt_value: int | float) -> Number:
+    def operate(
+        self, inputs: list[SampleSet], opt_value: int | float | None = None
+    ) -> Number:
         node = inputs[0]
 
         is_feas = np.array(_is_feasible_list(node))
@@ -272,5 +280,5 @@ class ResidualEnergy(Metrics):
             num_occurrences = np.array(node.record.num_occurrences)
             objective = np.array(node.evaluation.objective) * is_feas * num_occurrences
             mean = objective.sum() / (is_feas * num_occurrences).sum()
-            data = float(mean - opt_value)
+            data = float(mean - opt_value or np.nan)
         return Number(data, "residual_energy")

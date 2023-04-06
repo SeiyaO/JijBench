@@ -189,15 +189,10 @@ def test_experiment_append():
         assert e.table.loc[index, "num"] == i
 
 
-def test_ref():
-    factory = jb.functions.RecordFactory()
-    inputs1 = [
-        jb.ID(name="id1"),
-        jb.Date(name="date1"),
-        jb.Array(np.arange(5), name="array1"),
-    ]
+def test_sample():
+    import jijbench as jb
+    import typing as tp
+    from jijbench.node.base import DataNode
 
-    r1 = factory(inputs1)
-
-    factory = jb.functions.TableFactory()
-    table = r1.apply(factory)
+    a: DataNode[tp.Any] = jb.Artifact({}, "sample")
+    a.operator
