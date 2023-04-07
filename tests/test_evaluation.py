@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import os, shutil
+import os
+import shutil
 
 import jijmodeling as jm
 import pytest
@@ -53,10 +54,10 @@ def test_time_to_solution(jm_sampleset: jm.SampleSet):
 
     assert round(tts.data, 3) == 2.357
 
-    tts = f([sampleset], pr, base="feasible")
+    tts = f([sampleset], pr=pr, base="feasible")
     assert tts.data == 1.0
 
-    tts = f([sampleset], pr, base="derived")
+    tts = f([sampleset], pr=pr, base="derived")
     assert round(tts.data, 3) == 2.357
 
 

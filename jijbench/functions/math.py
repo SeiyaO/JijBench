@@ -104,7 +104,7 @@ class Std(FunctionNode["Array", Number]):
 
 
 def _operate_array(
-    inputs: list[Array], f: tp.Callable, f_name: str | None = None
+    inputs: list[Array], f: tp.Callable[..., tp.Any], f_name: str | None = None
 ) -> Number:
     data = f(inputs[0].data)
     if "int" in str(data.dtype):

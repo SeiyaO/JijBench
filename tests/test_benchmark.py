@@ -1,11 +1,12 @@
-import os, shutil
+import os
+import shutil
+from unittest.mock import MagicMock
 
 import jijmodeling as jm
 import jijzept as jz
 import pytest
 
 import jijbench as jb
-from unittest.mock import MagicMock
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -153,8 +154,7 @@ def test_apply_benchmark():
     assert "func_return[0]" in columns
 
     op1 = res.operator
-    # ic()
-    # ic(op1.inputs)
+
     assert op1 is not None
     assert isinstance(op1, jb.Benchmark)
     assert isinstance(op1.inputs[0], jb.Experiment)

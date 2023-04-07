@@ -12,7 +12,8 @@ import pandas as pd
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.node.base import DataNode
-from jijbench.typing import ArtifactDataType, T
+from jijbench.typing import (ArtifactDataType, ArtifactKeyType,
+                             ArtifactValueType, T)
 
 
 @dataclass
@@ -55,7 +56,9 @@ class Record(Container[pd.Series]):
         name (Hashable): The name of the record. Defaults to None.
     """
 
-    data: pd.Series = field(default_factory=lambda: pd.Series(dtype="object"))
+    data: pd.Series[DataNode[tp.Any]] = field(
+        default_factory=lambda: pd.Series(dtype="object")
+    )
     name: tp.Hashable = None
 
     def __len__(self) -> int:
@@ -65,7 +68,9 @@ class Record(Container[pd.Series]):
         return len(self.data)
 
     @classmethod
-    def validate_data(cls, data: pd.Series) -> pd.Series:
+    def validate_data(
+        cls, data: pd.Series[DataNode[tp.Any]]
+    ) -> pd.Series[DataNode[tp.Any]]:
         """
         Validate the data to ensure that it is a pandas Series and all elements of the Series are instances of DataNode.
 
@@ -114,7 +119,7 @@ class Record(Container[pd.Series]):
         node = self.apply(concat, [record], name=self.name)
         self._init_attrs(node)
 
-    def view(self) -> pd.Series:
+    def view(self) -> pd.Series[tp.Any]:
         """Return the data of each DataNode in the Series as a new Series."""
         return self.data.apply(lambda x: x.data)
 
@@ -172,17 +177,17 @@ class Artifact(Container[ArtifactDataType]):
         else:
             return data
 
-    def keys(self) -> tuple[tp.Hashable, ...]:
+    def keys(self) -> tuple[ArtifactKeyType, ...]:
         """Return a tuple of keys."""
         return tuple(self.data.keys())
 
-    def values(self) -> tuple[dict[tp.Hashable, DataNode], ...]:
+    def values(self) -> tuple[ArtifactValueType, ...]:
         """Return a tuple of values."""
         return tuple(self.data.values())
 
     def items(
         self,
-    ) -> tuple[tuple[tp.Hashable, dict[tp.Hashable, DataNode]], ...]:
+    ) -> tuple[tuple[ArtifactKeyType, ArtifactValueType], ...]:
         """Return a tuple of key-value pairs."""
         return tuple(self.data.items())
 
@@ -308,7 +313,7 @@ class Table(Container[pd.DataFrame]):
                 return data
 
     @staticmethod
-    def _extract(sampleset: jm.SampleSet) -> pd.Series:
+    def _extract(sampleset: jm.SampleSet) -> pd.Series[tp.Any]:
         """Extract data from jijmodeling.SampleSet object.
 
         This method extracts relevant data from a `jijmodeling.SampleSet`, such as the number of occurrences,
@@ -323,7 +328,7 @@ class Table(Container[pd.DataFrame]):
             pd.Series: Extracted data from the SampleSet..
         """
 
-        data = {}
+        data: dict[str, tp.Any] = {}
         data["num_occurrences"] = np.array(sampleset.record.num_occurrences)
         data["energy"] = np.array(sampleset.evaluation.energy)
         data["objective"] = np.array(sampleset.evaluation.objective)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import typing as tp
 from dataclasses import dataclass
 
 import numpy as np
@@ -7,10 +8,11 @@ import numpy as np
 from jijbench.elements.base import Number
 from jijbench.functions.math import Max, Mean, Min, Std
 from jijbench.node.base import DataNode
+from jijbench.typing import ArrayType
 
 
 @dataclass
-class Array(DataNode[np.ndarray]):
+class Array(DataNode[ArrayType]):
     """A class representing numpy arrays.
 
     Attributes:
@@ -51,7 +53,9 @@ class Array(DataNode[np.ndarray]):
         return self.apply(Std())
 
     @classmethod
-    def validate_data(cls, data: np.ndarray) -> np.ndarray:
+    def validate_data(
+        cls, data: ArrayType
+    ) -> ArrayType:
         """Validate the data to ensure it is a numpy array.
 
         Args:
