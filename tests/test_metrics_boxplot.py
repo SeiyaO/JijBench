@@ -1,14 +1,15 @@
-import os, shutil
-import jijmodeling as jm
-from matplotlib import axes, figure
+import os
+import shutil
 
+import jijmodeling as jm
 import numpy as np
 import pandas as pd
 import pytest
+from matplotlib import axes, figure
 
 import jijbench as jb
-
-from jijbench.visualization.metrics.plot import _get_violations_dict, MetricsPlot
+from jijbench.visualization.metrics.plot import (MetricsPlot,
+                                                 _get_violations_dict)
 
 
 @pytest.fixture(scope="function", autouse=True)

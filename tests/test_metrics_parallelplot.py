@@ -1,6 +1,7 @@
-import os, shutil
-import jijmodeling as jm
+import os
+import shutil
 
+import jijmodeling as jm
 import numpy as np
 import pandas as pd
 import pytest

@@ -76,6 +76,14 @@ def save(
         except Exception:
             return False
 
+    @tp.overload
+    def to_dillable(obj: Artifact) -> Artifact:
+        ...
+
+    @tp.overload
+    def to_dillable(obj: Table) -> Table:
+        ...
+
     def to_dillable(obj: Artifact | Table) -> Artifact | Table:
         if isinstance(obj, Artifact):
             data = {}

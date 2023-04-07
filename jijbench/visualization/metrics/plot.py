@@ -15,11 +15,8 @@ from matplotlib.ticker import MaxNLocator
 import jijbench as jb
 from jijbench.exceptions.exceptions import UserFunctionFailedError
 from jijbench.visualization.metrics.utils import (
-    _create_fig_title_list,
-    _df_has_number_array_column_target_name,
-    _df_has_number_column_target_name,
-    _df_has_valid_multipliers_column,
-)
+    _create_fig_title_list, _df_has_number_array_column_target_name,
+    _df_has_number_column_target_name, _df_has_valid_multipliers_column)
 
 AXIS_LABEL_POS = Literal["top", "bottom"]
 

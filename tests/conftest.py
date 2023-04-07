@@ -1,13 +1,13 @@
 import inspect
-import jijbench as jb
+import pathlib
+from unittest.mock import MagicMock
+
 import jijmodeling as jm
 import jijzept as jz
-import pathlib
 import pytest
-
-
 from pytest_mock import MockerFixture
-from unittest.mock import MagicMock
+
+import jijbench as jb
 
 
 @pytest.fixture

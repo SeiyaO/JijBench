@@ -5,7 +5,7 @@ import copy
 import typing as tp
 from dataclasses import dataclass
 
-from jijbench.typing import DataNodeInT, DataNodeOutT, DataNodeT, T
+from jijbench.typing import DataNodeInT, DataNodeOutT, T
 
 
 @dataclass
@@ -22,7 +22,7 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
     name: tp.Hashable
 
     def __post_init__(self) -> None:
-        self.operator: FunctionNode[DataNode[tp.Any], DataNode[tp.Any]] | None = None
+        self.operator: FunctionNode[DataNodeInT, DataNodeOutT] | None = None
         setattr(self, "state", None)
 
     def __setattr__(self, name: str, value: tp.Any) -> None:
@@ -92,12 +92,12 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
         """Apply a function `f` on the data stored in the `DataNode` instance and other input `DataNode` instances.
 
         Args:
-            f (FunctionNode[DataNodeT, DataNodeT2]): The function to be applied on the data.
-            others (list[DataNodeT] | None, optional): A list of other `DataNode` instances to be used as inputs to the function. Defaults to None. Defaults to None.
+            f (FunctionNode[DataNodeInT, DataNodeOutT]): The function to be applied on the data.
+            others (list[DataNodeInT] | None, optional): A list of other `DataNode` instances to be used as inputs to the function. Defaults to None. Defaults to None.
             **kwargs: Arbitrary keyword arguments to be passed to the function.
 
         Returns:
-            DataNodeT2: The result of applying the function on the data.
+            DataNodeOutT: The result of applying the function on the data.
         """
         inputs = [tp.cast("DataNodeInT", copy.copy(self))] + (others if others else [])
         node = f(inputs, **kwargs)
@@ -111,7 +111,7 @@ class FunctionNode(tp.Generic[DataNodeInT, DataNodeOutT], metaclass=abc.ABCMeta)
 
     Attributes:
         name (Hashable): The name of the function.
-        inputs (list[DataNodeT]): A list of input `DataNode` objects that the function will operate.
+        inputs (list[DataNodeInT]): A list of input `DataNode` objects that the function will operate.
     """
 
     def __init__(self, name: tp.Hashable = None) -> None:
@@ -129,11 +129,11 @@ class FunctionNode(tp.Generic[DataNodeInT, DataNodeOutT], metaclass=abc.ABCMeta)
         """Operate the inputs to produce a new `DataNode` object.
 
         Args:
-            inputs (list[DataNodeT]): A list of input `DataNode` objects.
+            inputs (list[DataNodeInT]): A list of input `DataNode` objects.
             kwargs (Any): Keyword arguments for the operation.
 
         Returns:
-            DataNodeT2: A new `DataNode` object that is the result of the operation.
+            DataNodeOutT: A new `DataNode` object that is the result of the operation.
         """
         node = self.operate(inputs, **kwargs)
         self.inputs += inputs
@@ -164,10 +164,10 @@ class FunctionNode(tp.Generic[DataNodeInT, DataNodeOutT], metaclass=abc.ABCMeta)
         This method must be implemented by subclasses.
 
         Args:
-            inputs (list[DataNodeT]): A list of input `DataNode` objects.
+            inputs (list[DataNodeInT]): A list of input `DataNode` objects.
             kwargs (Any): Keyword arguments for the operation.
 
         Returns:
-            DataNodeT2: A new `DataNode` object that is the result of the operation.
+            DataNodeOut: A new `DataNode` object that is the result of the operation.
         """
         pass

@@ -154,8 +154,7 @@ def test_apply_benchmark():
     assert "func_return[0]" in columns
 
     op1 = res.operator
-    # ic()
-    # ic(op1.inputs)
+
     assert op1 is not None
     assert isinstance(op1, jb.Benchmark)
     assert isinstance(op1.inputs[0], jb.Experiment)
