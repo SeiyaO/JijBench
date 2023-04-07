@@ -10,8 +10,6 @@ import pandas as pd
 import jijbench as jb
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 
-pd.DataFrame
-
 
 def checkpoint(
     name: str | None = None, savedir: str | pathlib.Path = DEFAULT_RESULT_DIR
@@ -53,6 +51,8 @@ def checkpoint(
     def decorator(func: tp.Callable[..., tp.Any]):
         @wraps(func)
         def wrapper(*args: tp.Any, **kwargs: tp.Any):
+            print(args)
+            print(kwargs)
             params = {}
             signature = inspect.signature(func)
             pos_arg_index = 0
@@ -65,8 +65,9 @@ def checkpoint(
                 elif v.kind == 2:
                     raise TypeError("Variable positional arguments are not supported.")
                 elif v.kind == 3:
-                    params[k] = [kwargs[k]]
-                    kw_arg_index += 1
+                    if k in kwargs:
+                        params[k] = [kwargs[k]]
+                        kw_arg_index += 1
                 elif v.kind == 4:
                     while kw_arg_index < len(kwargs):
                         k = list(kwargs.keys())[kw_arg_index]
@@ -77,7 +78,7 @@ def checkpoint(
             if name:
                 bench_dir = pathlib.Path(savedir) / name
                 if bench_dir.exists():
-                    jb.load(name).apply(bench, savedir=savedir)
+                    jb.load(bench_dir).apply(bench, savedir=savedir)
                 else:
                     bench(savedir=savedir)
             else:

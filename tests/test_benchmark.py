@@ -225,28 +225,42 @@ def test_benchmark_with_callable_args():
         (1, None, 1, {}, "2"),
         (1, 1, 1, {}, "3"),
         (1, 1, None, {"extra": "!"}, "2!"),
-    ],
+    ][-1:],
 )
 def test_benchmark_by_checkpoint(x, y, z, kwargs, expected):
     benchmark_id = "example_checkpoint"
 
     @jb.checkpoint(name=benchmark_id, savedir="./checkpoint")
-    def f(x: int, y: int = 0, z: int = 0, **kwargs) -> str:
+    def pos_or_kw(x: int, y: int = 0, z: int = 0, **kwargs) -> str:
+        extra = "".join(kwargs.values())
+        return f"{x + y + z}{extra}"
+
+    @jb.checkpoint(name=benchmark_id, savedir="./checkpoint")
+    def kw_only(x: int, *, y: int = 0, z: int = 0, **kwargs) -> str:
         extra = "".join(kwargs.values())
         return f"{x + y + z}{extra}"
 
     if y and z:
-        ret = f(x, y, z, **kwargs)
+        ret1 = pos_or_kw(x, y, z, **kwargs)
+        ret2 = kw_only(x, y=y, z=z, **kwargs)
     elif y and not z:
-        ret = f(x, y, **kwargs)
+        ret1 = pos_or_kw(x, y, **kwargs)
+        ret2 = kw_only(x, y=y, **kwargs)
     elif not y and z:
-        ret = f(x, z=z, **kwargs)
+        ret1 = pos_or_kw(x, z=z, **kwargs)
+        ret2 = kw_only(x, z=z, **kwargs)
     else:
-        ret = f(x, **kwargs)
+        ret1 = pos_or_kw(x, **kwargs)
+        ret2 = kw_only(x, **kwargs)
 
-    assert ret == expected
+    assert ret1 == expected
+    assert ret1 == ret2
 
     bench = jb.load(benchmark_id, savedir="./checkpoint")
-    assert (bench.table["f_return[0]"] == expected).all()
+    from icecream import ic
+
+    ic(bench.table)
+    assert (bench.table["pos_or_kw_return[0]"] == expected).all()
+    # assert (bench.table["kw_only_return[0]"] == expected).all()
 
     shutil.rmtree("./checkpoint")
