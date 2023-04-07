@@ -56,8 +56,13 @@ def checkpoint(
             signature = inspect.signature(func)
             pos_arg_index = 0
             kw_arg_index = 0
+
             # Make benchmark parameters by inspecting the function signature.
-            # CASE 1: POSITIONAL OR KEYWORD is v.kind = 1
+            # k is argument name, v is inspect.Parameter
+            # v.kind = 1 means POSITIONAL OR KEYWORD. ex. def f(a, b=1)
+            # v.kind = 2 means VAR_POSITIONAL. ex. def f(*args)
+            # v.kind = 3 means KEYWORD_ONLY. ex. def f(*, a)
+            # v.kind = 4 means VAR_KEYWORD. ex. def f(**kwargs)
             for k, v in signature.parameters.items():
                 if v.kind == 1:
                     if pos_arg_index < len(args):
