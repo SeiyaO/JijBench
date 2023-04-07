@@ -24,7 +24,7 @@ if tp.TYPE_CHECKING:
 
 
 class Benchmark(FunctionNode[Experiment, Experiment]):
-    """ "A class representing a benchmark.
+    """A class representing a benchmark.
 
     This class allows to define a benchmark as a collection of experiments
     over a set of parameters and solvers. The benchmark will be run sequentially
