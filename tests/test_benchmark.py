@@ -29,7 +29,7 @@ def test_simple_benchmark():
     columns = res.table.columns
 
     assert isinstance(res, jb.Experiment)
-    assert "func_return[0]" in columns
+    assert "solver_return[0]" in columns
 
     op1 = res.operator
     assert op1 is not None
@@ -151,7 +151,7 @@ def test_apply_benchmark():
     columns = res.table.columns
 
     assert isinstance(res, jb.Experiment)
-    assert "func_return[0]" in columns
+    assert "solver_return[0]" in columns
 
     op1 = res.operator
 
@@ -182,8 +182,8 @@ def test_benchmark_with_multi_return_solver():
     res = bench()
 
     assert len(res.table) == 2
-    assert res.table["func_return[0]"][0] == "a"
-    assert res.table["func_return[1]"][0] == 1.0
+    assert res.table["solver_return[0]"][0] == "a"
+    assert res.table["solver_return[1]"][0] == 1.0
 
 
 # def test_benchmark_with_custom_solver_by_sync_False():
