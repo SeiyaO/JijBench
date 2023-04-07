@@ -1,12 +1,18 @@
 from __future__ import annotations
 
-import glob
 import pathlib
 import typing as tp
 
+import numpy as np
+import plotly.graph_objects as go
 import streamlit as st
+from plotly.subplots import make_subplots
 
 from jijbench.consts.default import DEFAULT_PROBLEM_NAMES, DEFAULT_RESULT_DIR
+from jijbench.datasets.model import InstanceDataFileStorage
+
+if tp.TYPE_CHECKING:
+    from jijbench.dashboard.session import Session
 
 
 class InstanceDataDir:
@@ -14,17 +20,16 @@ class InstanceDataDir:
 
     def __init__(self) -> None:
         self._node_map: dict[str, tp.Any] = {}
-        for problem_name in self._problem_names:
+        for problem_name in DEFAULT_PROBLEM_NAMES:
+            storage = InstanceDataFileStorage(problem_name)
+
             node: dict[str, tp.Any] = {
                 "label": problem_name,
                 "value": problem_name,
                 "children": [],
             }
             for size in ["small", "medium", "large"]:
-                files = glob.glob(
-                    f"{self.base_dir}/{size}/{problem_name}/**/*.json", recursive=True
-                )
-                files.sort()
+                files = storage.get_files(size, self.num_files_to_display)
                 node["children"] += [
                     {
                         "label": size,
@@ -127,9 +132,8 @@ def _load_instance_data(files: list[str]) -> dict[str, dict[str, list[int | floa
 
     data = {}
     for file in files:
-        with open(file, "r") as f:
-            ins_d = rapidjson.load(f)
-            data[pathlib.Path(file).name] = {k: _flatten(v) for k, v in ins_d.items()}
+        ins_d = InstanceDataFileStorage.load(file)
+        data[pathlib.Path(file).name] = {k: _flatten(v) for k, v in ins_d.items()}
     return data
 
 

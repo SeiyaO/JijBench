@@ -1,17 +1,23 @@
 from __future__ import annotations
 
+import os
+import pathlib
+
 import streamlit as st
 
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.dashboard.session import Session
 
 st.set_page_config(layout="wide")
 
 
-session = Session()
-
-
-def main():
+def run():
     st.title("JB Board")
+
+    logdir = os.environ.get("logdir", DEFAULT_RESULT_DIR)
+
+    session = Session()
+    session.state.logdir = pathlib.Path(logdir)
 
     tab_names = ["Instance data", "Problem", "Solver", "Analysis"]
     tab_map = {name: tab for name, tab in zip(tab_names, st.tabs(tab_names))}
@@ -34,4 +40,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run()

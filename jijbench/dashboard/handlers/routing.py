@@ -20,7 +20,9 @@ from streamlit_tree_select import tree_select
 from typing_extensions import TypeGuard
 
 import jijbench as jb
-from jijbench.consts.default import DEFAULT_RESULT_DIR
+
+if tp.TYPE_CHECKING:
+    from jijbench.dashboard.session import Session
 
 
 class RoutingHandler:
@@ -133,16 +135,17 @@ class RoutingHandler:
         }
 
         code = codecs.decode(st_ace(**editor_options), "unicode_escape")
-        # 実行ボタン
+
         if st.button("Run"):
-            func = get_function_from_code(code)
-            problem = func()
-            st.latex(problem._repr_latex_()[2:-2])
+            st.info("Coming soon...")
+            # func = get_function_from_code(code)
+            # problem = func()
+            # st.latex(problem._repr_latex_()[2:-2])
 
     def on_select_result(self, session: Session) -> None:
         benchmark_id = session.state.selected_benchmark_id
         if benchmark_id:
-            results_table = _get_results_table(benchmark_id)
+            results_table = _get_results_table(benchmark_id, session.state.logdir)
             options = [
                 k
                 for k, v in results_table.items()
@@ -193,7 +196,8 @@ class RoutingHandler:
                     )
 
                 with elements("diff"):
-                    results = jb.load(benchmark_id)
+                    # TODO: 後で修正
+                    results = jb.load(benchmark_id, savedir=session.state.logdir)
                     r1 = results.data[1].data.iloc[r1_name]["sample_model_return[0]"]
                     r2 = results.data[1].data.iloc[r2_name]["sample_model_return[0]"]
                     editor.MonacoDiff(
@@ -214,7 +218,7 @@ class RoutingHandler:
 
         st.subheader("Previous bencnmark")
         # TODO: 後で修正
-        results_dir_series = pd.Series(glob.glob("/home/d/tmp/demo/.jb_results/*"))
+        results_dir_series = pd.Series(glob.glob(f"{session.state.logdir}/*"))
         created_time_series = results_dir_series.apply(
             lambda x: str(
                 datetime.datetime.fromtimestamp(pathlib.Path(x).stat().st_ctime)
@@ -250,7 +254,7 @@ class RoutingHandler:
 
 
 @st.cache_data
-def _get_results_table(benchmark_id: str) -> pd.DataFrame:
+def _get_results_table(benchmark_id: str, savedir: pathlib.Path) -> pd.DataFrame:
     def expand_dict_series_in(table: pd.DataFrame) -> pd.DataFrame:
         expanded = pd.DataFrame()
         for c in table:
@@ -267,7 +271,8 @@ def _get_results_table(benchmark_id: str) -> pd.DataFrame:
                 table.drop(columns=[c], inplace=True)
         return pd.concat([table, expanded], axis=1)
 
-    results = jb.load(benchmark_id)
+    # TODO: 後で修正
+    results = jb.load(benchmark_id, savedir=savedir)
     e = jb.Evaluation()
     eval_table = e([results], opt_value=0).table.drop(columns=results.table.columns)
 

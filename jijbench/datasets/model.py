@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import glob
-import json
 import pathlib
 import typing as tp
 
 import jijmodeling as jm
+import rapidjson
 
 from jijbench.datasets.problems import (
     bin_packing,
@@ -61,21 +61,21 @@ class InstanceDataFileStorage:
     ) -> dict[str, str]:
         return {pathlib.Path(file).name: file for file in self.get_files(size, n)}
 
-    @classmethod
-    def load(cls, file: str) -> jm.PH_VALUES_INTERFACE:
-        if not pathlib.Path(file).exists():
-            raise FileNotFoundError(f"'{file}' is not found.")
-
-        with open(file, "r") as f:
-            instance_data = json.load(f)
-        return instance_data
-
     def load_instance_data(
         self,
         size: tp.Literal["small", "medium", "large"] = "small",
         n: int | tp.Literal["all"] = 5,
     ) -> list[jm.PH_VALUES_INTERFACE]:
         return [self.load(file) for file in self.get_files(size, n)]
+
+    @staticmethod
+    def load(file: str) -> jm.PH_VALUES_INTERFACE:
+        if not pathlib.Path(file).exists():
+            raise FileNotFoundError(f"'{file}' is not found.")
+
+        with open(file, "r") as f:
+            instance_data = rapidjson.load(f)
+        return instance_data
 
 
 def get_models(

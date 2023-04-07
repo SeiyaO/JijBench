@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import pathlib
 import typing as tp
 
 import streamlit as st
 
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.dashboard.handlers.instance_data import (
     InstanceDataDir,
     InstanceDataHandler,
@@ -38,6 +40,7 @@ class State:
     def __init__(self) -> None:
         st.session_state["selected_page"] = "Instance data"
         st.session_state["instance_data_dir"] = InstanceDataDir()
+        st.session_state["logdir"] = DEFAULT_RESULT_DIR
         st.session_state["input_problem_name"] = ""
         st.session_state["uploaded_instance_data_name"] = ""
         st.session_state["selected_instance_data_name"] = None
@@ -58,6 +61,14 @@ class State:
     @property
     def instance_data_dir(self) -> InstanceDataDir:
         return st.session_state["instance_data_dir"]
+
+    @property
+    def logdir(self) -> pathlib.Path:
+        return st.session_state["logdir"]
+
+    @logdir.setter
+    def logdir(self, logdir: pathlib.Path) -> None:
+        st.session_state["logdir"] = logdir
 
     @property
     def input_problem_name(self) -> str:
