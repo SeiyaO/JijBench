@@ -224,7 +224,7 @@ def test_benchmark_with_callable_args():
         (1, None, 1, {}, "2"),
         (1, 1, 1, {}, "3"),
         (1, 1, None, {"extra": "!"}, "2!"),
-    ][-1:],
+    ],
 )
 def test_benchmark_by_checkpoint(x, y, z, kwargs, expected):
     benchmark_id = "example_checkpoint"
@@ -256,8 +256,6 @@ def test_benchmark_by_checkpoint(x, y, z, kwargs, expected):
     assert ret1 == ret2
 
     bench = jb.load(benchmark_id, savedir="./checkpoint")
-    assert len(bench.table) == 2
-    assert (bench.table["pos_or_kw_return[0]"].dropna() == expected).all()
-    assert (bench.table["kw_only_return[0]"].dropna() == expected).all()
+    assert (bench.table["solver_return[0]"][-2:] == expected).all()
 
     shutil.rmtree("./checkpoint")

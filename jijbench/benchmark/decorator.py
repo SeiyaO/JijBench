@@ -14,7 +14,7 @@ from jijbench.consts.path import DEFAULT_RESULT_DIR
 def checkpoint(
     name: str | None = None, savedir: str | pathlib.Path = DEFAULT_RESULT_DIR
 ):
-    """Decorator to checkpoint the result of a function.
+    """Decorator for saving and checkpointing the results of a function.
 
     Args:
         name (str, optional): The name of the benchmark. Defaults to None.
@@ -46,6 +46,7 @@ def checkpoint(
         f3("1", f=2.0, g=3.0)
 
         bench = jb.load("example_checkpoint")
+        ```
     """
 
     def decorator(func: tp.Callable[..., tp.Any]):
@@ -55,6 +56,8 @@ def checkpoint(
             signature = inspect.signature(func)
             pos_arg_index = 0
             kw_arg_index = 0
+            # Make benchmark parameters by inspecting the function signature.
+            # CASE 1: POSITIONAL OR KEYWORD is v.kind = 1
             for k, v in signature.parameters.items():
                 if v.kind == 1:
                     if pos_arg_index < len(args):

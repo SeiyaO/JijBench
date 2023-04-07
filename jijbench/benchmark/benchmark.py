@@ -73,9 +73,9 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         ]
 
         if isinstance(solver, tp.Callable):
-            self.solver = [Solver(solver)]
+            self.solver = [Solver(solver, "solver")]
         else:
-            self.solver = [Solver(f) for f in solver]
+            self.solver = [Solver(f, "solver") for f in solver]
 
     def __call__(
         self,
