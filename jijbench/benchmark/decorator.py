@@ -51,8 +51,6 @@ def checkpoint(
     def decorator(func: tp.Callable[..., tp.Any]):
         @wraps(func)
         def wrapper(*args: tp.Any, **kwargs: tp.Any):
-            print(args)
-            print(kwargs)
             params = {}
             signature = inspect.signature(func)
             pos_arg_index = 0

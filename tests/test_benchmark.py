@@ -256,10 +256,8 @@ def test_benchmark_by_checkpoint(x, y, z, kwargs, expected):
     assert ret1 == ret2
 
     bench = jb.load(benchmark_id, savedir="./checkpoint")
-    from icecream import ic
-
-    ic(bench.table)
-    assert (bench.table["pos_or_kw_return[0]"] == expected).all()
-    # assert (bench.table["kw_only_return[0]"] == expected).all()
+    assert len(bench.table) == 2
+    assert (bench.table["pos_or_kw_return[0]"].dropna() == expected).all()
+    assert (bench.table["kw_only_return[0]"].dropna() == expected).all()
 
     shutil.rmtree("./checkpoint")
