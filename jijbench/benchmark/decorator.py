@@ -5,8 +5,6 @@ import pathlib
 import typing as tp
 from functools import wraps
 
-import pandas as pd
-
 import jijbench as jb
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 
