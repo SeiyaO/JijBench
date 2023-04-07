@@ -23,7 +23,7 @@ readme = "README.md"
 include = ["jijbench/*.py", "jijbench/*.json", "jijbench/*.JSON"]
 homepage = "https://www.j-ij.com/"
 repository = "https://github.com/Jij-Inc/JijBench"
-documentation = "https://www.documentation.jijzept.com/docs/jijbench_docs/"
+documentation = "https://jij-inc.github.io/JijBench"
 classifiers =[
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python",
@@ -66,9 +66,12 @@ isort = "^5.12.0"
 
 
 [tool.poetry.group.docs.dependencies]
+mkdocs = "^1.4.2"
+mkdocs-autorefs = "^0.4.1"
 mkdocs-gen-files = "^0.4.0"
 mkdocs-literate-nav = "^0.6.0"
 mkdocs-section-index = "^0.3.5"
 mkdocs-minify-plugin = "^0.6.4"
 mkdocs-material = "^9.1.5"
 mkdocstrings = {extras = ["python"], version = ">=0.19"}
+mkdocs-git-revision-date-localized-plugin = "^1.2.0"

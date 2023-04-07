@@ -61,18 +61,28 @@ theme:
 
 # Plugins
 plugins:
+  - git-revision-date-localized:
+      fallback_to_build_date: true
+      type: iso_datetime
+      locale: en
   - search:
       separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
-  - minify:
-      minify_html: true
   - literate-nav:
       nav_file: docs/reference/SUMMARY.md
+  - autorefs
+  - tags 
   - section-index
+  - minify:
+      minify_html: true
+      htmlmin_opts:
+          remove_comments: true
+      cache_safe: true
   - mkdocstrings:
       default_handler: python
       handlers:
         python:
           options:
+            show_source: true
             docstring_style: "google"
   - gen-files:
       scripts:
