@@ -196,13 +196,18 @@ class RoutingHandler:
                     )
 
                 with elements("diff"):
-                    # TODO: 後で修正
                     results = jb.load(benchmark_id, savedir=session.state.logdir)
                     r1 = results.data[1].data.iloc[r1_name]["sample_model_return[0]"]
                     r2 = results.data[1].data.iloc[r2_name]["sample_model_return[0]"]
                     editor.MonacoDiff(
-                        original=r1.__repr__(),
-                        modified=r2.__repr__(),
+                        original="\n".join(
+                            r1.__repr__()[i : i + 100]
+                            for i in range(0, len(r1.__repr__()), 100)
+                        ),
+                        modified="\n".join(
+                            r2.__repr__()[i : i + 100]
+                            for i in range(0, len(r2.__repr__()), 100)
+                        ),
                         height=300,
                     )
 
@@ -217,7 +222,6 @@ class RoutingHandler:
             AgGrid(results_table, gridOptions=gridoptions)
 
         st.subheader("Previous bencnmark")
-        # TODO: 後で修正
         results_dir_series = pd.Series(glob.glob(f"{session.state.logdir}/*"))
         created_time_series = results_dir_series.apply(
             lambda x: str(
@@ -271,7 +275,6 @@ def _get_results_table(benchmark_id: str, savedir: pathlib.Path) -> pd.DataFrame
                 table.drop(columns=[c], inplace=True)
         return pd.concat([table, expanded], axis=1)
 
-    # TODO: 後で修正
     results = jb.load(benchmark_id, savedir=savedir)
     e = jb.Evaluation()
     eval_table = e([results], opt_value=0).table.drop(columns=results.table.columns)

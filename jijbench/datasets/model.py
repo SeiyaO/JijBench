@@ -34,14 +34,14 @@ class InstanceDataFileStorage:
     def get_names(
         self,
         size: tp.Literal["small", "medium", "large"] = "small",
-        n: int | tp.Literal["all"] = 5,
+        n: int | tp.Literal["all"] = 1,
     ) -> list[str]:
         return list(map(lambda x: pathlib.Path(x).name, self.get_files(size, n)))
 
     def get_files(
         self,
         size: tp.Literal["small", "medium", "large"] = "small",
-        n: int | tp.Literal["all"] = 5,
+        n: int | tp.Literal["all"] = 1,
     ) -> list[str]:
         files = glob.glob(
             f"{self.base_dir}/{size}/{self.problem_name}/**/*.json", recursive=True
@@ -57,14 +57,14 @@ class InstanceDataFileStorage:
     def get_files_map(
         self,
         size: tp.Literal["small", "medium", "large"] = "small",
-        n: int | tp.Literal["all"] = 5,
+        n: int | tp.Literal["all"] = 1,
     ) -> dict[str, str]:
         return {pathlib.Path(file).name: file for file in self.get_files(size, n)}
 
     def load_instance_data(
         self,
         size: tp.Literal["small", "medium", "large"] = "small",
-        n: int | tp.Literal["all"] = 5,
+        n: int | tp.Literal["all"] = 1,
     ) -> list[jm.PH_VALUES_INTERFACE]:
         return [self.load(file) for file in self.get_files(size, n)]
 
@@ -87,7 +87,7 @@ def get_models(
         "travelling-salesman-with-time-windows",
     ],
     size: tp.Literal["small", "medium", "large"] = "small",
-    n: int | tp.Literal["all"] = 5,
+    n: int | tp.Literal["all"] = 1,
 ) -> list[tuple[jm.Problem, jm.InstanceData]]:
     storage = InstanceDataFileStorage(problem_name)
     problem = get_problem(problem_name)
@@ -127,7 +127,7 @@ def get_instance_data(
         "travelling-salesman-with-time-windows",
     ],
     size: tp.Literal["small", "medium", "large"] = "small",
-    n: int | tp.Literal["all"] = 5,
+    n: int | tp.Literal["all"] = 1,
 ) -> list[jm.PH_VALUES_INTERFACE]:
     storage = InstanceDataFileStorage(problem_name)
     return storage.load_instance_data(size, n)
