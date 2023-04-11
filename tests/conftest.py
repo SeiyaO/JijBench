@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import pathlib
 import typing as tp
-from unittest.mock import MagicMock, create_autospec
+from unittest.mock import MagicMock
 
 import jijmodeling as jm
 import jijzept as jz
 import pytest
+from _pytest.fixtures import SubRequest
 from pytest_mock import MockerFixture
 
 import jijbench as jb
-from jijbench.dashboard.session import Session
 
 
 @pytest.fixture

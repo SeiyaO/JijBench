@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import typing as tp
 from unittest.mock import MagicMock
 
 import jijmodeling as jm
@@ -9,6 +10,7 @@ import pandas as pd
 import pytest
 
 import jijbench as jb
+from jijbench.typing import ModelType
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -21,15 +23,57 @@ def pre_post_process():
         shutil.rmtree(norm_path)
 
 
+def f1():
+    return "Hello, World!"
+
+
+def f2(i: int) -> int:
+    return i**2
+
+
+def f3(i: int) -> tuple[int, int]:
+    return i + 1, i + 2
+
+
+def f4(i: int, j: int = 1) -> int:
+    return i + j
+
+
+def f5(model: jm.Problem, feed_dict: jm.PH_VALUES_INTERFACE) -> ModelType:
+    return model, feed_dict
+
+
+def test_sample(problem):
+    print(problem)
+
+
 def test_simple_experiment():
     e = jb.Experiment(name="simple_experiment")
+    solver = jb.Solver(f1)
+    record = solver([])
+    e.append(record)
+    e.save()
 
-    def func(i):
-        return i**2
+    print(e.table)
 
-    for i in range(3):
-        solver = jb.Solver(func)
-        record = solver([jb.Parameter(i, "i")])
+
+@pytest.mark.parametrize(
+    "solver, params",
+    [
+        (f1, []),
+        (f2, [{"i": 1}, {"i": 2}, {"i": 3}]),
+        (f3, [{"i": 1}, {"i": 2}, {"i": 3}]),
+        (f4, [{"i": 1}, {"i": 1, "j": 2}, {"i": 1, "j": 3}]),
+    ],
+)
+def test_experiment(
+    solver: tp.Callable[..., tp.Any], params: dict[str, tp.Iterable[tp.Any]]
+):
+    e = jb.Experiment(name="simple_experiment")
+
+    for param in params:
+        solver = jb.Solver(solver)
+        record = solver([jb.Parameter(i, "i") for k, v in param.items() for i in v])
         e.append(record)
     e.save()
 
@@ -45,20 +89,6 @@ def test_simple_experiment_with_context_manager():
             solver = jb.Solver(func)
             record = solver([jb.Parameter(i, "i")])
             e.append(record)
-
-
-def test_construct_experiment():
-    e = jb.Experiment(name="test")
-
-    a = jb.Artifact({"x": {"0": jb.Number(1, "value")}})
-    t = jb.Table(pd.DataFrame([[jb.Number(1, "value")]]))
-    e.data = (a, t)
-
-    a = e.artifact
-    a.update({"y": 2})
-
-    t = e.table
-    t["x"] = [1]
 
 
 def test_jijmodeling(
