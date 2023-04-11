@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 import pathlib
 import typing as tp
