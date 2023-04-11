@@ -9,11 +9,11 @@ import jijmodeling as jm
 import numpy as np
 import pandas as pd
 
+from jijbench.elements.base import Callable
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.node.base import DataNode
-from jijbench.typing import (ArtifactDataType, ArtifactKeyType,
-                             ArtifactValueType, T)
+from jijbench.typing import ArtifactDataType, ArtifactKeyType, ArtifactValueType, T
 
 
 @dataclass
@@ -299,7 +299,9 @@ class Table(Container[pd.DataFrame]):
         if self.data.empty:
             return self.data
         else:
-            data = self.data.applymap(lambda x: x.data)
+            data = self.data.applymap(
+                lambda x: x.data.__name__ if isinstance(x, Callable) else x.data
+            )
             sampleset_columns = [
                 c for c in data.columns if isinstance(data[c][0], jm.SampleSet)
             ]

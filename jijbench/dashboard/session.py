@@ -1,3 +1,15 @@
+"""
+This module defines the Session class, a singleton class responsible for managing the state of the dashboard,
+as well as the State class, which has the state data of the application.
+
+Classes:
+Session: A Session class maintains the state of the application and the handlers responsible for different sections of the dashboard.
+State: A State class holds session state attributes and provides properties to access and modify them.
+
+Usage:
+The Session class is used by the main dashboard application script to manage the state and interactions between different components of the dashboard.
+"""
+
 from __future__ import annotations
 
 import pathlib
@@ -7,7 +19,7 @@ import streamlit as st
 
 from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.dashboard.handlers.instance_data import (
-    InstanceDataDir,
+    InstanceDataDirTree,
     InstanceDataHandler,
 )
 from jijbench.dashboard.handlers.routing import RoutingHandler
@@ -21,12 +33,15 @@ class _Singleton(type):
 
 
 class Session(metaclass=_Singleton):
-    def __init__(self) -> None:
-        self.state = State()
+    def __init__(self, logdir: pathlib.Path = DEFAULT_RESULT_DIR) -> None:
+        self.state = State(logdir)
         self.routing_handler = RoutingHandler()
         self.instance_data_handler = InstanceDataHandler()
 
-    def display_page(self) -> None:
+    def display_page(
+        self, tab_name: tp.Literal["Instance data", "Problem", "Solver", "Analysis"]
+    ) -> None:
+        self.state.selected_page = tab_name
         self.routing_handler.on_select_page(self)
 
     def add_instance_data(self) -> None:
@@ -37,10 +52,10 @@ class Session(metaclass=_Singleton):
 
 
 class State:
-    def __init__(self) -> None:
+    def __init__(self, logdir: pathlib.Path = DEFAULT_RESULT_DIR) -> None:
         st.session_state["selected_page"] = "Instance data"
-        st.session_state["instance_data_dir"] = InstanceDataDir()
-        st.session_state["logdir"] = DEFAULT_RESULT_DIR
+        st.session_state["instance_data_dir_tree"] = InstanceDataDirTree()
+        st.session_state["logdir"] = logdir
         st.session_state["input_problem_name"] = ""
         st.session_state["uploaded_instance_data_name"] = ""
         st.session_state["selected_instance_data_name"] = None
@@ -59,8 +74,8 @@ class State:
         st.session_state["selected_page"] = page
 
     @property
-    def instance_data_dir(self) -> InstanceDataDir:
-        return st.session_state["instance_data_dir"]
+    def instance_data_dir_tree(self) -> InstanceDataDirTree:
+        return st.session_state["instance_data_dir_tree"]
 
     @property
     def logdir(self) -> pathlib.Path:

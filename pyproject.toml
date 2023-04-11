@@ -1,6 +1,6 @@
 [build-system]
-requires = ["poetry-core>=1.5.2", "poetry-dynamic-versioning>=0.21.4"]
 build-backend = "poetry_dynamic_versioning.backend"
+requires = ["poetry-core>=1.5.2", "poetry-dynamic-versioning>=0.21.4"]
 
 [tool.poetry-dynamic-versioning]
 enable = true
@@ -8,74 +8,74 @@ style = "pep440"
 
 [tool.pytest.ini_options]
 addopts = "-s -vv --color=yes --randomly-seed=last --code-highlight=yes --cov-context=test --cov --cov-report term  --cov-config .coveragerc"
-testpaths = ["tests"]
+asyncio_mode = "auto"
 console_output_style = "count"
 log_auto_indent = true
-asyncio_mode = "auto"
+testpaths = ["tests"]
 
 [tool.poetry]
-name = "jijbench"
+authors = ["Jij Inc. <info@j-ij.com>"] 
+classifiers = [
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3 :: Only",
+  "Operating System :: POSIX",
+  "Operating System :: Unix",
+  "Operating System :: MacOS",
+] 
+description = "Experiment management and benchmark tools for mathematical optimization" 
+documentation = "https://jij-inc.github.io/JijBench" 
+homepage = "https://www.j-ij.com/" 
+include = ["jijbench/*.py", "jijbench/*.json", "jijbench/*.JSON"] 
+license = "MIT" 
+name = "jijbench" 
+readme = "README.md" 
+repository = "https://github.com/Jij-Inc/JijBench" 
 version = "0.0.0" # using poetry-dynamic-versioning
-description = "Experiment management and benchmark tools for mathematical optimization"
-authors = ["Jij Inc. <info@j-ij.com>"]
-license = "MIT"
-readme = "README.md"
-include = ["jijbench/*.py", "jijbench/*.json", "jijbench/*.JSON"]
-homepage = "https://www.j-ij.com/"
-repository = "https://github.com/Jij-Inc/JijBench"
-documentation = "https://www.documentation.jijzept.com/docs/jijbench_docs/"
-classifiers =[
-        "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3 :: Only",
-        "Operating System :: POSIX",
-        "Operating System :: Unix",
-        "Operating System :: MacOS"]
-
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.9.7 || >3.9.7,<3.11"
-numpy = "^1.24.2"
-pandas = "^1.5.3"
-plotly = "^5.14.0"
+dill = "^0.3.6"
+jijmodeling = "^0.10.21"
+jijzept = "^1.14.0"
 matplotlib = "^3.7.1"
 nbformat = "^5.8.0"
 networkx = "^3.0"
-dill = "^0.3.6"
+numpy = "^1.24.2"
+pandas = "^1.5.3"
+plotly = "^5.14.0"
+python = ">=3.8,<3.9.7 || >3.9.7,<3.11"
 streamlit = "^1.20.0"
-streamlit-aggrid = "^0.3.4"
 streamlit-ace = "^0.1.1"
+streamlit-aggrid = "^0.3.4"
 streamlit-elements = "^0.1.0"
 streamlit-tree-select = "^0.0.5"
-jijmodeling = "^0.10.21"
-jijzept = "^1.14.0"
-
 
 [tool.poetry.group.tests.dependencies]
+coverage = "^7.2.2"
 pytest = "^7.2.2"
+pytest-asyncio = "^0.21.0"
 pytest-cov = "^4.0.0"
 pytest-mock = "^3.10.0"
 pytest-randomly = "^3.12.0"
 pytest-spec = "^3.2.0"
-pytest-asyncio = "^0.21.0"
-coverage = "^7.2.2"
-
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^3.2.1"
 black = "^23.3.0"
 isort = "^5.12.0"
-
+pre-commit = "^3.2.1"
 
 [tool.poetry.group.docs.dependencies]
+mkdocs = "^1.4.2"
+mkdocs-autorefs = "^0.4.1"
 mkdocs-gen-files = "^0.4.0"
+mkdocs-git-revision-date-localized-plugin = "^1.2.0"
 mkdocs-literate-nav = "^0.6.0"
-mkdocs-section-index = "^0.3.5"
-mkdocs-minify-plugin = "^0.6.4"
 mkdocs-material = "^9.1.5"
+mkdocs-minify-plugin = "^0.6.4"
+mkdocs-section-index = "^0.3.5"
 mkdocstrings = {extras = ["python"], version = ">=0.19"}
 
 [tool.poetry.scripts]

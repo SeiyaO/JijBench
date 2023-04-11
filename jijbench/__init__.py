@@ -5,6 +5,7 @@ __path__ = extend_path(__path__, __name__)
 import jijbench.functions as functions
 import jijbench.node as node
 from jijbench.benchmark.benchmark import Benchmark, construct_benchmark_for
+from jijbench.benchmark.decorator import checkpoint
 from jijbench.containers.containers import Artifact, Record, Table
 from jijbench.datasets.model import get_instance_data, get_models, get_problem
 from jijbench.elements.array import Array
@@ -18,6 +19,7 @@ from jijbench.solver.base import Parameter, Response, Solver
 from jijbench.solver.jijzept import InstanceData, Model, SampleSet
 
 __all__ = [
+    "checkpoint",
     "construct_benchmark_for",
     "functions",
     "node",

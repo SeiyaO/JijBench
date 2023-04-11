@@ -8,18 +8,29 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from jijbench.consts.default import DEFAULT_PROBLEM_NAMES, DEFAULT_RESULT_DIR
+from jijbench.consts.default import DEFAULT_PROBLEM_NAMES
 from jijbench.datasets.model import InstanceDataFileStorage
 
 if tp.TYPE_CHECKING:
     from jijbench.dashboard.session import Session
 
 
-class InstanceDataDir:
-    num_files_to_display = 5
+class InstanceDataDirTree:
+    """
+    A class representing a directory tree of instance data files.
+
+    Attributes:
+        num_files_to_display (int): The number of files to display.
+        node_map (dict[str, tp.Any]): A property to get or set the node map.
+        nodes (list[dict[str, tp.Any]]): A property to get the list of nodes.
+        problem_names (list[str]): A property to get or set the list of problem names.
+    """
 
     def __init__(self) -> None:
         self._node_map: dict[str, tp.Any] = {}
+        self._num_files_to_display = 5
+        self._problem_names = DEFAULT_PROBLEM_NAMES
+
         for problem_name in DEFAULT_PROBLEM_NAMES:
             storage = InstanceDataFileStorage(problem_name)
 
@@ -65,33 +76,56 @@ class InstanceDataDir:
     def problem_names(self, problem_names: list[str]) -> None:
         self._problem_names = problem_names
 
+    @property
+    def num_files_to_display(self) -> int:
+        return self._num_files_to_display
+
+    @num_files_to_display.setter
+    def num_files_to_display(self, num_files_to_display: int) -> None:
+        self._num_files_to_display = num_files_to_display
+
 
 class InstanceDataHandler:
-    def __init__(self, base_data_dir: pathlib.Path = DEFAULT_RESULT_DIR) -> None:
-        self.base_data_dir = base_data_dir
+    """
+    A class to handle instance data files, manage their loading, and visualize them using various plot types.
+
+    """
 
     def on_add(self, session: Session) -> None:
+        """Adds a new instance data file to the directory tree.
+
+        Args:
+            session (Session): The current session.
+        """
         problem_name = session.state.input_problem_name
         instance_data_name = session.state.uploaded_instance_data_name
-        instance_data_dir = session.state.instance_data_dir
+        logdir = session.state.logdir
+        instance_data_dir_tree = session.state.instance_data_dir_tree
 
-        file = f"{self.base_data_dir}/{problem_name}/{instance_data_name}"
-        if problem_name in instance_data_dir.node_map:
+        file = f"{logdir}/{problem_name}/{instance_data_name}"
+        if problem_name in instance_data_dir_tree.node_map:
             if file not in [
                 child["value"]
-                for child in instance_data_dir.node_map[problem_name]["children"]
+                for child in instance_data_dir_tree.node_map[problem_name]["children"]
             ]:
-                instance_data_dir.node_map[problem_name]["children"] += [
+                instance_data_dir_tree.node_map[problem_name]["children"] += [
                     {"label": instance_data_name, "value": file}
                 ]
         else:
-            instance_data_dir.node_map[problem_name] = {
+            instance_data_dir_tree.node_map[problem_name] = {
                 "label": problem_name,
                 "value": problem_name,
                 "children": [{"label": instance_data_name, "value": file}],
             }
 
+        instance_data_dir_tree.problem_names += [problem_name]
+
     def on_load(self, session: Session) -> None:
+        """Loads selected instance data files and displays the chosen plot type.
+
+        Args:
+            session (Session): The current session.
+        """
         files = session.state.selected_instance_data_files
         data_map = _load_instance_data(files)
 
@@ -107,16 +141,32 @@ class InstanceDataHandler:
                 self.on_select_violin(data_map[key])
 
     def on_select_histogram(self, data: dict[str, list[int | float]]) -> None:
+        """Creates a histogram plot of the given data.
+
+        Args:
+            data (dict[str, list[int | float]]): The instance data to be visualized.
+        """
         fig = _plot_histogram_for_instance_data(data)
         with st.container():
             st.plotly_chart(fig, use_container_width=True)
 
     def on_select_box(self, data: dict[str, list[int | float]]) -> None:
+        """Creates a box plot of the given data.
+
+        Args:
+            data (dict[str, list[int | float]]): The instance data to be visualized.
+        """
         fig = _plot_box_for_instance_data(data)
         with st.container():
             st.plotly_chart(fig, use_container_width=True)
 
     def on_select_violin(self, data: dict[str, list[int | float]]) -> None:
+        """Display a violin plot for the given instance data.
+
+
+        Args:
+            data (dict[str, list[int | float]]): The instance data to be visualized.
+        """
         fig = _plot_violin_for_instance_data(data)
         with st.container():
             st.plotly_chart(fig, use_container_width=True)

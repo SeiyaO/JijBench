@@ -26,7 +26,18 @@ if tp.TYPE_CHECKING:
 
 
 class RoutingHandler:
+    """
+    This class provides methods to handle the navigation between different pages of the application,
+    such as instance data selection, solver configuration, problem definition, and result analysis.
+    """
+
     def on_select_page(self, session: Session) -> None:
+        """
+        Handle the navigation to the selected page.
+
+        Args:
+            session (Session): The current session.
+        """
         page = session.state.selected_page
         if page == "Instance data":
             self.on_select_instance_data(session)
@@ -38,6 +49,12 @@ class RoutingHandler:
             self.on_select_result(session)
 
     def on_select_instance_data(self, session: Session) -> None:
+        """
+        Display the instance data selection and visualization options.
+
+        Args:
+            session (Session): The current session.
+        """
         session.state.selected_figure_for_instance_data = st.radio(
             "Fugure",
             options=["Histogram", "Box", "Violin"],
@@ -67,7 +84,7 @@ class RoutingHandler:
         with cols[0]:
             with st.expander("List", expanded=True):
                 session.state.selected_instance_data_map = tree_select(
-                    session.state.instance_data_dir.nodes,
+                    session.state.instance_data_dir_tree.nodes,
                     check_model="leaf",
                     only_leaf_checkboxes=True,
                 )
@@ -93,9 +110,22 @@ class RoutingHandler:
                             st.experimental_rerun()
 
     def on_select_solver(self, session: Session) -> None:
+        """
+        Display the solver selection and configuration options.
+
+        Args:
+            session (Session): The current session.
+        """
         st.info("Coming soon...")
 
     def on_select_problem(self, session: Session) -> None:
+        """
+        Display the problem definition and visualization options.
+
+        Args:
+            session (Session): The current session.
+        """
+
         def is_callable(obj: tp.Any, name: str) -> TypeGuard[tp.Callable[..., tp.Any]]:
             check_type(name, obj, tp.Callable[..., tp.Any])
             return True
@@ -143,6 +173,12 @@ class RoutingHandler:
             # st.latex(problem._repr_latex_()[2:-2])
 
     def on_select_result(self, session: Session) -> None:
+        """
+        Display the benchmark results and analysis options.
+
+        Args:
+            session (Session): The current session.
+        """
         benchmark_id = session.state.selected_benchmark_id
         if benchmark_id:
             results_table = _get_results_table(benchmark_id, session.state.logdir)

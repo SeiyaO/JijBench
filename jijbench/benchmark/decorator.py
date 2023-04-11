@@ -6,7 +6,7 @@ import typing as tp
 from functools import wraps
 
 import jijbench as jb
-from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 
 
 def checkpoint(

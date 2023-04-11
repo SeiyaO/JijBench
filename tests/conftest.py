@@ -1,5 +1,6 @@
 import inspect
 import pathlib
+import typing as tp
 from unittest.mock import MagicMock
 
 import jijmodeling as jm
@@ -8,6 +9,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 import jijbench as jb
+from jijbench.dashboard.session import Session
 
 
 @pytest.fixture
@@ -42,7 +44,7 @@ def tsp_instance_data() -> jm.PH_VALUES_INTERFACE:
 
 
 @pytest.fixture
-def jm_sampleset_dict() -> dict:
+def jm_sampleset_dict() -> dict[str, tp.Any]:
     return {
         "record": {
             "solution": {
@@ -87,7 +89,7 @@ def sa_sampler() -> jz.JijSASampler:
 
 @pytest.fixture
 def sample_model(
-    mocker: MockerFixture, sa_sampler, jm_sampleset: jm.SampleSet
+    mocker: MockerFixture, sa_sampler: jz.JijSASampler, jm_sampleset: jm.SampleSet
 ) -> MagicMock:
     mocker.patch("jijbench.Experiment.save")
     mocker.patch(
@@ -100,3 +102,9 @@ def sample_model(
     )
     sample_model.__name__ = "sample_model"
     return sample_model
+
+
+@pytest.fixture
+def session(mocker: MockerFixture) -> Session:
+    mocker.patch("streamlit.session_state", return_value={})
+    return Session()
