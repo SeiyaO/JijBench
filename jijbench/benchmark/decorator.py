@@ -78,7 +78,7 @@ def checkpoint(
                         if k in kwargs:
                             params[k] = [kwargs[k]]
                             kw_arg_index += 1
-            bench = jb.Benchmark(params=params, solver=func, name=name)
+            bench = jb.Benchmark(solver=func, params=params, name=name)
             if name:
                 bench_dir = pathlib.Path(savedir) / name
                 if bench_dir.exists():

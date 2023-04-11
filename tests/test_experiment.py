@@ -62,14 +62,17 @@ def test_construct_experiment():
 
 
 def test_jijmodeling(
-    sample_model: MagicMock,
     knapsack_problem: jm.Problem,
     knapsack_instance_data: jm.PH_VALUES_INTERFACE,
+    jm_sampleset: jm.SampleSet,
 ):
+    def func(model, feed_dict):
+        return jm_sampleset
+
     experiment = jb.Experiment(autosave=False)
 
     with experiment:
-        solver = jb.Solver(sample_model)
+        solver = jb.Solver(func)
         x1 = jb.Parameter(knapsack_problem, name="model")
         x2 = jb.Parameter(knapsack_instance_data, name="feed_dict")
         record = solver([x1, x2])
@@ -81,8 +84,3 @@ def test_jijmodeling(
     cols = droped_table.columns
     assert "energy" in cols
     assert "num_feasible" in cols
-
-    assert sample_model.call_count == 1
-    sample_model.assert_called_with(
-        model=knapsack_problem, feed_dict=knapsack_instance_data
-    )

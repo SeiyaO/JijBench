@@ -73,8 +73,11 @@ def test_residual_energy(jm_sampleset: jm.SampleSet):
     assert residual_energy.data == 9.0
 
 
-def test_evaluate_benchmark_results(sample_model):
-    bench = jb.Benchmark({"num_reads": [1, 2]}, solver=sample_model)
+def test_evaluate_benchmark_results(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
+    bench = jb.Benchmark(solver=func, params={"num_reads": [1, 2]})
     res = bench(autosave=False)
 
     opt_value = 3.0

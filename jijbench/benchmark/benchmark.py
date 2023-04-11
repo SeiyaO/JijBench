@@ -39,18 +39,18 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
 
     def __init__(
         self,
-        params: dict[str, tp.Iterable[tp.Any]],
         solver: tp.Callable[..., tp.Any] | list[tp.Callable[..., tp.Any]],
+        params: dict[str, tp.Iterable[tp.Any]],
         name: str | None = None,
     ) -> None:
         """Initializes the benchmark with the given parameters and solvers.
 
         Args:
+            solver (Callable | list[Callable]): A single solver or a list of solvers to be used in the benchmark.
+                The solvers should be callable objects taking in a list of parameters.
             params (dict[str, Iterable[Any]]): Dictionary of parameters for the benchmark.
                 The keys should be the names of the parameters and the values should
                 be iterables of the respective parameter values.
-            solver (Callable | list[Callable]): A single solver or a list of solvers to be used in the benchmark.
-                The solvers should be callable objects taking in a list of parameters.
             name (str | None, optional): Name of the benchmark. Defaults to None.
 
         Raises:
@@ -222,7 +222,7 @@ def construct_benchmark_for(
             f"The argument corresponding to instance data is missing in sample_model of {sampler.__class__.__name__}."
         )
 
-    bench = Benchmark(params, sample_model, name)
+    bench = Benchmark(sample_model, params, name)
 
     additional_params: list[list[Parameter[tp.Any]]] = []
     for problem, instance_data in models:

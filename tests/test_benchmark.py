@@ -23,7 +23,7 @@ def test_simple_benchmark():
     def func(x):
         return x
 
-    bench = jb.Benchmark({"x": [1, 2]}, solver=func, name="test")
+    bench = jb.Benchmark(solver=func, params={"x": [1, 2]}, name="test")
 
     res = bench(autosave=True)
     columns = res.table.columns
@@ -58,7 +58,10 @@ def test_benchmark_for_jijzept_sampler(
     assert sample_model.call_count == 2
     assert len(sample_model.call_args_list) == 2
     sample_model.assert_called_with(
-        model=knapsack_problem, feed_dict=knapsack_instance_data, num_reads=2
+        sa_sampler,
+        model=knapsack_problem,
+        feed_dict=knapsack_instance_data,
+        num_reads=2,
     )
 
     table = res.table.reset_index()
@@ -92,12 +95,14 @@ def test_benchmark_for_jijzept_sampler_with_multi_models(
     assert len(sample_model.call_args_list) == 4
 
     sample_model.assert_any_call(
+        sa_sampler,
         model=knapsack_problem,
         feed_dict=knapsack_instance_data,
         search=True,
         num_search=5,
     )
     sample_model.assert_any_call(
+        sa_sampler,
         model=tsp_problem,
         feed_dict=tsp_instance_data,
         search=False,
@@ -123,13 +128,13 @@ def test_benchmark_for_jijzept_sampler_using_params(
     instance_data["d"][0] = -1
 
     bench = jb.Benchmark(
-        {
+        solver=f,
+        params={
             "num_reads": [1, 2],
             "num_sweeps": [10],
             "problem": [onehot_problem],
             "instance_data": [instance_data],
         },
-        solver=f,
     )
     res = bench(autosave=False)
 
@@ -142,8 +147,8 @@ def test_apply_benchmark():
         return x
 
     bench = jb.Benchmark(
-        {"x": [1, 2]},
         solver=func,
+        params={"x": [1, 2]},
     )
 
     experiment = jb.Experiment(name=jb.ID().data)
@@ -167,8 +172,8 @@ def test_benchmark_params_table():
         return x
 
     bench = jb.Benchmark(
-        {"x": [1, 2]},
         solver=func,
+        params={"x": [1, 2]},
     )
 
     res = bench()
@@ -178,7 +183,7 @@ def test_benchmark_with_multi_return_solver():
     def func():
         return "a", 1
 
-    bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
+    bench = jb.Benchmark(solver=func, params={"num_reads": [1, 2], "num_sweeps": [10]})
     res = bench()
 
     assert len(res.table) == 2
@@ -203,11 +208,11 @@ def test_benchmark_with_callable_args():
         return f(x)
 
     bench = jb.Benchmark(
-        {
+        solver=rap_solver,
+        params={
             "x": [1, 2, 3],
             "f": [f],
         },
-        solver=rap_solver,
     )
 
     res = bench()

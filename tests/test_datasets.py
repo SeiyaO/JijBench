@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import jijmodeling as jm
 import pytest
 
 import jijbench as jb
@@ -27,6 +28,23 @@ def test_get_models(problem_name: str, size: str):
 
     assert problem.name == problem_name
     assert isinstance(instance_data, dict)
+
+
+@pytest.mark.parametrize(
+    "problem_name",
+    [
+        "bin-packing",
+        "knapsack",
+        "nurse-scheduling",
+        "travelling-salesman",
+        "travelling-salesman-with-time-windows",
+    ],
+)
+def test_get_problem(problem_name: str):
+    problem = jb.get_problem(problem_name)
+
+    assert problem.name == problem_name
+    assert isinstance(problem, jm.Problem)
 
 
 @pytest.mark.parametrize(
