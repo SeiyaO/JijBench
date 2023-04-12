@@ -1,9 +1,11 @@
 import os
 import shutil
+import typing as tp
 from unittest.mock import MagicMock
 
 import jijmodeling as jm
 import jijzept as jz
+import pandas as pd
 import pytest
 
 import jijbench as jb
@@ -19,27 +21,54 @@ def pre_post_process():
         shutil.rmtree(norm_path)
 
 
-def test_simple_benchmark():
-    def func(x):
-        return x
+def f1():
+    return "Hello, World!"
 
-    bench = jb.Benchmark(solver=func, params={"x": [1, 2]}, name="test")
+
+def f2(i: int) -> int:
+    return i**2
+
+
+def f3(i: int) -> tuple[int, int]:
+    return i + 1, i + 2
+
+
+def f4(i: int, j: int = 1) -> int:
+    return i + j
+
+
+@pytest.mark.parametrize(
+    "solver, params",
+    [
+        (f1, {}),
+        (f2, {"i": [1, 2]}),
+        (f3, {"i": [1, 2]}),
+        (f4, {"i": [1, 2], "j": [1, 2]}),
+    ],
+)
+def test_benchmark(
+    solver: tp.Callable[..., tp.Any], params: dict[str, tp.Iterable[tp.Any]]
+):
+    bench = jb.Benchmark(solver=solver, params=params, name="test")
 
     res = bench(autosave=True)
-    columns = res.table.columns
-
     assert isinstance(res, jb.Experiment)
-    assert "solver_return[0]" in columns
 
-    op1 = res.operator
-    assert op1 is not None
-    assert isinstance(op1.inputs[0], jb.Experiment)
-    assert isinstance(op1.inputs[1], jb.Experiment)
-    t1 = op1.inputs[0].table
-    t2 = op1.inputs[1].table
+    actual = res.response_table
 
-    assert t1.iloc[0, 1] == 1
-    assert t2.iloc[0, 1] == 2
+    solver_args = [{pi.name: pi.data for pi in p} for p in bench.params]
+    expected = pd.DataFrame(
+        map(lambda x: solver(**x), solver_args),
+        index=actual.index,
+        columns=actual.columns,
+    )
+
+    assert actual.equals(expected)
+
+    op = res.operator
+    assert op is not None
+    assert isinstance(op.inputs[0], jb.Experiment)
+    assert isinstance(op.inputs[1], jb.Experiment)
 
 
 def test_benchmark_for_jijzept_sampler(

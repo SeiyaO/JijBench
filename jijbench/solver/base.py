@@ -79,7 +79,7 @@ class Solver(FunctionNode[Parameter[tp.Any], Record]):
             name (str, optional): The name of the solver function. Defaults to None.
         """
         if name is None:
-            name = function.__name__
+            name = "solver"
         super().__init__(name)
         self.function = function
 

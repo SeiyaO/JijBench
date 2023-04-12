@@ -171,7 +171,7 @@ class _ExperimentState(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def save(self) -> None:
+    def save(self, context: Experiment) -> None:
         pass
 
 
@@ -190,7 +190,7 @@ class _Waiting(_ExperimentState):
         record.name = len(context)
         _append(context, record)
 
-    def save(self, context) -> None:
+    def save(self, context: Experiment) -> None:
         save(context, savedir=context.savedir)
 
 

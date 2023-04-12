@@ -3,14 +3,13 @@ from __future__ import annotations
 import os
 import shutil
 import typing as tp
-from unittest.mock import MagicMock
 
 import jijmodeling as jm
 import pandas as pd
 import pytest
 
 import jijbench as jb
-from jijbench.typing import ModelType
+from jijbench.experiment.experiment import _Created, _Running, _Waiting
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -39,78 +38,101 @@ def f4(i: int, j: int = 1) -> int:
     return i + j
 
 
-def f5(model: jm.Problem, feed_dict: jm.PH_VALUES_INTERFACE) -> ModelType:
-    return model, feed_dict
-
-
-def test_sample(problem):
-    print(problem)
-
-
-def test_simple_experiment():
-    e = jb.Experiment(name="simple_experiment")
-    solver = jb.Solver(f1)
-    record = solver([])
-    e.append(record)
-    e.save()
-
-    print(e.table)
-
-
 @pytest.mark.parametrize(
-    "solver, params",
+    "f, param_names, param_values",
     [
-        (f1, []),
-        (f2, [{"i": 1}, {"i": 2}, {"i": 3}]),
-        (f3, [{"i": 1}, {"i": 2}, {"i": 3}]),
-        (f4, [{"i": 1}, {"i": 1, "j": 2}, {"i": 1, "j": 3}]),
+        (f1, [(), (), ()], [(), (), ()]),
+        (f2, ("i",), [(1,), (2,), (3,)]),
+        (f3, ("i",), [(1,), (2,), (3,)]),
+        (f4, ("i", "j"), [(1,), (1, 2), (1, 3)]),
     ],
 )
 def test_experiment(
-    solver: tp.Callable[..., tp.Any], params: dict[str, tp.Iterable[tp.Any]]
+    f: tp.Callable[..., tp.Any],
+    param_names: tuple[str, ...],
+    param_values: list[tuple[int, ...]],
 ):
-    e = jb.Experiment(name="simple_experiment")
+    experiment = jb.Experiment(name="simple_experiment")
 
-    for param in params:
-        solver = jb.Solver(solver)
-        record = solver([jb.Parameter(i, "i") for k, v in param.items() for i in v])
-        e.append(record)
-    e.save()
+    state = getattr(experiment, "state")
+    assert isinstance(state, _Created)
 
-
-def test_simple_experiment_with_context_manager():
-    e = jb.Experiment(name="simple_experiment_with_context_manager", autosave=True)
-
-    def func(i):
-        return i**2
-
-    for i in range(3):
-        with e:
-            solver = jb.Solver(func)
-            record = solver([jb.Parameter(i, "i")])
-            e.append(record)
-
-
-def test_jijmodeling(
-    knapsack_problem: jm.Problem,
-    knapsack_instance_data: jm.PH_VALUES_INTERFACE,
-    jm_sampleset: jm.SampleSet,
-):
-    def func(model, feed_dict):
-        return jm_sampleset
-
-    experiment = jb.Experiment(autosave=False)
-
-    with experiment:
-        solver = jb.Solver(func)
-        x1 = jb.Parameter(knapsack_problem, name="model")
-        x2 = jb.Parameter(knapsack_instance_data, name="feed_dict")
-        record = solver([x1, x2])
-        record.name = jb.ID().data
+    solver = jb.Solver(f)
+    for v in param_values:
+        record = solver([jb.Parameter(vi, name) for name, vi in zip(param_names, v)])
         experiment.append(record)
 
-    droped_table = experiment.table.dropna(axis="columns")
+        actual = experiment.table.filter(regex="solver_return").tail(1)
+        expected = pd.DataFrame([f(*v)], index=actual.index, columns=actual.columns)
 
-    cols = droped_table.columns
-    assert "energy" in cols
-    assert "num_feasible" in cols
+        assert actual.equals(expected)
+
+        state = getattr(experiment, "state")
+        assert isinstance(state, _Waiting)
+    experiment.save()
+
+
+@pytest.mark.parametrize(
+    "f, param_names, param_values",
+    [
+        (f1, [(), (), ()], [(), (), ()]),
+        (f2, ("i",), [(1,), (2,), (3,)]),
+        (f3, ("i",), [(1,), (2,), (3,)]),
+        (f4, ("i", "j"), [(1,), (1, 2), (1, 3)]),
+    ],
+)
+def test_experiment_with_context_manager(
+    f: tp.Callable[..., tp.Any],
+    param_names: tuple[str, ...],
+    param_values: list[tuple[int, ...]],
+):
+    experiment = jb.Experiment(name="simple_experiment")
+
+    state = getattr(experiment, "state")
+    assert isinstance(state, _Created)
+
+    solver = jb.Solver(f)
+    for v in param_values:
+        with experiment:
+            record = solver(
+                [jb.Parameter(vi, name) for name, vi in zip(param_names, v)]
+            )
+            experiment.append(record)
+
+            actual = experiment.table.filter(regex="solver_return").tail(1)
+            expected = pd.DataFrame([f(*v)], index=actual.index, columns=actual.columns)
+
+            assert actual.equals(expected)
+
+            state = getattr(experiment, "state")
+            assert isinstance(state, _Running)
+    experiment.save()
+
+
+def test_experiment_with_solver_returning_jm_sampleset(
+    jm_sampleset: jm.SampleSet,
+):
+    def f():
+        return jm_sampleset
+
+    experiment = jb.Experiment()
+
+    with experiment:
+        solver = jb.Solver(f)
+        record = solver([])
+        experiment.append(record)
+
+    expected_columns = [
+        "num_occurrences",
+        "energy",
+        "objective",
+        "onehot1_violations",
+        "onehot2_violations",
+        "num_samples",
+        "num_feasible",
+        "execution_time",
+    ]
+
+    assert set(expected_columns) <= set(experiment.table.columns)
+    assert set(expected_columns) == set(experiment.response_table.columns)
+    assert experiment.params_table.empty
