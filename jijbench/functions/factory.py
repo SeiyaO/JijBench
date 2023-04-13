@@ -14,7 +14,7 @@ if tp.TYPE_CHECKING:
 
 class Factory(FunctionNode[DataNodeInT, DataNodeOutT]):
     """An abstract base class for creating a new data node from a list of input nodes.
-    
+
     Attributes:
         inputs (list[`DataNodeInT`]): List of input data nodes.
         name (Optional[str]): Name of the resulting data node.
@@ -67,7 +67,7 @@ class RecordFactory(Factory[DataNodeInT, "Record"]):
     def create(
         self,
         inputs: list[DataNodeInT],
-        name: str = "",
+        name: str | None = None,
     ) -> Record:
         """Create a Record object from the input DataNode objects.
 
@@ -90,7 +90,7 @@ class RecordFactory(Factory[DataNodeInT, "Record"]):
 class ArtifactFactory(Factory["Record", "Artifact"]):
     """A factory class for creating Artifact objects."""
 
-    def create(self, inputs: list[Record], name: str = "") -> Artifact:
+    def create(self, inputs: list[Record], name: str | None = None) -> Artifact:
         """Creates an `Artifact` object using a list of `Record` inputs.
 
         Args:
@@ -117,7 +117,7 @@ class TableFactory(Factory["Record", "Table"]):
     def create(
         self,
         inputs: list[Record],
-        name: str = "",
+        name: str | None = None,
         index_name: str | None = None,
     ) -> Table:
         """Creates a `Table` object using a list of `Record` inputs.

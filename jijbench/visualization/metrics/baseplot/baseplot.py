@@ -50,7 +50,7 @@ class BasePlot:
             ylabel (str | None): the ylabel of figure. Defaults to None.
             ylabel_size (float | None): the fontsize of the ylabel. The default uses matplotlib's default value.
             yticks (list[int | float] | None): the yticks of figure. Default to only integers by`MaxNLocator(integer=True)`.
-            matplotlib_boxplot_kwargs: the parameter passed to matplotlib.boxplot.
+            **matplotlib_boxplot_kwargs (dict): the parameter passed to matplotlib.boxplot.
 
         Returns:
             tuple[tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]]: A tuple of length equal to the number of rows in result. each element of is a tuple of figure and axes.

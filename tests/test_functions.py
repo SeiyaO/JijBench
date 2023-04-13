@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+
 import jijbench as jb
 
 
@@ -80,6 +81,33 @@ def test_concat_table():
         assert d == factory.inputs[0].data[i]
 
 
+def test_concat_table_contain_nan():
+    concat = jb.functions.Concat()
+
+    factory = jb.functions.TableFactory()
+    data = [jb.ID("id"), jb.Date(), jb.Array(np.arange(5), "array")]
+    data2 = [
+        jb.ID("id"),
+        jb.Date(),
+        jb.Array(np.arange(5), "array"),
+        jb.Array(np.arange(5), "array2"),
+    ]
+    r1 = jb.Record(pd.Series(data), "a")
+    r2 = jb.Record(pd.Series(data2), "b")
+
+    t1 = factory([r1])
+    t2 = factory([r2])
+
+    table = concat([t1, t2])
+
+    assert isinstance(table, jb.Table)
+    assert table.operator is None
+    assert table.data.index[0] == "a"
+    assert table.data.index[1] == "b"
+    for i, d in enumerate(table.data.loc["b"]):
+        assert d == factory.inputs[1].data[i]
+
+
 def test_concat_artifact():
     concat = jb.functions.Concat()
 
@@ -92,9 +120,6 @@ def test_concat_artifact():
     a2 = factory([r2])
 
     artifact = concat([a1, a2])
-
-    print(artifact.data)
-    print(artifact.data.keys())
 
     assert isinstance(artifact, jb.Artifact)
     assert artifact.operator is None

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-import os, shutil
-
+import os
+import shutil
+from unittest.mock import MagicMock
 
 import jijmodeling as jm
 import pandas as pd
 import pytest
 
 import jijbench as jb
-from unittest.mock import MagicMock
 
 
 @pytest.fixture(scope="function", autouse=True)

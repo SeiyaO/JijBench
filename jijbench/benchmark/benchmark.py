@@ -6,6 +6,7 @@ import pathlib
 import typing as tp
 
 import jijmodeling as jm
+from typing_extensions import TypeGuard
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.elements.base import Callable
@@ -39,7 +40,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
     def __init__(
         self,
         params: dict[str, tp.Iterable[tp.Any]],
-        solver: tp.Callable | list[tp.Callable],
+        solver: tp.Callable[..., tp.Any] | list[tp.Callable[..., tp.Any]],
         name: str | None = None,
     ) -> None:
         """Initializes the benchmark with the given parameters and solvers.
@@ -55,22 +56,26 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         Raises:
             TypeError: If the name is not a string.
         """
+
+        def is_any_parameter(param: tp.Any) -> TypeGuard[Parameter[tp.Any]]:
+            return isinstance(param, Parameter)
+
         if name is None:
             name = ID().data
         super().__init__(name)
 
         self.params = [
             [
-                v if isinstance(v, Parameter) else Parameter(v, k)
+                v if is_any_parameter(v) else Parameter(v, k)
                 for k, v in zip(params.keys(), r)
             ]
             for r in itertools.product(*params.values())
         ]
 
         if isinstance(solver, tp.Callable):
-            self.solver = [Solver(solver)]
+            self.solver = [Solver(solver, "solver")]
         else:
-            self.solver = [Solver(f) for f in solver]
+            self.solver = [Solver(f, "solver") for f in solver]
 
     def __call__(
         self,
@@ -219,7 +224,7 @@ def construct_benchmark_for(
 
     bench = Benchmark(params, sample_model, name)
 
-    additional_params = []
+    additional_params: list[list[Parameter[tp.Any]]] = []
     for problem, instance_data in models:
         data = (problem, instance_data)
         data = UserDefinedModel.validate_data(data)

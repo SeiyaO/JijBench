@@ -1,9 +1,10 @@
 from collections import OrderedDict
+
 import matplotlib
-from matplotlib import axes, collections, figure, patches
 import networkx as nx
 import numpy as np
 import pytest
+from matplotlib import axes, collections, figure, patches
 
 from jijbench.visualization.figure.graph import Graph, GraphType
 from jijbench.visualization.figure.schedule import Schedule

@@ -1,11 +1,12 @@
-import os, shutil
+import os
+import shutil
+from unittest.mock import MagicMock
 
 import jijmodeling as jm
 import jijzept as jz
 import pytest
 
 import jijbench as jb
-from unittest.mock import MagicMock
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -28,7 +29,7 @@ def test_simple_benchmark():
     columns = res.table.columns
 
     assert isinstance(res, jb.Experiment)
-    assert "func_return[0]" in columns
+    assert "solver_return[0]" in columns
 
     op1 = res.operator
     assert op1 is not None
@@ -150,11 +151,10 @@ def test_apply_benchmark():
     columns = res.table.columns
 
     assert isinstance(res, jb.Experiment)
-    assert "func_return[0]" in columns
+    assert "solver_return[0]" in columns
 
     op1 = res.operator
-    # ic()
-    # ic(op1.inputs)
+
     assert op1 is not None
     assert isinstance(op1, jb.Benchmark)
     assert isinstance(op1.inputs[0], jb.Experiment)
@@ -182,8 +182,8 @@ def test_benchmark_with_multi_return_solver():
     res = bench()
 
     assert len(res.table) == 2
-    assert res.table["func_return[0]"][0] == "a"
-    assert res.table["func_return[1]"][0] == 1.0
+    assert res.table["solver_return[0]"][0] == "a"
+    assert res.table["solver_return[1]"][0] == 1.0
 
 
 # def test_benchmark_with_custom_solver_by_sync_False():
@@ -216,123 +216,46 @@ def test_benchmark_with_callable_args():
     # assert isinstance(res.table[sample_model.__name__][0], str)
 
 
-# def test_benchmark_with_multisolver():
-#     def func1(x):
-#         return 2 * x
-#
-#     def func2(x):
-#         return 3 * x
-#
-#     bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=[func1, func2])
-#     bench.run()
-#
-#     columns = bench.table.columns
-#
-#     assert "solver" in columns
-#     assert "func1" in bench.table["solver"].values
-#     assert "func2" in bench.table["solver"].values
-#
-#
-# def test_load():
-#     def func1(x):
-#         return 2 * x
-#
-#     bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
-#     bench.run()
-#
-#     del bench
-#
-#     bench = jb.load(benchmark_id="test")
-#
-#     assert "func1" in bench.table["solver"].values
-#
-#
-# def test_save():
-#     def func1(x):
-#         return 2 * x
-#
-#     import pathlib
-#
-#     save_dir = str(pathlib.PurePath(__file__).parent / ".my_result")
-#
-#     bench = jb.Benchmark(
-#         params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test", save_dir=save_dir
-#     )
-#     bench.run()
-#
-#     shutil.rmtree(save_dir)
-#
-#
-# def test_benchmark_for_custom_solver_return_jm_sampleset():
-#     def func():
-#         jm_sampleset = jm.SampleSet.from_serializable(
-#             {
-#                 "record": {
-#                     "solution": {
-#                         "x": [
-#                             (([0, 1], [0, 1]), [1, 1], (2, 2)),
-#                             (([], []), [], (2, 2)),
-#                         ]
-#                     },
-#                     "num_occurrences": [1, 1],
-#                 },
-#                 "evaluation": {
-#                     "energy": [
-#                         -3.8499999046325684,
-#                         0.0,
-#                     ],
-#                     "objective": [3.0, 0.0],
-#                     "constraint_violations": {},
-#                     "penalty": None,
-#                 },
-#                 "measuring_time": {
-#                     "solve": None,
-#                     "system": None,
-#                     "total": None,
-#                 },
-#             }
-#         )
-#         jm_sampleset.measuring_time.solve.solve = None
-#         jm_sampleset.measuring_time.system.system = None
-#         jm_sampleset.measuring_time.total = None
-#         return jm_sampleset
-#
-#     bench = jb.Benchmark(params={"dummy": [1]}, solver=func)
-#     bench.run()
-#
-#
-# def test_benchmark_for_custom_solver_failed():
-#     def custom_solver_failed():
-#         raise Exception("solver is failed.")
-#
-#     bench = jb.Benchmark(params={"dummy": [1]}, solver=custom_solver_failed)
-#     with pytest.raises(SolverFailedError):
-#         bench.run()
-#
-#
-# def test_benchmark_for_num_feasible():
-#     bench = jb.Benchmark(
-#         {
-#             "N": [10, 200],
-#             "sample_model": [sample_model],
-#         },
-#         solver=sample_model,
-#     )
-#     bench.run()
-#     assert (bench.table["num_feasible"].values == 7).all()
-#
-#
-# def test_benchmark_for_change_solver_return_name():
-#     def solver():
-#         return 1
-#
-#     bench = jb.Benchmark(
-#         {
-#             "N": [10, 200],
-#             "sample_model": [sample_model],
-#         },
-#         solver=solver,
-#         solver_return_name={"solver": ["return_1"]},
-#     )
-#     bench.run()
-#     assert "return_1" in bench.table.columns
+@pytest.mark.parametrize(
+    "x, y, z, kwargs, expected",
+    [
+        (1, None, None, {}, "1"),
+        (1, 1, None, {}, "2"),
+        (1, None, 1, {}, "2"),
+        (1, 1, 1, {}, "3"),
+        (1, 1, None, {"extra": "!"}, "2!"),
+    ],
+)
+def test_benchmark_by_checkpoint(x, y, z, kwargs, expected):
+    benchmark_id = "example_checkpoint"
+
+    @jb.checkpoint(name=benchmark_id, savedir="./checkpoint")
+    def pos_or_kw(x: int, y: int = 0, z: int = 0, **kwargs) -> str:
+        extra = "".join(kwargs.values())
+        return f"{x + y + z}{extra}"
+
+    @jb.checkpoint(name=benchmark_id, savedir="./checkpoint")
+    def kw_only(x: int, *, y: int = 0, z: int = 0, **kwargs) -> str:
+        extra = "".join(kwargs.values())
+        return f"{x + y + z}{extra}"
+
+    if y and z:
+        ret1 = pos_or_kw(x, y, z, **kwargs)
+        ret2 = kw_only(x, y=y, z=z, **kwargs)
+    elif y and not z:
+        ret1 = pos_or_kw(x, y, **kwargs)
+        ret2 = kw_only(x, y=y, **kwargs)
+    elif not y and z:
+        ret1 = pos_or_kw(x, z=z, **kwargs)
+        ret2 = kw_only(x, z=z, **kwargs)
+    else:
+        ret1 = pos_or_kw(x, **kwargs)
+        ret2 = kw_only(x, **kwargs)
+
+    assert ret1 == expected
+    assert ret1 == ret2
+
+    bench = jb.load(benchmark_id, savedir="./checkpoint")
+    assert (bench.table["solver_return[0]"][-2:] == expected).all()
+
+    shutil.rmtree("./checkpoint")

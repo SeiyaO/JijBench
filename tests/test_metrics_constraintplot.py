@@ -1,3 +1,6 @@
+import os
+import shutil
+
 import jijmodeling as jm
 import numpy as np
 import pandas as pd
@@ -9,6 +12,16 @@ from jijbench.visualization import ConstraintPlot
 from jijbench.visualization.metrics.constraintplot.constraintplot import (
     _get_violations_dict,
 )
+
+
+@pytest.fixture(scope="function", autouse=True)
+def pre_post_process():
+    # preprocess
+    yield
+    # postprocess
+    norm_path = os.path.normcase("./.jb_results")
+    if os.path.exists(norm_path):
+        shutil.rmtree(norm_path)
 
 
 def solve():

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import jijbench as jb
 import numpy as np
 import pandas as pd
 import pytest
+
+import jijbench as jb
 
 
 def test_record():
@@ -189,15 +190,11 @@ def test_experiment_append():
         assert e.table.loc[index, "num"] == i
 
 
-def test_ref():
-    factory = jb.functions.RecordFactory()
-    inputs1 = [
-        jb.ID(name="id1"),
-        jb.Date(name="date1"),
-        jb.Array(np.arange(5), name="array1"),
-    ]
+def test_sample():
+    import typing as tp
 
-    r1 = factory(inputs1)
+    import jijbench as jb
+    from jijbench.node.base import DataNode
 
-    factory = jb.functions.TableFactory()
-    table = r1.apply(factory)
+    a: DataNode[tp.Any] = jb.Artifact({}, "sample")
+    a.operator
