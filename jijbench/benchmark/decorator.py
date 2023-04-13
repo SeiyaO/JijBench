@@ -43,7 +43,7 @@ def checkpoint(
         f2("1", f=2.0)
         f3("1", f=2.0, g=3.0)
 
-        bench = jb.load("example_checkpoint")
+        result = jb.load("example_checkpoint")
         ```
     """
 

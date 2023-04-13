@@ -17,6 +17,7 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from streamlit_ace import st_ace
 from streamlit_elements import editor, elements
 from streamlit_tree_select import tree_select
+from typeguard import check_type
 from typing_extensions import TypeGuard
 
 import jijbench as jb
