@@ -147,3 +147,5 @@ Results/
 __marker__*
 
 notebooks/
+
+.streamlit

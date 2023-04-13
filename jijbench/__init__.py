@@ -7,8 +7,7 @@ import jijbench.node as node
 from jijbench.benchmark.benchmark import Benchmark, construct_benchmark_for
 from jijbench.benchmark.decorator import checkpoint
 from jijbench.containers.containers import Artifact, Record, Table
-from jijbench.datasets.instance_data import get_instance_data
-from jijbench.datasets.problem import get_problem
+from jijbench.datasets.model import get_instance_data, get_models, get_problem
 from jijbench.elements.array import Array
 from jijbench.elements.base import Callable, Number, String
 from jijbench.elements.date import Date
@@ -17,7 +16,7 @@ from jijbench.evaluation.evaluation import Evaluation
 from jijbench.experiment.experiment import Experiment
 from jijbench.io.io import load, save
 from jijbench.solver.base import Parameter, Response, Solver
-from jijbench.solver.jijzept import InstanceData, SampleSet, UserDefinedModel
+from jijbench.solver.jijzept import InstanceData, Model, SampleSet
 
 __all__ = [
     "checkpoint",
@@ -25,6 +24,7 @@ __all__ = [
     "functions",
     "node",
     "get_instance_data",
+    "get_models",
     "get_problem",
     "load",
     "save",
@@ -37,7 +37,7 @@ __all__ = [
     "Experiment",
     "ID",
     "InstanceData",
-    "UserDefinedModel",
+    "Model",
     "Number",
     "Parameter",
     "Record",

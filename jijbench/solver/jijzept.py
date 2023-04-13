@@ -58,7 +58,7 @@ class InstanceData(Parameter[jm.PH_VALUES_INTERFACE]):
 
 
 @dataclass
-class UserDefinedModel(Parameter[ModelType]):
+class Model(Parameter[ModelType]):
     """User defined model for jijzept.
 
     Attributes:

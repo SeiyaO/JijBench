@@ -1,10 +1,13 @@
-import inspect
+from __future__ import annotations
+
 import pathlib
+import typing as tp
 from unittest.mock import MagicMock
 
 import jijmodeling as jm
 import jijzept as jz
 import pytest
+from _pytest.fixtures import SubRequest
 from pytest_mock import MockerFixture
 
 import jijbench as jb
@@ -23,26 +26,26 @@ def onehot_problem() -> jm.Problem:
 
 @pytest.fixture
 def knapsack_problem() -> jm.Problem:
-    return jb.get_problem("Knapsack")
+    return jb.get_problem("knapsack")
 
 
 @pytest.fixture
 def tsp_problem() -> jm.Problem:
-    return jb.get_problem("TSP")
+    return jb.get_problem("travelling-salesman")
 
 
 @pytest.fixture
 def knapsack_instance_data() -> jm.PH_VALUES_INTERFACE:
-    return jb.get_instance_data("Knapsack")[0][1]
+    return jb.get_instance_data("knapsack")[0]
 
 
 @pytest.fixture
 def tsp_instance_data() -> jm.PH_VALUES_INTERFACE:
-    return jb.get_instance_data("TSP")[0][1]
+    return jb.get_instance_data("travelling-salesman")[0]
 
 
 @pytest.fixture
-def jm_sampleset_dict() -> dict:
+def jm_sampleset_dict() -> dict[str, tp.Any]:
     return {
         "record": {
             "solution": {
@@ -86,17 +89,12 @@ def sa_sampler() -> jz.JijSASampler:
 
 
 @pytest.fixture
-def sample_model(
-    mocker: MockerFixture, sa_sampler, jm_sampleset: jm.SampleSet
-) -> MagicMock:
-    mocker.patch("jijbench.Experiment.save")
+def sample_model(mocker: MockerFixture, jm_sampleset: jm.SampleSet) -> MagicMock:
     mocker.patch(
-        "inspect.signature",
-        return_value=inspect.signature(sa_sampler.sample_model),
+        "jijbench.Experiment.save",
     )
     sample_model = mocker.patch(
-        "jijzept.JijSASampler.sample_model",
-        return_value=jm_sampleset,
+        "jijzept.JijSASampler.sample_model", autospec=True, return_value=jm_sampleset
     )
     sample_model.__name__ = "sample_model"
     return sample_model

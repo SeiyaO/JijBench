@@ -7,7 +7,7 @@ import jijmodeling as jm
 import numpy as np
 import pandas as pd
 
-from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.elements.base import Any
 from jijbench.elements.id import ID
 from jijbench.node.base import DataNode, FunctionNode

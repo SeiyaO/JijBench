@@ -26,7 +26,10 @@ def _is_feasible_list(sampleset: SampleSet) -> list[bool]:
         constraint_violations = np.array(
             list(sampleset.evaluation.constraint_violations.values())
         )
-        return constraint_violations.sum(axis=0) == 0
+        if len(constraint_violations):
+            return constraint_violations.sum(axis=0) == 0
+        else:
+            return [True] * len(sampleset.data)
 
 
 class Metrics(FunctionNode[SampleSet, Number]):

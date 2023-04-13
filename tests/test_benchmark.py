@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import os
 import shutil
+import typing as tp
 from unittest.mock import MagicMock
 
 import jijmodeling as jm
 import jijzept as jz
+import pandas as pd
 import pytest
 
 import jijbench as jb
@@ -19,27 +23,54 @@ def pre_post_process():
         shutil.rmtree(norm_path)
 
 
-def test_simple_benchmark():
-    def func(x):
-        return x
+def f1():
+    return "Hello, World!"
 
-    bench = jb.Benchmark({"x": [1, 2]}, solver=func, name="test")
+
+def f2(i: int) -> int:
+    return i**2
+
+
+def f3(i: int) -> tuple[int, int]:
+    return i + 1, i + 2
+
+
+def f4(i: int, j: int = 1) -> int:
+    return i + j
+
+
+@pytest.mark.parametrize(
+    "solver, params",
+    [
+        (f1, {}),
+        (f2, {"i": [1, 2]}),
+        (f3, {"i": [1, 2]}),
+        (f4, {"i": [1, 2], "j": [1, 2]}),
+    ],
+)
+def test_benchmark(
+    solver: tp.Callable[..., tp.Any], params: dict[str, tp.Iterable[tp.Any]]
+):
+    bench = jb.Benchmark(solver=solver, params=params, name="test")
 
     res = bench(autosave=True)
-    columns = res.table.columns
-
     assert isinstance(res, jb.Experiment)
-    assert "solver_return[0]" in columns
 
-    op1 = res.operator
-    assert op1 is not None
-    assert isinstance(op1.inputs[0], jb.Experiment)
-    assert isinstance(op1.inputs[1], jb.Experiment)
-    t1 = op1.inputs[0].table
-    t2 = op1.inputs[1].table
+    actual = res.response_table
 
-    assert t1.iloc[0, 1] == 1
-    assert t2.iloc[0, 1] == 2
+    solver_args = [{pi.name: pi.data for pi in p} for p in bench.params]
+    expected = pd.DataFrame(
+        map(lambda x: solver(**x), solver_args),
+        index=actual.index,
+        columns=actual.columns,
+    )
+
+    assert actual.equals(expected)
+
+    op = res.operator
+    assert op is not None
+    assert isinstance(op.inputs[0], jb.Experiment)
+    assert isinstance(op.inputs[1], jb.Experiment)
 
 
 def test_benchmark_for_jijzept_sampler(
@@ -58,7 +89,10 @@ def test_benchmark_for_jijzept_sampler(
     assert sample_model.call_count == 2
     assert len(sample_model.call_args_list) == 2
     sample_model.assert_called_with(
-        model=knapsack_problem, feed_dict=knapsack_instance_data, num_reads=2
+        sa_sampler,
+        model=knapsack_problem,
+        feed_dict=knapsack_instance_data,
+        num_reads=2,
     )
 
     table = res.table.reset_index()
@@ -92,12 +126,14 @@ def test_benchmark_for_jijzept_sampler_with_multi_models(
     assert len(sample_model.call_args_list) == 4
 
     sample_model.assert_any_call(
+        sa_sampler,
         model=knapsack_problem,
         feed_dict=knapsack_instance_data,
         search=True,
         num_search=5,
     )
     sample_model.assert_any_call(
+        sa_sampler,
         model=tsp_problem,
         feed_dict=tsp_instance_data,
         search=False,
@@ -123,13 +159,13 @@ def test_benchmark_for_jijzept_sampler_using_params(
     instance_data["d"][0] = -1
 
     bench = jb.Benchmark(
-        {
+        solver=f,
+        params={
             "num_reads": [1, 2],
             "num_sweeps": [10],
             "problem": [onehot_problem],
             "instance_data": [instance_data],
         },
-        solver=f,
     )
     res = bench(autosave=False)
 
@@ -142,8 +178,8 @@ def test_apply_benchmark():
         return x
 
     bench = jb.Benchmark(
-        {"x": [1, 2]},
         solver=func,
+        params={"x": [1, 2]},
     )
 
     experiment = jb.Experiment(name=jb.ID().data)
@@ -167,8 +203,8 @@ def test_benchmark_params_table():
         return x
 
     bench = jb.Benchmark(
-        {"x": [1, 2]},
         solver=func,
+        params={"x": [1, 2]},
     )
 
     res = bench()
@@ -178,7 +214,7 @@ def test_benchmark_with_multi_return_solver():
     def func():
         return "a", 1
 
-    bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
+    bench = jb.Benchmark(solver=func, params={"num_reads": [1, 2], "num_sweeps": [10]})
     res = bench()
 
     assert len(res.table) == 2
@@ -203,11 +239,11 @@ def test_benchmark_with_callable_args():
         return f(x)
 
     bench = jb.Benchmark(
-        {
+        solver=rap_solver,
+        params={
             "x": [1, 2, 3],
             "f": [f],
         },
-        solver=rap_solver,
     )
 
     res = bench()

@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
-from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.containers.containers import Artifact, Container, Record, Table
 from jijbench.elements.base import Callable
 from jijbench.elements.id import ID
@@ -171,7 +171,7 @@ class _ExperimentState(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def save(self) -> None:
+    def save(self, context: Experiment) -> None:
         pass
 
 
@@ -190,7 +190,7 @@ class _Waiting(_ExperimentState):
         record.name = len(context)
         _append(context, record)
 
-    def save(self, context) -> None:
+    def save(self, context: Experiment) -> None:
         save(context, savedir=context.savedir)
 
 

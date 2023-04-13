@@ -5,7 +5,7 @@ import typing as tp
 
 import dill
 
-from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.containers.containers import Artifact, Table
 from jijbench.elements.base import Any
 from jijbench.functions.concat import Concat

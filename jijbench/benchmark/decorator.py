@@ -6,7 +6,7 @@ import typing as tp
 from functools import wraps
 
 import jijbench as jb
-from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 
 
 def checkpoint(
@@ -43,7 +43,7 @@ def checkpoint(
         f2("1", f=2.0)
         f3("1", f=2.0, g=3.0)
 
-        bench = jb.load("example_checkpoint")
+        result = jb.load("example_checkpoint")
         ```
     """
 
@@ -78,7 +78,7 @@ def checkpoint(
                         if k in kwargs:
                             params[k] = [kwargs[k]]
                             kw_arg_index += 1
-            bench = jb.Benchmark(params=params, solver=func, name=name)
+            bench = jb.Benchmark(solver=func, params=params, name=name)
             if name:
                 bench_dir = pathlib.Path(savedir) / name
                 if bench_dir.exists():

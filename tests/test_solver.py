@@ -92,7 +92,7 @@ def test_user_defined_model():
 
     instance_data: jm.PH_VALUES_INTERFACE = {"a": 1, "b": 2.0, "c": [1, 2]}
 
-    model = jb.UserDefinedModel((problem, instance_data), "test")
+    model = jb.Model((problem, instance_data), "test")
 
 
 def test_invalid_user_defined_model():
@@ -109,7 +109,7 @@ def test_invalid_user_defined_model():
 
     instance_data: jm.PH_VALUES_INTERFACE = {"a": 1, "c": [1, 2]}
     with pytest.raises(KeyError):
-        model = jb.UserDefinedModel((problem, instance_data), "test")
+        model = jb.Model((problem, instance_data), "test")
 
 
 def test_parameter():

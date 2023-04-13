@@ -8,7 +8,7 @@ import typing as tp
 import jijmodeling as jm
 from typing_extensions import TypeGuard
 
-from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.elements.base import Callable
 from jijbench.elements.date import Date
 from jijbench.elements.id import ID
@@ -17,14 +17,14 @@ from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
 from jijbench.node.base import FunctionNode
 from jijbench.solver.base import Parameter, Solver
-from jijbench.solver.jijzept import InstanceData, UserDefinedModel
+from jijbench.solver.jijzept import InstanceData, Model
 
 if tp.TYPE_CHECKING:
     from jijzept.sampler.base_sampler import JijZeptBaseSampler
 
 
 class Benchmark(FunctionNode[Experiment, Experiment]):
-    """ "A class representing a benchmark.
+    """A class representing a benchmark.
 
     This class allows to define a benchmark as a collection of experiments
     over a set of parameters and solvers. The benchmark will be run sequentially
@@ -39,18 +39,18 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
 
     def __init__(
         self,
-        params: dict[str, tp.Iterable[tp.Any]],
         solver: tp.Callable[..., tp.Any] | list[tp.Callable[..., tp.Any]],
+        params: dict[str, tp.Iterable[tp.Any]],
         name: str | None = None,
     ) -> None:
         """Initializes the benchmark with the given parameters and solvers.
 
         Args:
+            solver (Callable | list[Callable]): A single solver or a list of solvers to be used in the benchmark.
+                The solvers should be callable objects taking in a list of parameters.
             params (dict[str, Iterable[Any]]): Dictionary of parameters for the benchmark.
                 The keys should be the names of the parameters and the values should
                 be iterables of the respective parameter values.
-            solver (Callable | list[Callable]): A single solver or a list of solvers to be used in the benchmark.
-                The solvers should be callable objects taking in a list of parameters.
             name (str | None, optional): Name of the benchmark. Defaults to None.
 
         Raises:
@@ -222,12 +222,12 @@ def construct_benchmark_for(
             f"The argument corresponding to instance data is missing in sample_model of {sampler.__class__.__name__}."
         )
 
-    bench = Benchmark(params, sample_model, name)
+    bench = Benchmark(sample_model, params, name)
 
     additional_params: list[list[Parameter[tp.Any]]] = []
     for problem, instance_data in models:
         data = (problem, instance_data)
-        data = UserDefinedModel.validate_data(data)
+        data = Model.validate_data(data)
         additional_params.append(
             [
                 Parameter(data[0], argname_problem),

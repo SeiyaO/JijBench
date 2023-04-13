@@ -145,7 +145,7 @@ def test_load_benchmark_results():
         return x
 
     benchmark_name = "test"
-    bench = jb.Benchmark({"x": [1, 2]}, solver=func, name=benchmark_name)
+    bench = jb.Benchmark(solver=func, params={"x": [1, 2]}, name=benchmark_name)
     res = bench(savedir=SAVEDIR)
 
     res_l = jb.load(benchmark_name, savedir=SAVEDIR)
