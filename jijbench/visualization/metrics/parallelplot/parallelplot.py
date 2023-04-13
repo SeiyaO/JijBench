@@ -71,6 +71,9 @@ class MetricsParallelPlot:
     ) -> plotly.graph_objects.Figure:
         """Plot the parallel plot of the experiment.
 
+        This method creates a `plotly.graph_objects.Figure` instance and returns it.
+        To view the figure, you need to call the show method of the returned instance.
+
         Args:
             color_column_name (str | None): the column name, and the values from this column are used to assign color to mark.
                 Defaults to samplemean_total_violations or objective if those columns exist.
@@ -129,6 +132,7 @@ class MetricsParallelPlot:
 
             mp = MetricsParallelPlot(result)
             fig = mp.parallelplot_experiment()
+            fig.show()
             ```
 
             You can change the appearance of the graph by performing the following operations on the `plotly.graph_objects.Figure` instance returned by `parallelplot_experiment`.
@@ -335,7 +339,6 @@ class MetricsParallelPlot:
         fig.update_traces(
             labelfont_size=axis_label_fontsize, selector=dict(type="parcoords")
         )
-        fig.show()
 
         return fig
 

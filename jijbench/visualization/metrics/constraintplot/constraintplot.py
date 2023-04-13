@@ -51,8 +51,7 @@ def _get_violations_dict(x: pd.Series) -> dict:
         metrics = experiment.table.apply(_get_violations_dict, axis=1)
         ```
     """
-    constraint_violations_indices = x.index[x.index.str.contains("violations")]
-    return {index: x[index] for index in constraint_violations_indices}
+    return x.filter(regex="violations").to_dict()
 
 
 class ConstraintPlot:
