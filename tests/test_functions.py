@@ -148,6 +148,3 @@ def test_concat_experiment():
 
     concat = jb.functions.Concat()
     e = concat([e1, e2])
-    print()
-    print(e.artifact)
-    print(e.table)

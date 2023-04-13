@@ -17,7 +17,6 @@ from jijbench.datasets.model import InstanceDataFileStorage
 # InstanceDataDirTreeクラスのテスト
 def test_instance_data_dir_tree_initialization():
     instance_data_dir_tree = InstanceDataDirTree()
-    print(instance_data_dir_tree.nodes)
 
     assert set(instance_data_dir_tree.problem_names) == set(DEFAULT_PROBLEM_NAMES)
 
