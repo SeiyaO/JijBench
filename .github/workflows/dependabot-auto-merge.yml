@@ -1,9 +1,16 @@
 name: Dependabot auto-merge
-on: pull_request
+on: 
+  pull_request:
+    types: 
+      - opened
+      - reopened
+      - synchronize
 
 permissions:
   contents: write
   pull-requests: write
+  issues: write
+  repository-projects: write
 
 jobs:
   dependabot:
@@ -14,10 +21,41 @@ jobs:
         id: metadata
         uses: dependabot/fetch-metadata@v1
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: Enable auto-merge for Dependabot PRs
-        if: ${{contains(steps.metadata.outputs.dependency-names, 'my-dependency') && steps.metadata.outputs.update-type == 'version-update:semver-patch'}}
-        run: gh pr merge --auto --merge "$PR_URL"
+          alert-lookup: true
+          compat-lookup: true
+          github-token: "${{ secrets.GITHUB_TOKEN }}" 
+      - name: Add Reviewer production dependencies
+        run: gh pr edit "$PR_URL" --add-reviewer "@Jij-Inc/jijzept"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+      - name: Add Assignee production dependencies
+        run: gh pr edit "$PR_URL" --add-assignee "@Jij-Inc/jijzept"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+      - name: Add a label for all production dependencies
+        if: ${{ steps.metadata.outputs.dependency-type == 'direct:production' }}
+        run: gh pr edit "$PR_URL" --add-label "production"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+      - name: Add a label for all development dependencies
+        if: ${{ steps.metadata.outputs.dependency-type == 'direct:development' }}
+        run: gh pr edit "$PR_URL" --add-label "development"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+      - name: Approve a PR
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Enable auto-merge for Dependabot PRs Version Update SemVer Patch
+        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch'}}
+        run: gh pr merge --auto --merge "$PR_URL" --delete-branch --squash
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Enable auto-merge for Dependabot PRs Version Update SemVer Minor
+        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor'}}
+        run: gh pr merge --auto --merge "$PR_URL" --delete-branch --squash
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
