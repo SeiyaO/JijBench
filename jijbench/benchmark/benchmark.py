@@ -148,6 +148,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         """
         concat: Concat[Experiment] = Concat()
         name = inputs[0].name
+
         experiment = concat(inputs, name=name, autosave=autosave, savedir=savedir)
         if concurrent:
             return self._co()
@@ -161,17 +162,24 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         self,
         experiment: Experiment,
     ) -> Experiment:
-        for f in self.solver:
+        for solver in self.solver:
+            f = solver.function
             for params in self.params:
                 with experiment:
+                    f_name = str(f).split(f"{f.__class__.__name__} ")[-1].split(" ")[0]
                     info = RecordFactory()(
-                        [Date(), *params, Callable(f.function, str(f.name))]
+                        [
+                            Date(),
+                            Parameter(f_name, "solver_name"),
+                            *params,
+                            Callable(solver.function, solver.name),
+                        ]
                     )
-                    ret = f(params)
+                    ret = solver(params)
                     record = Concat()([info, ret])
 
                     state = getattr(experiment, "state")
-                    state.name = (self.name, experiment.name)
+                    state.index = (self.name, experiment.name)
                     experiment.append(record)
                     experiment.data[1].index.names = [
                         "benchmark_id",

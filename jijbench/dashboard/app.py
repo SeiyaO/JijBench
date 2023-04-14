@@ -35,8 +35,11 @@ def run():
 
     session = Session(logdir)
 
-    tab_names = ["Instance data", "Problem", "Solver", "Analysis"]
+    tab_names = ["Analysis", "Instance data", "Problem", "Solver"]
     tab_map = {name: tab for name, tab in zip(tab_names, st.tabs(tab_names))}
+
+    with tab_map["Analysis"]:
+        session.display_page("Analysis")
 
     with tab_map["Instance data"]:
         session.display_page("Instance data")
@@ -46,9 +49,6 @@ def run():
 
     with tab_map["Solver"]:
         session.display_page("Solver")
-
-    with tab_map["Analysis"]:
-        session.display_page("Analysis")
 
 
 if __name__ == "__main__":

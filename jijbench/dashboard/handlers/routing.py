@@ -10,6 +10,8 @@ import typing as tp
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objs as go
+import plotly.offline as pyo
 import rapidjson
 import streamlit as st
 from st_aggrid import AgGrid, GridUpdateMode
@@ -47,7 +49,7 @@ class RoutingHandler:
         elif page == "Solver":
             self.on_select_solver(session)
         elif page == "Analysis":
-            self.on_select_result(session)
+            self.on_select_analysis(session)
 
     def on_select_instance_data(self, session: Session) -> None:
         """
@@ -78,8 +80,7 @@ class RoutingHandler:
             horizontal=True,
         )
 
-        if session.state.is_instance_data_loaded:
-            session.plot_instance_data()
+        ph_plot = st.empty()
 
         cols = st.columns(2)
         with cols[0]:
@@ -91,7 +92,8 @@ class RoutingHandler:
                 )
                 if st.button("Load", key="load_instance_data"):
                     session.state.is_instance_data_loaded = True
-                    st.experimental_rerun()
+                    with ph_plot.container():
+                        session.plot_instance_data()
 
         with cols[1]:
             with st.expander("Upload", expanded=True):
@@ -173,23 +175,79 @@ class RoutingHandler:
             # problem = func()
             # st.latex(problem._repr_latex_()[2:-2])
 
-    def on_select_result(self, session: Session) -> None:
+    def on_select_analysis(self, session: Session) -> None:
         """
         Display the benchmark results and analysis options.
 
         Args:
             session (Session): The current session.
         """
-        benchmark_id = session.state.selected_benchmark_id
-        if benchmark_id:
-            results_table = _get_results_table(benchmark_id, session.state.logdir)
-            options = [
-                k
-                for k, v in results_table.items()
-                if isinstance(v[0], (int, float, np.int64, np.float64))
-            ]
 
-            with st.container():
+        ph_benchmark_id_table = st.empty()
+        ph_results_table = st.empty()
+        ph_sampleset_analysis = st.empty()
+        ph_scatter = st.empty()
+        ph_parallel_coordinates = st.empty()
+
+        with ph_benchmark_id_table.container():
+            st.subheader("Previous bencnmark")
+            results_dir_series = pd.Series(glob.glob(f"{session.state.logdir}/*"))
+            created_time_series = results_dir_series.apply(
+                lambda x: str(
+                    datetime.datetime.fromtimestamp(pathlib.Path(x).stat().st_ctime)
+                )
+            )
+            name_series = results_dir_series.apply(lambda x: pathlib.Path(x).name)
+            path_table = pd.concat(
+                [
+                    pd.Series([""] * len(results_dir_series)),
+                    created_time_series,
+                    name_series,
+                ],
+                axis=1,
+            )
+            path_table.columns = pd.Index(["", "timestamp", "benchmark_id"])
+
+            gb = GridOptionsBuilder.from_dataframe(path_table)
+            gb.configure_selection(use_checkbox=True, selection_mode="multiple")
+            gb.configure_column("", width=42)
+            gb.configure_column("timestamp", flex=1)
+            gb.configure_column("benchmark_id", flex=3)
+            grid_options = gb.build()
+            grid_path_table = AgGrid(
+                path_table,
+                height=250,
+                gridOptions=grid_options,
+                update_mode=GridUpdateMode.SELECTION_CHANGED,
+            )
+            session.state.selected_benchmark_results = grid_path_table["selected_rows"]
+            session.state.is_benchmark_results_loaded = st.button(
+                "Load", key="load_benchmark_results"
+            )
+
+        if session.state.is_benchmark_results_loaded:
+            benchmark_ids = session.state.selected_benchmark_ids
+
+            with ph_results_table.container():
+                st.subheader("Table")
+                results_table = _get_results_table(benchmark_ids, session.state.logdir)
+                options = [
+                    k
+                    for k, v in results_table.items()
+                    if isinstance(v[0], (int, float, np.int64, np.float64))
+                ]
+                gb = GridOptionsBuilder.from_dataframe(results_table)
+                gb.configure_columns(
+                    ["benchmark_id", "experiment_id", "run_id"],
+                    width=100,
+                    cellStyle={"backgroundColor": "#f8f9fb"},
+                )
+                gridoptions = gb.build()
+                AgGrid(results_table, gridOptions=gridoptions)
+
+                st.markdown("<hr>", unsafe_allow_html=True)
+
+            with ph_scatter.container():
                 st.subheader("Scatter")
                 cols = st.columns(3)
                 with cols[0]:
@@ -203,8 +261,9 @@ class RoutingHandler:
                 fig.update_layout(margin=dict(t=10))
                 st.plotly_chart(fig, use_container_width=True)
 
-            st.markdown("<hr>", unsafe_allow_html=True)
-            with st.container():
+                st.markdown("<hr>", unsafe_allow_html=True)
+
+            with ph_parallel_coordinates.container():
                 st.subheader("Parallel coordinates")
                 selected_columns = st.multiselect(
                     "Columns", options=options, default=options[:5]
@@ -219,83 +278,110 @@ class RoutingHandler:
                 fig.update_layout(margin=dict(l=50))
                 st.plotly_chart(fig, use_container_width=True)
 
-            st.markdown("<hr>", unsafe_allow_html=True)
-            with st.container():
-                st.subheader("Diff")
-                cols = st.columns(2)
-                with cols[0]:
-                    r1_name = st.selectbox(
-                        "Record 1", options=range(len(results_table)), index=0
-                    )
-                with cols[1]:
-                    r2_name = st.selectbox(
-                        "Record 2", options=range(len(results_table)), index=1
-                    )
+                st.markdown("<hr>", unsafe_allow_html=True)
 
-                with elements("diff"):
-                    results = jb.load(benchmark_id, savedir=session.state.logdir)
-                    r1 = results.data[1].data.iloc[r1_name]["sample_model_return[0]"]
-                    r2 = results.data[1].data.iloc[r2_name]["sample_model_return[0]"]
-                    editor.MonacoDiff(
-                        original="\n".join(
-                            r1.__repr__()[i : i + 100]
-                            for i in range(0, len(r1.__repr__()), 100)
-                        ),
-                        modified="\n".join(
-                            r2.__repr__()[i : i + 100]
-                            for i in range(0, len(r2.__repr__()), 100)
-                        ),
-                        height=300,
-                    )
+            with ph_sampleset_analysis.container():
+                st.subheader("SampleSet Analysis")
 
-            st.subheader("Table")
-            gb = GridOptionsBuilder.from_dataframe(results_table)
-            gb.configure_columns(
-                ["benchmark_id", "experiment_id", "run_id"],
-                width=100,
-                cellStyle={"backgroundColor": "#f8f9fb"},
-            )
-            gridoptions = gb.build()
-            AgGrid(results_table, gridOptions=gridoptions)
+                st.subheader("Constraint Violations")
+                tmp_options = ["solver_name", "model", "num_sweeps"]
+                groupby = ["solver_name"]
+                unselected_options = [o for o in tmp_options if o not in groupby]
+                df = results_table.filter(
+                    regex="|".join(tmp_options + ["violations_min"])
+                )
+                df = df.rename(
+                    columns={
+                        c: c.replace("_violations_min", "")
+                        for c in df.columns
+                        if c.endswith("violations_min")
+                    }
+                )
+                stacked = df.set_index(tmp_options).stack()
+                stacked.name = "violations_min"
+                stacked = stacked.reset_index(
+                    level=[i + 1 for i in range(len(unselected_options))]
+                )
 
-        st.subheader("Previous bencnmark")
-        results_dir_series = pd.Series(glob.glob(f"{session.state.logdir}/*"))
-        created_time_series = results_dir_series.apply(
-            lambda x: str(
-                datetime.datetime.fromtimestamp(pathlib.Path(x).stat().st_ctime)
-            )
-        )
-        name_series = results_dir_series.apply(lambda x: pathlib.Path(x).name)
-        path_table = pd.concat(
-            [
-                pd.Series([""] * len(results_dir_series)),
-                created_time_series,
-                name_series,
-            ],
-            axis=1,
-        )
-        path_table.columns = pd.Index(["", "timestamp", "benchmark_id"])
+                fig = px.bar(
+                    stacked,
+                    x=stacked.index.get_level_values(1),
+                    y=stacked["violations_min"],
+                    color=stacked.index.get_level_values(0),
+                    barmode="group",
+                    hover_data=unselected_options,
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                st.markdown("<hr>", unsafe_allow_html=True)
+                # fig = go.Figure()
+                # for name, group in results_table.groupby(groupby):
+                #     violations = group.filter(regex="violations_mean")
+                #     print(violations)
+                #     fig.add_trace(
+                #         go.Bar(
+                #             x=violations.columns,
+                #             y=violations,
+                #             name=name,
+                #         )
+                #     )
+                # fig.update_layout(barmode='group')
+                # TODO
+                # concat: jb.functions.Concat[jb.Experiment] = jb.functions.Concat()
+                # results = concat(
+                #     [
+                #         jb.load(benchmark_id, savedir=session.state.logdir)
+                #         for benchmark_id in benchmark_ids
+                #     ]
+                # )
+                # _, t = results.data
+                # heatmap = []
+                # for name, group in t.view().groupby("solver_name"):
+                #     for sampleset in t.data.loc[group.index, "solver_output[0]"]:
+                #         expr_values = sampleset.evaluation.constraint_expr_values[-1]
+                #         expr_values = {str(k): v for k, v in expr_values.items()}
+                #
+                #         x = expr_values["assign"]
+                #         keys = [str(k) for k in x.keys()]
+                #         values = list(x.values())
+                #
+                #         heatmap.append(values)
+                # heatmap = np.array(heatmap).T
+                #
+                # fig = px.imshow(heatmap, aspect="auto", color_continuous_scale="Viridis")
+                # st.plotly_chart(fig, use_container_width=True)
+                # st.markdown("<hr>", unsafe_allow_html=True)
 
-        gb = GridOptionsBuilder.from_dataframe(path_table)
-        gb.configure_selection(use_checkbox=True)
-        gb.configure_column("", width=42)
-        gb.configure_column("timestamp", flex=1)
-        gb.configure_column("benchmark_id", flex=3)
-        grid_options = gb.build()
-        grid_path_table = AgGrid(
-            path_table,
-            height=250,
-            gridOptions=grid_options,
-            update_mode=GridUpdateMode.SELECTION_CHANGED,
-        )
-        session.state.selected_benchmark_results = grid_path_table["selected_rows"]
-        session.state.is_benchmark_results_loaded = st.button(
-            "Load", key="load_benchmark_results"
-        )
+            # with ph_sampleset_diff.container():
+            #    st.subheader("Diff")
+            #    cols = st.columns(2)
+            #    with cols[0]:
+            #        r1_name = st.selectbox(
+            #            "Record 1", options=range(len(results_table)), index=0
+            #        )
+            #    with cols[1]:
+            #        r2_name = st.selectbox(
+            #            "Record 2", options=range(len(results_table)), index=1
+            #        )
+
+            #    with elements("diff"):
+            #        results = jb.load(benchmark_id, savedir=session.state.logdir)
+            #        r1 = results.data[1].data.iloc[r1_name]["solver_output[0]"]
+            #        r2 = results.data[1].data.iloc[r2_name]["solver_output[0]"]
+            #        editor.MonacoDiff(
+            #            original="\n".join(
+            #                r1.__repr__()[i : i + 100]
+            #                for i in range(0, len(r1.__repr__()), 100)
+            #            ),
+            #            modified="\n".join(
+            #                r2.__repr__()[i : i + 100]
+            #                for i in range(0, len(r2.__repr__()), 100)
+            #            ),
+            #            height=300,
+            #        )
 
 
 @st.cache_data
-def _get_results_table(benchmark_id: str, savedir: pathlib.Path) -> pd.DataFrame:
+def _get_results_table(benchmark_ids: list[str], savedir: pathlib.Path) -> pd.DataFrame:
     def expand_dict_series_in(table: pd.DataFrame) -> pd.DataFrame:
         expanded = pd.DataFrame()
         for c in table:
@@ -312,19 +398,30 @@ def _get_results_table(benchmark_id: str, savedir: pathlib.Path) -> pd.DataFrame
                 table.drop(columns=[c], inplace=True)
         return pd.concat([table, expanded], axis=1)
 
-    results = jb.load(benchmark_id, savedir=savedir)
-    e = jb.Evaluation()
-    eval_table = e([results], opt_value=0).table.drop(columns=results.table.columns)
+    table = pd.DataFrame()
+    for benchmark_id in benchmark_ids:
+        results = jb.load(benchmark_id, savedir=savedir)
+        e = jb.Evaluation()
+        eval_table = e([results], opt_value=0).table.drop(columns=results.table.columns)
 
-    params_table = results.params_table
-    for c in ("model", "problem"):
-        if c in params_table:
-            params_table[c] = params_table[c].apply(lambda x: x.name)
+        params_table = results.params_table
+        for c in ("model", "problem"):
+            if c in params_table:
+                params_table[c] = params_table[c].apply(lambda x: x.name)
 
-    for c in ("feed_dict", "instance_data"):
-        if c in params_table:
-            params_table.drop(columns=[c], inplace=True)
+        for c in ("feed_dict", "instance_data"):
+            if c in params_table:
+                params_table.drop(columns=[c], inplace=True)
 
-    params_table = expand_dict_series_in(params_table)
-    response_table = expand_dict_series_in(results.response_table)
-    return pd.concat([params_table, response_table, eval_table], axis=1).reset_index()
+        params_table = expand_dict_series_in(params_table)
+        response_table = expand_dict_series_in(results.response_table)
+        table = pd.concat(
+            [
+                table,
+                pd.concat(
+                    [params_table, response_table, eval_table],
+                    axis=1,
+                ).reset_index(),
+            ]
+        ).reset_index(drop=True)
+    return table

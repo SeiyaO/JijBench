@@ -187,7 +187,7 @@ def test_apply_benchmark():
     columns = res.table.columns
 
     assert isinstance(res, jb.Experiment)
-    assert "solver_return[0]" in columns
+    assert "solver_output[0]" in columns
 
     op1 = res.operator
 
@@ -218,8 +218,8 @@ def test_benchmark_with_multi_return_solver():
     res = bench()
 
     assert len(res.table) == 2
-    assert res.table["solver_return[0]"][0] == "a"
-    assert res.table["solver_return[1]"][0] == 1.0
+    assert res.table["solver_output[0]"][0] == "a"
+    assert res.table["solver_output[1]"][0] == 1.0
 
 
 # def test_benchmark_with_custom_solver_by_sync_False():
@@ -292,6 +292,6 @@ def test_benchmark_by_checkpoint(x, y, z, kwargs, expected):
     assert ret1 == ret2
 
     bench = jb.load(benchmark_id, savedir="./checkpoint")
-    assert (bench.table["solver_return[0]"][-2:] == expected).all()
+    assert (bench.table["solver_output[0]"][-2:] == expected).all()
 
     shutil.rmtree("./checkpoint")

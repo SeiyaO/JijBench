@@ -15,6 +15,8 @@ from jijbench.consts.default import DEFAULT_RESULT_DIR
 )
 def main(logdir: str):
     os.environ["logdir"] = logdir
+    os.environ["STREAMLIT_THEME_BACKGROUND_COLOR"] = "white"
+
     command = ["streamlit", "run", f"{pathlib.Path(__file__).parent}/app.py"]
     subprocess.run(command)
 

@@ -49,7 +49,7 @@ class Experiment(Container[ExperimentDataType]):
             self.data[1].name = self.name
 
         self.savedir = pathlib.Path(self.savedir)
-        setattr(self, "state", _Created(self.name))
+        setattr(self, "state", _Created())
 
     def __len__(self) -> int:
         """
@@ -95,12 +95,6 @@ class Experiment(Container[ExperimentDataType]):
     def params_table(self) -> pd.DataFrame:
         """Return the parameters table of the experiment as a pandas dataframe."""
         bools = self.data[1].data.applymap(lambda x: isinstance(x, Parameter))
-        return self.table[bools].dropna(axis=1)
-
-    @property
-    def solver_table(self) -> pd.DataFrame:
-        """Return the solver table of the experiment as a pandas dataframe."""
-        bools = self.data[1].data.applymap(lambda x: isinstance(x, Callable))
         return self.table[bools].dropna(axis=1)
 
     @property
@@ -163,8 +157,8 @@ class Experiment(Container[ExperimentDataType]):
 
 
 class _ExperimentState(metaclass=abc.ABCMeta):
-    def __init__(self, name: tp.Hashable) -> None:
-        self.name = name
+    def __init__(self, index: tp.Hashable = 0) -> None:
+        self.index = index
 
     @abc.abstractmethod
     def append(self, context: Experiment, record: Record) -> None:
@@ -177,9 +171,11 @@ class _ExperimentState(metaclass=abc.ABCMeta):
 
 class _Created(_ExperimentState):
     def append(self, context: Experiment, record: Record) -> None:
-        record.name = len(context)
+        record.name = self.index
         _append(context, record)
-        context.state = _Waiting(self.name)
+        if isinstance(self.index, int):
+            self.index += 1
+        context.state = _Waiting(self.index)
 
     def save(self, context: Experiment) -> None:
         save(context, savedir=context.savedir)
@@ -187,8 +183,10 @@ class _Created(_ExperimentState):
 
 class _Waiting(_ExperimentState):
     def append(self, context: Experiment, record: Record) -> None:
-        record.name = len(context)
+        record.name = self.index
         _append(context, record)
+        if isinstance(self.index, int):
+            self.index += 1
 
     def save(self, context: Experiment) -> None:
         save(context, savedir=context.savedir)
@@ -197,12 +195,12 @@ class _Waiting(_ExperimentState):
 class _Running(_ExperimentState):
     def append(self, context: Experiment, record: Record) -> None:
         run_id = ID().data
-        if isinstance(self.name, str):
-            record.name = (self.name, run_id)
-        elif isinstance(self.name, tp.Iterable):
-            record.name = (*self.name, run_id)
+        if isinstance(self.index, str):
+            record.name = (self.index, run_id)
+        elif isinstance(self.index, tp.Iterable):
+            record.name = (*self.index, run_id)
         else:
-            record.name = (self.name, run_id)
+            record.name = (self.index, run_id)
         _append(context, record)
 
     def save(

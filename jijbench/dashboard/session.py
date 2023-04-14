@@ -53,7 +53,7 @@ class Session(metaclass=_Singleton):
 
 class State:
     def __init__(self, logdir: pathlib.Path = DEFAULT_RESULT_DIR) -> None:
-        st.session_state["selected_page"] = "Instance data"
+        st.session_state["selected_page"] = "Analysis"
         st.session_state["instance_data_dir_tree"] = InstanceDataDirTree()
         st.session_state["logdir"] = logdir
         st.session_state["input_problem_name"] = ""
@@ -162,11 +162,12 @@ class State:
         st.session_state["selected_benchmark_results"] = results
 
     @property
-    def selected_benchmark_id(self) -> str | None:
+    def selected_benchmark_ids(self) -> list[str] | None:
         if self.selected_benchmark_results:
-            benchmark_id = self.selected_benchmark_results[0]["benchmark_id"]
-            if isinstance(benchmark_id, str):
-                return benchmark_id
+            return tp.cast(
+                list[str],
+                [result["benchmark_id"] for result in self.selected_benchmark_results],
+            )
 
     @property
     def is_benchmark_results_loaded(self) -> bool:
