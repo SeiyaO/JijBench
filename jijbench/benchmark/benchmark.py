@@ -81,7 +81,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         self,
         inputs: list[Experiment] | None = None,
         concurrent: bool = False,
-        sync_index: bool = True,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
@@ -106,7 +105,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         return super().__call__(
             inputs,
             concurrent=concurrent,
-            sync_index=True,
             autosave=autosave,
             savedir=savedir,
         )
@@ -134,7 +132,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         self,
         inputs: list[Experiment],
         concurrent: bool = False,
-        sync_index: bool = True,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
