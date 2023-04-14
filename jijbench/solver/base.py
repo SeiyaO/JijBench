@@ -116,7 +116,7 @@ class Solver(FunctionNode[Parameter[tp.Any], Record]):
             msg = f'An error occurred inside your solver. Please check implementation of "{self.name}". -> {e}'
             raise SolverFailedError(msg)
 
-        solver_return_names = [f"{self.name}_return[{i}]" for i in range(len(rets))]
+        solver_return_names = [f"{self.name}_output[{i}]" for i in range(len(rets))]
 
         rets = [
             SampleSet(data, name)

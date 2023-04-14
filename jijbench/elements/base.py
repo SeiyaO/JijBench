@@ -58,7 +58,7 @@ class String(DataNode[str]):
 
 
 @dataclass
-class Callable(DataNode[tp.Callable]):
+class Callable(DataNode[tp.Callable[..., tp.Any]]):
     """A class representing a callable element.
 
     Attributes:
@@ -67,7 +67,7 @@ class Callable(DataNode[tp.Callable]):
     """
 
     @classmethod
-    def validate_data(cls, data: tp.Callable) -> tp.Callable:
+    def validate_data(cls, data: tp.Callable[..., tp.Any]) -> tp.Callable[..., tp.Any]:
         """Validate the data to be a callable.
 
         Args:

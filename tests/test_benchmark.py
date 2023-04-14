@@ -198,6 +198,32 @@ def test_apply_benchmark():
     assert op1.inputs[0].table.empty
 
 
+def test_benchmark_by_sync_index():
+    def func(x):
+        return x
+
+    def func2(x):
+        return x**x
+
+    bench = jb.Benchmark(
+        solver=func,
+        params={"x": [1, 2]},
+    )
+    res = bench()
+
+    bench = jb.Benchmark(
+        solver=func2,
+        params={"x": [1, 2]},
+    )
+    res = bench([res], sync_index=True)
+
+    from icecream import ic
+
+    print()
+    ic(res.table)
+    ic(res.artifact)
+
+
 def test_benchmark_params_table():
     def func(x):
         return x

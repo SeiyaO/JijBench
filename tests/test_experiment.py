@@ -58,13 +58,14 @@ def test_experiment(
     assert isinstance(state, _Created)
 
     solver = jb.Solver(f)
-    for v in param_values:
+    for i, v in enumerate(param_values):
         record = solver([jb.Parameter(vi, name) for name, vi in zip(param_names, v)])
         experiment.append(record)
 
         actual = experiment.table.filter(regex="solver_return").tail(1)
         expected = pd.DataFrame([f(*v)], index=actual.index, columns=actual.columns)
 
+        assert actual.index[-1] == i
         assert actual.equals(expected)
 
         state = getattr(experiment, "state")
@@ -102,6 +103,7 @@ def test_experiment_with_context_manager(
             actual = experiment.table.filter(regex="solver_return").tail(1)
             expected = pd.DataFrame([f(*v)], index=actual.index, columns=actual.columns)
 
+            assert actual.index.get_level_values(0)[-1] == experiment.name
             assert actual.equals(expected)
 
             state = getattr(experiment, "state")
