@@ -8,7 +8,7 @@ import pytest
 
 import jijbench as jb
 from jijbench.exceptions.exceptions import UserFunctionFailedError
-from jijbench.visualization.metrics.plot import MetricsPlot
+from jijbench.visualization import MetricsParallelPlot
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -141,15 +141,13 @@ def fig_contain_target_data(fig, label, values):
     return False
 
 
-def test_metrics_plot_parallelplot_num_feasible(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_num_feasible():
     bench = jb.Benchmark(
         params={"multipliers": [{}, {}]},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     expect_value_0 = result.table["num_feasible"].values[0]
@@ -159,15 +157,13 @@ def test_metrics_plot_parallelplot_num_feasible(mocker):
     assert fig_contain_target_data(fig, "num_feasible", expect_arr)
 
 
-def test_metrics_plot_parallelplot_samplemean_objective(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_samplemean_objective():
     bench = jb.Benchmark(
         params={"multipliers": [{}, {}]},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     def calc_expect_samplemean_objective(result, idx):
@@ -182,15 +178,13 @@ def test_metrics_plot_parallelplot_samplemean_objective(mocker):
     assert fig_contain_target_data(fig, "samplemean_objective", expect_arr)
 
 
-def test_metrics_plot_parallelplot_samplemean_violations(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_samplemean_violations():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     def calc_result_samplemean_violations(result, idx, constraint_name):
@@ -215,15 +209,13 @@ def test_metrics_plot_parallelplot_samplemean_violations(mocker):
     )
 
 
-def test_metrics_plot_parallelplot_samplemean_violations_no_constraint(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_samplemean_violations_no_constraint():
     bench = jb.Benchmark(
         params={},
         solver=[solve_no_constraint],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     # samplemean_total_violationsが含まれていないことを確認する（本テストでは制約がない問題を解く状況を想定しているため）
@@ -236,9 +228,7 @@ def test_metrics_plot_parallelplot_samplemean_violations_no_constraint(mocker):
     assert no_samplemean_total_violations(fig)
 
 
-def test_metrics_plot_parallelplot_multipliers(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_multipliers():
     params = {
         "multipliers": [{"onehot1": 1, "onehot2": 2}, {"onehot1": 3, "onehot2": 4}]
     }
@@ -248,7 +238,7 @@ def test_metrics_plot_parallelplot_multipliers(mocker):
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     assert fig_contain_target_data(fig, "onehot1_multiplier", np.array([1, 3]))
@@ -268,28 +258,24 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_color_column_default(mocker, solver, expect):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_color_column_default(solver, expect):
     bench = jb.Benchmark(
         params={},
         solver=[solver],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
     assert fig.layout.coloraxis.colorbar.title.text == expect
 
 
-def test_metrics_plot_parallelplot_arg_color_column(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_color_column():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         color_column_name="samplemean_onehot1_violations"
     )
@@ -297,15 +283,13 @@ def test_metrics_plot_parallelplot_arg_color_column(mocker):
     assert fig.layout.coloraxis.colorbar.title.text == "samplemean_onehot1_violations"
 
 
-def test_metrics_plot_parallelplot_arg_color_midpoint(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_color_midpoint():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         color_midpoint=5,
     )
@@ -313,15 +297,13 @@ def test_metrics_plot_parallelplot_arg_color_midpoint(mocker):
     assert fig.layout.coloraxis.cmid == 5
 
 
-def test_metrics_plot_parallelplot_arg_color_midpoint_default(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_color_midpoint_default():
     bench = jb.Benchmark(
         params={"multipliers": [{}, {}]},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     def calc_mean_total_violaions(x: pd.Series):
@@ -349,15 +331,13 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_title(mocker, title, expect):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_title(title, expect):
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         title=title,
     )
@@ -376,15 +356,13 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_height(mocker, height, expect):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_height(height, expect):
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         height=height,
     )
@@ -403,15 +381,13 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_width(mocker, width, expect):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_width(width, expect):
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         width=width,
     )
@@ -430,15 +406,13 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_axis_label_pos(mocker, axis_label_pos, expect):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_axis_label_pos(axis_label_pos, expect):
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(axis_label_pos=axis_label_pos)
     assert fig.data[0].labelside == expect
 
@@ -449,15 +423,13 @@ params = {
 }
 
 
-def test_metrics_plot_parallelplot_arg_axis_label_pos_invalid_value(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_axis_label_pos_invalid_value():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     with pytest.raises(ValueError) as e:
         mplot.parallelplot_experiment(axis_label_pos="INVALID_VALUE")
 
@@ -472,28 +444,24 @@ def test_metrics_plot_parallelplot_arg_axis_label_pos_invalid_value(mocker):
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_axis_label_fontsize(mocker, fontsize, expect):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_axis_label_fontsize(fontsize, expect):
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(axis_label_fontsize=fontsize)
     assert fig.data[0].labelfont.size == expect
 
 
-def test_metrics_plot_parallelplot_arg_additional_axes(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_additional_axes():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         additional_axes=["num_samples"],
     )
@@ -503,30 +471,26 @@ def test_metrics_plot_parallelplot_arg_additional_axes(mocker):
     assert fig_contain_target_data(fig, "num_samples", expect_num_samples)
 
 
-def test_metrics_plot_parallelplot_arg_additional_axes_not_number(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_additional_axes_not_number():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     with pytest.raises(TypeError):
         mplot.parallelplot_experiment(
             additional_axes=["energy"],
         )
 
 
-def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
 
     def get_max_num_occurrences(x: pd.Series) -> float:
         return np.max(x["num_occurrences"])
@@ -564,11 +528,7 @@ def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function(mocke
     )
 
 
-def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_return_not_number(
-    mocker,
-):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_return_not_number():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
@@ -578,7 +538,7 @@ def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_retur
     def get_max_num_occurrences_return_not_number(x: pd.Series) -> str:
         return str(np.max(x["num_occurrences"]))
 
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
 
     with pytest.raises(TypeError):
         mplot.parallelplot_experiment(
@@ -588,11 +548,7 @@ def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_retur
         )
 
 
-def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_error_in_func(
-    mocker,
-):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_error_in_func():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
@@ -602,22 +558,20 @@ def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_error
     def error_func(x: pd.Series) -> str:
         raise RuntimeError
 
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     with pytest.raises(UserFunctionFailedError):
         mplot.parallelplot_experiment(
             additional_axes_created_by_function={"column_name": error_func}
         )
 
 
-def test_metrics_plot_parallelplot_arg_display_axes_list(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_display_axes_list():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         display_axes_list=[
             "samplemean_onehot2_violations",
@@ -630,15 +584,13 @@ def test_metrics_plot_parallelplot_arg_display_axes_list(mocker):
     assert fig.data[0].dimensions[1].label == "samplemean_onehot1_violations"
 
 
-def test_metrics_plot_parallelplot_property_parallelplot_axes_list(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_property_parallelplot_axes_list():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
     expect_name_list = [dimension.label for dimension in fig.data[0].dimensions]
@@ -652,20 +604,18 @@ def test_metrics_plot_parallelplot_property_parallelplot_axes_list_before_call_p
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
 
     assert mplot.parallelplot_axes_list == []
 
 
-def test_metrics_plot_parallelplot_arg_rename_map(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
+def test_metrics_plot_parallelplot_arg_rename_map():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
     )
     result = bench()
-    mplot = MetricsPlot(result)
+    mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment(
         rename_map={
             "samplemean_onehot1_violations": "Samplemean Onehot1 Violations",
