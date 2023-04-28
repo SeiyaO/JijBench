@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import abc
+import datetime
 import pathlib
 import typing as tp
 import uuid
 import warnings
 from dataclasses import dataclass, field
 
+import numpy as np
 import pandas as pd
 
 from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.containers.containers import Artifact, Container, Record, Table
-from jijbench.elements.base import Callable
 from jijbench.elements.id import ID
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
@@ -41,13 +42,6 @@ class Experiment(Container[ExperimentDataType]):
 
     def __post_init__(self):
         super().__post_init__()
-
-        if self.data[0].name is None:
-            self.data[0].name = self.name
-
-        if self.data[1].name is None:
-            self.data[1].name = self.name
-
         self.savedir = pathlib.Path(self.savedir)
         setattr(self, "state", _Created())
 
@@ -94,15 +88,20 @@ class Experiment(Container[ExperimentDataType]):
     @property
     def params_table(self) -> pd.DataFrame:
         """Return the parameters table of the experiment as a pandas dataframe."""
-        bools = self.data[1].data.applymap(lambda x: isinstance(x, Parameter))
-        return self.table[bools].dropna(axis=1)
+        _, t = self.data
+        bools = t.data.apply(lambda x: not isinstance(x[0], Parameter))
+        droped_columns = t.data.columns[bools]
+        data = t.data.drop(columns=droped_columns)
+        return Table(data, self.name).view()
 
     @property
     def response_table(self) -> pd.DataFrame:
         """Return the returns table of the experiment as a pandas dataframe."""
-        bools = self.data[1].data.apply(lambda x: not isinstance(x[0], Response))
-        droped_columns = self.data[1].data.columns[bools]
-        return self.table.drop(columns=droped_columns)
+        _, t = self.data
+        bools = t.data.apply(lambda x: not isinstance(x[0], Response))
+        droped_columns = t.data.columns[bools]
+        data = t.data.drop(columns=droped_columns)
+        return Table(data, self.name).view()
 
     @classmethod
     def validate_data(cls, data: ExperimentDataType) -> ExperimentDataType:
@@ -148,6 +147,43 @@ class Experiment(Container[ExperimentDataType]):
         """
         state = getattr(self, "state")
         state.append(self, record)
+
+    def star(self) -> None:
+        """Mark the experiment."""
+
+        savedir = pathlib.Path(self.savedir)
+        benchmark_id = None
+        if (savedir / "star.csv").exists():
+            star_file = savedir / "star.csv"
+        elif (savedir.parent / "star.csv").exists():
+            star_file = savedir.parent / "star.csv"
+            benchmark_id = savedir.name
+        else:
+            star_file = savedir / "star.csv"
+
+        if star_file.exists():
+            if star_file.stat().st_size:
+                star = pd.read_csv(star_file, index_col=0)
+            else:
+                star = pd.DataFrame(
+                    columns=["benchmark_id", "experiment_id", "savedir"]
+                )
+            star.loc[len(star), ["benchmark_id", "experiment_id", "savedir"]] = [
+                benchmark_id or np.nan,
+                self.name,
+                self.savedir,
+            ]
+            star = star.drop_duplicates(subset=["experiment_id"])
+        else:
+            star_file.parent.mkdir(parents=True, exist_ok=True)
+            star = pd.DataFrame(
+                {
+                    "benchmark_id": benchmark_id or np.nan,
+                    "experiment_id": [self.name],
+                    "savedir": [self.savedir],
+                }
+            )
+        star.to_csv(star_file)
 
     def save(self):
         """Save the experiment."""
@@ -232,4 +268,97 @@ def _append(context: Experiment, record: Record) -> None:
         autosave=context.autosave,
         savedir=context.savedir,
     )
-    context._init_attrs(node)
+    context._update_attrs(node)
+
+
+def get_benchmark_ids(
+    savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
+) -> list[str | float]:
+    """Get the benchmark ids.
+
+    Args:
+        savedir (str | pathlib.Path, optional): The directory to save the experiment. Defaults to DEFAULT_RESULT_DIR.
+
+    Returns:
+        list[str]: The benchmark ids.
+    """
+
+    benchmark_ids: list[str | float] = []
+    for d in pathlib.Path(savedir).glob("*"):
+        if d.is_dir():
+            if list(d.glob("artifact")):
+                benchmark_ids.append(np.nan)
+            else:
+                benchmark_ids.extend([d.name] * len(get_experiment_ids(d)))
+
+    return benchmark_ids
+
+
+def get_experiment_ids(
+    savedir: str | pathlib.Path = DEFAULT_RESULT_DIR, only_star: bool = False
+) -> list[str]:
+    """Get the experiment ids.
+
+    Args:
+        savedir (str | pathlib.Path, optional): The directory to save the experiment. Defaults to DEFAULT_RESULT_DIR.
+        only_star (bool, optional): Whether to only return the starred experiments. Defaults to False.
+
+    Returns:
+        list[str]: The experiment ids.
+    """
+    if only_star:
+        star_file = pathlib.Path(savedir) / "star.csv"
+        if star_file.exists():
+            return pd.read_csv(star_file, index_col=0)["experiment_id"].tolist()
+        else:
+            return []
+    else:
+        experiment_ids: list[str] = []
+        for d in pathlib.Path(savedir).glob("*"):
+            if d.is_dir():
+                if list(d.glob("artifact")):
+                    experiment_ids.append(d.name)
+                else:
+                    experiment_ids.extend(get_experiment_ids(d))
+        return experiment_ids
+
+
+def get_id_table(
+    savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
+) -> pd.DataFrame:
+    """Get the experiment info.
+
+    Args:
+        savedir (str | pathlib.Path, optional): The directory to save the experiment. Defaults to DEFAULT_RESULT_DIR.
+
+    Returns:
+        pd.DataFrame: The experiment info.
+    """
+
+    info = pd.DataFrame(
+        {
+            "benchmark_id": get_benchmark_ids(savedir),
+            "experiment_id": get_experiment_ids(savedir),
+        }
+    )
+
+    info["savedir"] = info.apply(
+        lambda x: f"{savedir}/{x['benchmark_id']}/{x['experiment_id']}"
+        if isinstance(x["benchmark_id"], str)
+        else f"{savedir}/{x['experiment_id']}",
+        axis=1,
+    )
+
+    info["timestamp"] = info["savedir"].apply(
+        lambda x: datetime.datetime.fromtimestamp(
+            pathlib.Path(x).stat().st_ctime
+        ).strftime("%Y-%m-%d %H:%M:%S")
+    )
+    info["star"] = ""
+
+    star_file = pathlib.Path(savedir) / "star.csv"
+    if star_file.exists():
+        star = pd.read_csv(star_file, index_col=0)
+        mask = info["experiment_id"].isin(star["experiment_id"].tolist())
+        info.loc[mask, "star"] = "*"
+    return info

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import shutil
 import typing as tp
 from unittest.mock import MagicMock
@@ -11,6 +12,7 @@ import pandas as pd
 import pytest
 
 import jijbench as jb
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -18,8 +20,8 @@ def pre_post_process():
     # preprocess
     yield
     # postprocess
-    norm_path = os.path.normcase("./.jb_results")
-    if os.path.exists(norm_path):
+    norm_path = os.path.normcase(DEFAULT_RESULT_DIR)
+    if DEFAULT_RESULT_DIR.exists():
         shutil.rmtree(norm_path)
 
 
@@ -79,7 +81,7 @@ def test_benchmark_for_jijzept_sampler(
     knapsack_problem: jm.Problem,
     knapsack_instance_data: jm.PH_VALUES_INTERFACE,
 ):
-    bench = jb.construct_benchmark_for(
+    bench = jb.benchmark_for(
         sa_sampler,
         [(knapsack_problem, knapsack_instance_data)],
         {"num_reads": [1, 2]},
@@ -112,7 +114,7 @@ def test_benchmark_for_jijzept_sampler_with_multi_models(
         (knapsack_problem, knapsack_instance_data),
         (tsp_problem, tsp_instance_data),
     ]
-    bench = jb.construct_benchmark_for(
+    bench = jb.benchmark_for(
         sa_sampler,
         models,
         {
@@ -265,12 +267,15 @@ def test_benchmark_with_callable_args():
 def test_benchmark_by_checkpoint(x, y, z, kwargs, expected):
     benchmark_id = "example_checkpoint"
 
-    @jb.checkpoint(name=benchmark_id, savedir="./checkpoint")
+    savedir = pathlib.Path("./checkpoint")
+    savedir.mkdir(parents=True, exist_ok=True)
+
+    @jb.checkpoint(name=benchmark_id, savedir=savedir)
     def pos_or_kw(x: int, y: int = 0, z: int = 0, **kwargs) -> str:
         extra = "".join(kwargs.values())
         return f"{x + y + z}{extra}"
 
-    @jb.checkpoint(name=benchmark_id, savedir="./checkpoint")
+    @jb.checkpoint(name=benchmark_id, savedir=savedir)
     def kw_only(x: int, *, y: int = 0, z: int = 0, **kwargs) -> str:
         extra = "".join(kwargs.values())
         return f"{x + y + z}{extra}"
@@ -291,7 +296,43 @@ def test_benchmark_by_checkpoint(x, y, z, kwargs, expected):
     assert ret1 == expected
     assert ret1 == ret2
 
-    bench = jb.load(benchmark_id, savedir="./checkpoint")
-    assert (bench.table["solver_output[0]"][-2:] == expected).all()
+    bench = jb.load(benchmark_id, savedir=savedir)
+    assert (bench.table["solver_output[0]"].tail(2) == expected).all()
 
-    shutil.rmtree("./checkpoint")
+    shutil.rmtree(savedir)
+
+
+def test_star():
+    savedir = DEFAULT_RESULT_DIR
+    name = "star_benchmark"
+    bench = jb.Benchmark(solver=lambda x: x**2, params={"x": [1, 2, 3]}, name=name)
+    result = bench(savedir=savedir)
+    result.star()
+
+    star_file = savedir / "star.csv"
+    assert star_file.exists()
+
+    star = pd.read_csv(star_file, index_col=0)
+    assert star.isin([name, result.name, str(result.savedir)]).any().all()
+
+
+def test_get_benchmark_and_experiment_ids():
+    name = "example"
+    bench = jb.Benchmark(solver=lambda x: x**2, params={"x": [1, 2, 3]}, name=name)
+    result = bench()
+
+    benchmark_ids = jb.get_benchmark_ids()
+    experiment_ids = jb.get_experiment_ids()
+
+    assert name in benchmark_ids
+    assert result.table.index.get_level_values(1)[0] in experiment_ids
+
+
+def test_get_id_table():
+    name = "example"
+    bench = jb.Benchmark(solver=lambda x: x**2, params={"x": [1, 2, 3]}, name=name)
+    bench()
+    bench().star()
+    id_table = jb.get_id_table()
+    print(id_table)
+    assert all(id_table["star"].tail(1) == "*")

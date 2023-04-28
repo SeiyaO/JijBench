@@ -4,17 +4,20 @@ import codecs
 import datetime
 import glob
 import pathlib
+import re
 import sys
 import typing as tp
 
+import jijmodeling as jm
+import matplotlib
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
-import plotly.offline as pyo
 import rapidjson
 import streamlit as st
-from st_aggrid import AgGrid, GridUpdateMode
+from plotly.colors import n_colors
+from st_aggrid import AgGrid, ColumnsAutoSizeMode, GridUpdateMode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from streamlit_ace import st_ace
 from streamlit_elements import editor, elements
@@ -183,173 +186,368 @@ class RoutingHandler:
             session (Session): The current session.
         """
 
-        ph_benchmark_id_table = st.empty()
-        ph_results_table = st.empty()
-        ph_sampleset_analysis = st.empty()
-        ph_scatter = st.empty()
-        ph_parallel_coordinates = st.empty()
+        components = {
+            "id_table": st.empty(),
+            "result_table": st.empty(),
+            "evaluation_table": st.empty(),
+            "sampleset_analysis": st.empty(),
+            "scatter": st.empty(),
+            "parallel_coordinates": st.empty(),
+        }
 
-        with ph_benchmark_id_table.container():
-            st.subheader("Previous bencnmark")
-            results_dir_series = pd.Series(glob.glob(f"{session.state.logdir}/*"))
-            created_time_series = results_dir_series.apply(
-                lambda x: str(
-                    datetime.datetime.fromtimestamp(pathlib.Path(x).stat().st_ctime)
-                )
+        with components["id_table"].container():
+            st.subheader("Experiment history")
+            id_table = jb.get_id_table(savedir=session.state.logdir)
+            id_table = (
+                id_table.sort_values("timestamp", ascending=False)
+                .replace("*", "⭐️")
+                .drop(columns=["savedir"])
             )
-            name_series = results_dir_series.apply(lambda x: pathlib.Path(x).name)
-            path_table = pd.concat(
-                [
-                    pd.Series([""] * len(results_dir_series)),
-                    created_time_series,
-                    name_series,
-                ],
-                axis=1,
-            )
-            path_table.columns = pd.Index(["", "timestamp", "benchmark_id"])
+            id_table.insert(0, "", [""] * len(id_table))
 
-            gb = GridOptionsBuilder.from_dataframe(path_table)
-            gb.configure_selection(use_checkbox=True, selection_mode="multiple")
-            gb.configure_column("", width=42)
-            gb.configure_column("timestamp", flex=1)
-            gb.configure_column("benchmark_id", flex=3)
-            grid_options = gb.build()
-            grid_path_table = AgGrid(
-                path_table,
+            gob = GridOptionsBuilder.from_dataframe(id_table)
+            gob.configure_selection(use_checkbox=True, selection_mode="multiple")
+            gob.configure_column("star", cellStyle={"textAlign": "center"})
+            grid_options = gob.build()
+            grid_id_table = AgGrid(
+                id_table,
                 height=250,
                 gridOptions=grid_options,
-                update_mode=GridUpdateMode.SELECTION_CHANGED,
+                grid_update_mode=GridUpdateMode.VALUE_CHANGED,
+                columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
             )
-            session.state.selected_benchmark_results = grid_path_table["selected_rows"]
-            session.state.is_benchmark_results_loaded = st.button(
+            session.state.selected_benchmark_results = grid_id_table["selected_rows"]
+            is_benchmark_results_loaded = st.button(
                 "Load", key="load_benchmark_results"
             )
+            if is_benchmark_results_loaded:
+                session.state.num_experiment_loaded += 1
 
-        if session.state.is_benchmark_results_loaded:
+        table_cols = st.columns(2)
+        if session.state.num_experiment_loaded:
             benchmark_ids = session.state.selected_benchmark_ids
+            params_table = _get_params_table(benchmark_ids, session.state.logdir)
 
-            with ph_results_table.container():
+            with components["result_table"].container():
                 st.subheader("Table")
-                results_table = _get_results_table(benchmark_ids, session.state.logdir)
-                options = [
-                    k
-                    for k, v in results_table.items()
-                    if isinstance(v[0], (int, float, np.int64, np.float64))
-                ]
-                gb = GridOptionsBuilder.from_dataframe(results_table)
-                gb.configure_columns(
-                    ["benchmark_id", "experiment_id", "run_id"],
-                    width=100,
+                response_table = _get_response_table(
+                    benchmark_ids, session.state.logdir
+                )
+                table = pd.concat([params_table, response_table], axis=1)
+                gob = GridOptionsBuilder.from_dataframe(table)
+                gob.configure_columns(
+                    params_table.columns,
                     cellStyle={"backgroundColor": "#f8f9fb"},
+                    pinned="left",
                 )
-                gridoptions = gb.build()
-                AgGrid(results_table, gridOptions=gridoptions)
-
+                grid_options = gob.build()
+                AgGrid(
+                    table,
+                    height=500,
+                    gridOptions=grid_options,
+                    grid_update_mode=GridUpdateMode.VALUE_CHANGED,
+                    columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+                )
                 st.markdown("<hr>", unsafe_allow_html=True)
 
-            with ph_scatter.container():
-                st.subheader("Scatter")
-                cols = st.columns(3)
+            with components["evaluation_table"].container():
+                st.subheader("Evaluation")
+                cols = st.columns(8)
                 with cols[0]:
-                    xlabel = st.selectbox("X:", options=options, index=0)
+                    opt_value = st.text_input("opt value", value=None)
+                    if _is_number_str(opt_value):
+                        opt_value = float(opt_value)
+                    else:
+                        opt_value = None
                 with cols[1]:
-                    ylabel = st.selectbox("Y:", options=options, index=1)
-                with cols[2]:
-                    color = st.selectbox("Color:", options=options, index=2)
-
-                fig = px.scatter(results_table, x=xlabel, y=ylabel, color=color)
-                fig.update_layout(margin=dict(t=10))
-                st.plotly_chart(fig, use_container_width=True)
-
+                    pr = st.text_input(
+                        "pr",
+                        value=0.99,
+                    )
+                    if _is_number_str(pr):
+                        pr = float(pr)
+                evaluation_table = _get_evaluation_table(
+                    benchmark_ids, session.state.logdir
+                )
+                table = pd.concat([params_table, evaluation_table], axis=1)
+                gob = GridOptionsBuilder.from_dataframe(table)
+                gob.configure_columns(
+                    params_table.columns,
+                    cellStyle={"backgroundColor": "#f8f9fb"},
+                    pinned="left",
+                )
+                grid_options = gob.build()
+                AgGrid(
+                    table,
+                    height=500,
+                    gridOptions=grid_options,
+                    grid_update_mode=GridUpdateMode.VALUE_CHANGED,
+                    columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+                )
                 st.markdown("<hr>", unsafe_allow_html=True)
 
-            with ph_parallel_coordinates.container():
-                st.subheader("Parallel coordinates")
-                selected_columns = st.multiselect(
-                    "Columns", options=options, default=options[:5]
-                )
-                color = st.selectbox("Color", options=options)
-                if color not in selected_columns:
-                    selected_columns.append(color)
-                fig = px.parallel_coordinates(
-                    results_table[selected_columns],
-                    color=color,
-                )
-                fig.update_layout(margin=dict(l=50))
-                st.plotly_chart(fig, use_container_width=True)
+            # with ph_scatter.container():
+            #     st.subheader("Scatter")
+            #     cols = st.columns(3)
+            #     with cols[0]:
+            #         xlabel = st.selectbox("X:", options=options, index=0)
+            #     with cols[1]:
+            #         ylabel = st.selectbox("Y:", options=options, index=1)
+            #     with cols[2]:
+            #         color = st.selectbox("Color:", options=options, index=2)
 
-                st.markdown("<hr>", unsafe_allow_html=True)
+            #     fig = px.scatter(results_table, x=xlabel, y=ylabel, color=color)
+            #     fig.update_layout(margin=dict(t=10))
+            #     st.plotly_chart(fig, use_container_width=True)
 
-            with ph_sampleset_analysis.container():
+            #     st.markdown("<hr>", unsafe_allow_html=True)
+
+            # with ph_parallel_coordinates.container():
+            #     st.subheader("Parallel coordinates")
+            #     selected_columns = st.multiselect(
+            # "Columns", options=options, default=options[:5]
+            #     )
+            #     color = st.selectbox("Color", options=options)
+            #     if color not in selected_columns:
+            #         selected_columns.append(color)
+            #     fig = px.parallel_coordinates(
+            #         results_table[selected_columns],
+            #         color=color,
+            #     )
+            #     fig.update_layout(margin=dict(l=50))
+            #     st.plotly_chart(fig, use_container_width=True)
+
+            #     st.markdown("<hr>", unsafe_allow_html=True)
+
+            with components["sampleset_analysis"].container():
                 st.subheader("SampleSet Analysis")
-
                 st.subheader("Constraint Violations")
-                tmp_options = ["solver_name", "model", "num_sweeps"]
-                groupby = ["solver_name"]
-                unselected_options = [o for o in tmp_options if o not in groupby]
-                df = results_table.filter(
-                    regex="|".join(tmp_options + ["violations_min"])
-                )
-                df = df.rename(
-                    columns={
-                        c: c.replace("_violations_min", "")
-                        for c in df.columns
-                        if c.endswith("violations_min")
-                    }
-                )
-                stacked = df.set_index(tmp_options).stack()
-                stacked.name = "violations_min"
-                stacked = stacked.reset_index(
-                    level=[i + 1 for i in range(len(unselected_options))]
-                )
 
-                fig = px.bar(
-                    stacked,
-                    x=stacked.index.get_level_values(1),
-                    y=stacked["violations_min"],
-                    color=stacked.index.get_level_values(0),
-                    barmode="group",
-                    hover_data=unselected_options,
-                )
-                st.plotly_chart(fig, use_container_width=True)
-                st.markdown("<hr>", unsafe_allow_html=True)
-                # fig = go.Figure()
-                # for name, group in results_table.groupby(groupby):
-                #     violations = group.filter(regex="violations_mean")
-                #     print(violations)
-                #     fig.add_trace(
-                #         go.Bar(
-                #             x=violations.columns,
-                #             y=violations,
-                #             name=name,
-                #         )
-                #     )
-                # fig.update_layout(barmode='group')
-                # TODO
-                # concat: jb.functions.Concat[jb.Experiment] = jb.functions.Concat()
-                # results = concat(
-                #     [
-                #         jb.load(benchmark_id, savedir=session.state.logdir)
-                #         for benchmark_id in benchmark_ids
-                #     ]
-                # )
-                # _, t = results.data
-                # heatmap = []
-                # for name, group in t.view().groupby("solver_name"):
-                #     for sampleset in t.data.loc[group.index, "solver_output[0]"]:
-                #         expr_values = sampleset.evaluation.constraint_expr_values[-1]
-                #         expr_values = {str(k): v for k, v in expr_values.items()}
-                #
-                #         x = expr_values["assign"]
-                #         keys = [str(k) for k in x.keys()]
-                #         values = list(x.values())
-                #
-                #         heatmap.append(values)
-                # heatmap = np.array(heatmap).T
-                #
-                # fig = px.imshow(heatmap, aspect="auto", color_continuous_scale="Viridis")
-                # st.plotly_chart(fig, use_container_width=True)
-                # st.markdown("<hr>", unsafe_allow_html=True)
+                violations_analysis_cols = st.columns(2)
+                plot_settings_cols = st.columns(2)
+                plot_components = {}
+
+                with violations_analysis_cols[0]:
+                    # bar
+                    plot_components["bar"] = st.empty()
+                    plot_components["settings_bar"] = st.empty()
+                    # st.markdown("<hr>", unsafe_allow_html=True)
+
+                    with plot_components["settings_bar"]:
+                        agg_options = ["min", "max", "mean", "std"]
+                        groupby_options: list[str] = params_table.columns.tolist()
+
+                        with plot_settings_cols[0]:
+                            cols = st.columns(2)
+                            with cols[0]:
+                                agg = (
+                                    st.selectbox(
+                                        "Select a function for aggregating violations:",
+                                        options=agg_options,
+                                        index=0,
+                                    )
+                                    or "min"
+                                )
+                            with cols[1]:
+                                groupby = (
+                                    st.selectbox(
+                                        "Group by:", options=groupby_options, index=0
+                                    )
+                                    or groupby_options[0]
+                                )
+
+                    table = pd.concat([params_table, evaluation_table], axis=1)
+                    unselected_options = [c for c in params_table if c != groupby]
+                    violations_table = table.filter(
+                        regex="|".join(groupby_options + [f"violations_{agg}"])
+                    )
+
+                    violations_table = violations_table.rename(
+                        columns={
+                            c: c.replace(f"_violations_{agg}", "")
+                            for c in violations_table.columns
+                            if c.endswith(f"violations_{agg}")
+                        }
+                    )
+                    violations_table = violations_table.astype(
+                        {c: str for c in groupby_options}
+                    )
+                    stacked = violations_table.set_index(
+                        params_table.columns.tolist()
+                    ).stack()
+                    stacked.name = f"violations_{agg}"
+                    stacked = stacked.reset_index(unselected_options)
+
+                    fig = px.bar(
+                        stacked,
+                        x=stacked.index.get_level_values(-1),
+                        y=stacked[f"violations_{agg}"],
+                        color=stacked.index.get_level_values(groupby),
+                        barmode="group",
+                        hover_data=unselected_options,
+                        color_discrete_sequence=px.colors.sequential.Jet,
+                    )
+
+                    with plot_components["bar"].container():
+                        st.plotly_chart(fig, use_container_width=True)
+
+                with violations_analysis_cols[1]:
+                    # line
+                    plot_components["line"] = st.empty()
+                    plot_components["settings_line"] = st.empty()
+
+                    with plot_components["settings_line"]:
+                        array_options: list[str] = [
+                            c.split("_mean")[0]
+                            for c in evaluation_table.filter(regex="_mean").columns
+                        ]
+                        metric_options = [
+                            "success_probability",
+                            "feasible_rate",
+                            "residual_energy",
+                            "TTS[optimal]",
+                            "TTS[feasible]",
+                            "TTS[derived]",
+                        ]
+                        with plot_settings_cols[1]:
+                            cols = st.columns(3)
+                            with cols[0]:
+                                x = (
+                                    st.selectbox(
+                                        "X:", options=groupby_options, index=0, key="x"
+                                    )
+                                    or groupby_options[0]
+                                )
+                            with cols[1]:
+                                base_y = (
+                                    st.selectbox(
+                                        "Y:",
+                                        options=array_options + metric_options,
+                                        index=0,
+                                        key="y",
+                                    )
+                                    or array_options[0]
+                                )
+                                if base_y in array_options:
+                                    y = base_y + "_mean"
+                                else:
+                                    y = base_y
+                            with cols[2]:
+                                unselected_options = [c for c in params_table if c != x]
+                                groupby = st.selectbox(
+                                    "Group by:",
+                                    options=unselected_options,
+                                    index=0,
+                                    key="groupby",
+                                )
+
+                        unselected_options = [
+                            c for c in params_table if c not in (x, groupby)
+                        ]
+                        with plot_settings_cols[1]:
+                            cols = st.columns(len(unselected_options))
+                            index: list[str] = []
+                            for col, option in zip(cols, unselected_options):
+                                with col:
+                                    unique_values = (
+                                        params_table[option].unique().tolist()
+                                    )
+                                    index.append(
+                                        st.selectbox(
+                                            f"{option}:",
+                                            options=unique_values,
+                                            index=0,
+                                        )
+                                        or unique_values[0]
+                                    )
+
+                    index_x = tuple(index + [x])
+                    index_y = tuple(index + [y])
+                    index_lower_y = tuple(index + [f"{base_y}_std"])
+
+                    fig = go.Figure()
+                    for i, (name, group) in enumerate(table.groupby(groupby)):
+                        line_color = px.colors.sequential.Jet[
+                            i % len(px.colors.sequential.Jet)
+                        ]
+                        fill_color = px.colors.sequential.Jet[
+                            i % len(px.colors.sequential.Jet)
+                        ]
+
+                        stacked = (
+                            group.set_index(unselected_options).stack().sort_index()
+                        )
+                        lower = (
+                            stacked.loc[index_y].values
+                            - stacked.loc[index_lower_y].values
+                        )
+                        upper = (
+                            stacked.loc[index_y].values
+                            + stacked.loc[index_lower_y].values
+                        )
+
+                        fig.add_traces(
+                            [
+                                go.Scatter(
+                                    x=stacked.loc[index_x].values,
+                                    y=stacked.loc[index_y].values,
+                                    name=name,
+                                    mode="markers+lines",
+                                    line=dict(color=line_color),
+                                ),
+                                go.Scatter(
+                                    x=stacked.loc[index_x].values,
+                                    y=upper,
+                                    name=name,
+                                    showlegend=False,
+                                    mode="lines",
+                                    fillcolor=_rgb_to_rgba(fill_color, 0.2),
+                                    line=dict(color=_rgb_to_rgba(fill_color, 0.0)),
+                                ),
+                                go.Scatter(
+                                    x=stacked.loc[index_x].values,
+                                    y=lower,
+                                    fill="tonexty",
+                                    name=name,
+                                    showlegend=False,
+                                    mode="lines",
+                                    fillcolor=_rgb_to_rgba(fill_color, 0.2),
+                                    line=dict(color=_rgb_to_rgba(fill_color, 0.0)),
+                                ),
+                            ]
+                        )
+                    fig.update_layout(xaxis=dict(title=x), yaxis=dict(title=base_y))
+                    fig.update_coloraxes(colorscale="Jet")
+
+                    with plot_components["line"].container():
+                        st.plotly_chart(fig, use_container_width=True)
+
+                for col in st.columns(2):
+                    with col:
+                        st.markdown("<hr>", unsafe_allow_html=True)
+
+            # tmp
+            # concat: jb.functions.Concat[jb.Experiment] = jb.functions.Concat()
+            # results = concat(
+            #     [
+            #         jb.load(benchmark_id, savedir=session.state.logdir)
+            #         for benchmark_id in benchmark_ids
+            #     ]
+            # )
+            # _, t = results.data
+            # heatmap = []
+            # for name, group in t.view().groupby("solver_name"):
+            #     for sampleset in t.data.loc[group.index, "solver_output[0]"]:
+            #         expr_values = sampleset.evaluation.constraint_expr_values[-1]
+            #         expr_values = {str(k): v for k, v in expr_values.items()}
+            #         x = expr_values["assign"]
+            #         keys = [str(k) for k in x.keys()]
+            #         values = list(x.values())
+            #         heatmap.append(values)
+            # heatmap = np.array(heatmap).T
+            # fig = px.imshow(heatmap, aspect="auto", color_continuous_scale="Viridis")
+            # st.plotly_chart(fig, use_container_width=True)
+            # st.markdown("<hr>", unsafe_allow_html=True)
 
             # with ph_sampleset_diff.container():
             #    st.subheader("Diff")
@@ -381,47 +579,65 @@ class RoutingHandler:
 
 
 @st.cache_data
-def _get_results_table(benchmark_ids: list[str], savedir: pathlib.Path) -> pd.DataFrame:
-    def expand_dict_series_in(table: pd.DataFrame) -> pd.DataFrame:
-        expanded = pd.DataFrame()
-        for c in table:
-            sample = table[c][0]
-            if isinstance(sample, dict):
-                expanded = pd.concat(
-                    [
-                        expanded,
-                        table.apply(lambda x: pd.Series(x[c]), axis=1).rename(
-                            columns=lambda x: f"{c}[{x}]"
-                        ),
-                    ]
-                )
-                table.drop(columns=[c], inplace=True)
-        return pd.concat([table, expanded], axis=1)
+def _get_params_table(benchmark_ids: list[str], savedir: pathlib.Path) -> pd.DataFrame:
+    table = jb.load(benchmark_ids[0], savedir=savedir).params_table
+    expected_problem_columns = [c for c in table if isinstance(table[c][0], jm.Problem)]
+    for benchmark_id in benchmark_ids[1:]:
+        params_table = jb.load(benchmark_id, savedir=savedir).params_table
+        problem_columns = [
+            c for c in params_table if isinstance(params_table[c][0], jm.Problem)
+        ]
+        for c, expected in zip(problem_columns, expected_problem_columns):
+            params_table = params_table.rename(columns={c: expected})
 
+        table = pd.concat([table, params_table])
+
+    for c in ("feed_dict", "instance_data"):
+        droped_columns = table.filter(regex=c).columns
+        table = table.drop(columns=droped_columns)
+
+    for c in expected_problem_columns:
+        table[c] = table[c].apply(lambda x: x.name)
+    return table
+
+
+@st.cache_data
+def _get_response_table(
+    benchmark_ids: list[str], savedir: pathlib.Path
+) -> pd.DataFrame:
+    table = pd.DataFrame()
+    for benchmark_id in benchmark_ids:
+        results = jb.load(benchmark_id, savedir=savedir)
+        response_table = jb.Table._expand_dict_in(results.response_table)
+        table = pd.concat([table, response_table])
+    return table
+
+
+@st.cache_data
+def _get_evaluation_table(
+    benchmark_ids: list[str],
+    savedir: pathlib.Path,
+    opt_value: float | None = None,
+    pr: float = 0.99,
+) -> pd.DataFrame:
     table = pd.DataFrame()
     for benchmark_id in benchmark_ids:
         results = jb.load(benchmark_id, savedir=savedir)
         e = jb.Evaluation()
-        eval_table = e([results], opt_value=0).table.drop(columns=results.table.columns)
-
-        params_table = results.params_table
-        for c in ("model", "problem"):
-            if c in params_table:
-                params_table[c] = params_table[c].apply(lambda x: x.name)
-
-        for c in ("feed_dict", "instance_data"):
-            if c in params_table:
-                params_table.drop(columns=[c], inplace=True)
-
-        params_table = expand_dict_series_in(params_table)
-        response_table = expand_dict_series_in(results.response_table)
-        table = pd.concat(
-            [
-                table,
-                pd.concat(
-                    [params_table, response_table, eval_table],
-                    axis=1,
-                ).reset_index(),
-            ]
-        ).reset_index(drop=True)
+        evaluation_table = e([results], opt_value=opt_value, pr=pr).table.drop(
+            columns=results.table.columns,
+        )
+        table = pd.concat([table, evaluation_table])
     return table
+
+
+def _rgb_to_rgba(rgb_str: str, alpha: float) -> str:
+    rgba = rgb_str.replace("rgb", "rgba")
+    rgba = rgba.split(")")
+    rgba[-1] = f"{alpha}"
+    return ",".join(rgba) + ")"
+
+
+def _is_number_str(s: str) -> bool:
+    pattern = r"^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$"
+    return bool(re.match(pattern, s))

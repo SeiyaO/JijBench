@@ -5,9 +5,12 @@ import pytest
 
 import jijbench as jb
 from jijbench.visualization.metrics.utils import (
-    _create_fig_title_list, _df_has_number_array_column_target_name,
-    _df_has_number_column_target_name, _df_has_valid_multipliers_column,
-    construct_experiment_from_samplesets)
+    _create_fig_title_list,
+    _df_has_number_array_column_target_name,
+    _df_has_number_column_target_name,
+    _df_has_valid_multipliers_column,
+    construct_experiment_from_samplesets,
+)
 
 
 def test_construct_experiment_from_samplesets():
@@ -222,16 +225,19 @@ def test_create_fig_title_list_for_invalid_input():
 
 params = {
     "no_multipliers_columns": ([[0, 1], [2, 3]], ["col_0", "col_1"], False),
-    "first_multipliers_isnot_dict": ([[0]], ["multipliers"], False),
-    "second_multipliers_isnot_dict": ([[{"onehot": 1}], [0]], ["multipliers"], False),
-    "multipliers_key_isnot_str": ([[{0: 1}]], ["multipliers"], False),
+    "first_multipliers_isnot_dict": ([[{"onehot": 1}], [0]], ["multipliers"], False),
+    "second_multipliers_isnot_dict": ([[0], [{"onehot": 1}]], ["multipliers"], False),
     "multipliers_value_isnot_number": ([[{"onehot": "1"}]], ["multipliers"], False),
     "constraint_name_is_different": (
         [[{"onehot1": 1}], [{"onehot2": 2}]],
         ["multipliers"],
         False,
     ),
-    "valid_case": ([[{"onehot1": 1}], [{"onehot1": 2}]], ["multipliers"], True),
+    "valid_case": (
+        [[0, 1], [2, 3]],
+        ["multipliers['onehot1']", "multipliers['onehot2']"],
+        True,
+    ),
 }
 
 

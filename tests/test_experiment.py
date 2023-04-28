@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-import os
+import pathlib
 import shutil
 import typing as tp
 
 import jijmodeling as jm
+import numpy as np
 import pandas as pd
 import pytest
 
 import jijbench as jb
+from jijbench.consts.default import DEFAULT_RESULT_DIR
 from jijbench.experiment.experiment import _Created, _Running, _Waiting
 
 
@@ -17,9 +19,8 @@ def pre_post_process():
     # preprocess
     yield
     # postprocess
-    norm_path = os.path.normcase("./.jb_results")
-    if os.path.exists(norm_path):
-        shutil.rmtree(norm_path)
+    if DEFAULT_RESULT_DIR.exists():
+        shutil.rmtree(DEFAULT_RESULT_DIR)
 
 
 def f1():
@@ -36,6 +37,16 @@ def f3(i: int) -> tuple[int, int]:
 
 def f4(i: int, j: int = 1) -> int:
     return i + j
+
+
+def simple_experiment(name: str, savedir: pathlib.Path) -> jb.Experiment:
+    experiment = jb.Experiment(name=name, savedir=savedir)
+
+    solver = jb.Solver(f1)
+    record = solver([])
+    experiment.append(record)
+
+    return experiment
 
 
 @pytest.mark.parametrize(
@@ -138,3 +149,48 @@ def test_experiment_with_solver_outputing_jm_sampleset(
     assert set(expected_columns) <= set(experiment.table.columns)
     assert set(expected_columns) == set(experiment.response_table.columns)
     assert experiment.params_table.empty
+
+
+def test_star():
+    savedir = DEFAULT_RESULT_DIR
+    name = "star_experiment"
+    experiment = simple_experiment(name, savedir)
+    experiment.star()
+
+    star_file = savedir / "star.csv"
+    assert star_file.exists()
+
+    star = pd.read_csv(star_file, index_col=0)
+    assert star.isin([np.nan, experiment.name, str(experiment.savedir)]).any().all()
+
+
+def test_get_benchmark_ids():
+    savedir = DEFAULT_RESULT_DIR
+    experiment = simple_experiment(name="example", savedir=savedir)
+    experiment.save()
+
+    benchmark_ids = jb.get_benchmark_ids()
+
+    assert np.isnan(benchmark_ids).all()
+
+
+@pytest.mark.parametrize("only_star", [True, False])
+def test_get_experiment_ids(only_star: bool):
+    savedir = DEFAULT_RESULT_DIR
+    experiment = simple_experiment(name="example", savedir=savedir)
+    star_experiment = simple_experiment(name="example_star", savedir=savedir)
+
+    experiment_ids = jb.get_experiment_ids(only_star=only_star)
+    assert not experiment_ids
+
+    experiment.save()
+
+    star_experiment.star()
+    star_experiment.save()
+
+    experiment_ids = jb.get_experiment_ids(only_star=only_star)
+    if only_star:
+        assert len(experiment_ids) == 1
+        assert experiment_ids[0] == star_experiment.name
+    else:
+        assert set(experiment_ids) == {experiment.name, star_experiment.name}

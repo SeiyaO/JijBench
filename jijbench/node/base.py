@@ -71,7 +71,7 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
                 f"Attribute data of class {cls.__name__} must be type {dtype_str}."
             )
 
-    def _init_attrs(self, node: DataNode[tp.Any]) -> None:
+    def _update_attrs(self, node: DataNode[tp.Any]) -> None:
         """Refresh the attributes in DataNode object.
 
         Args:

@@ -241,8 +241,8 @@ def test_metrics_plot_parallelplot_multipliers():
     mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
 
-    assert fig_contain_target_data(fig, "onehot1_multiplier", np.array([1, 3]))
-    assert fig_contain_target_data(fig, "onehot2_multiplier", np.array([2, 4]))
+    assert fig_contain_target_data(fig, "multipliers[onehot1]", np.array([1, 3]))
+    assert fig_contain_target_data(fig, "multipliers[onehot2]", np.array([2, 4]))
 
 
 params = {

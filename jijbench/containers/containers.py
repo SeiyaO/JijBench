@@ -9,7 +9,6 @@ import jijmodeling as jm
 import numpy as np
 import pandas as pd
 
-from jijbench.elements.base import Callable
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.node.base import DataNode
@@ -117,7 +116,7 @@ class Record(Container[pd.Series]):
         """
         concat: Concat[Record] = Concat()
         node = self.apply(concat, [record], name=self.name)
-        self._init_attrs(node)
+        self._update_attrs(node)
 
     def view(self) -> pd.Series[tp.Any]:
         """Return the data of each DataNode in the Series as a new Series."""
@@ -200,7 +199,7 @@ class Artifact(Container[ArtifactDataType]):
         concat: Concat[Artifact] = Concat()
         other = ArtifactFactory()([record])
         node = self.apply(concat, [other], name=self.name)
-        self._init_attrs(node)
+        self._update_attrs(node)
 
     def view(self) -> ArtifactDataType:
         """Return the data of each DataNode in the dict as a new dict."""
@@ -292,27 +291,45 @@ class Table(Container[pd.DataFrame]):
         concat: Concat[Table] = Concat()
         other = TableFactory()([record])
         node = self.apply(concat, [other], name=self.name, axis=0)
-        self._init_attrs(node)
+        self._update_attrs(node)
 
     def view(self) -> pd.DataFrame:
         """Return the data of each DataNode in the pandas.DataFrame as a new pandas.DataFrame."""
+
         if self.data.empty:
             return self.data
         else:
-            data = self.data.applymap(
-                lambda x: x.data.__name__ if isinstance(x, Callable) else x.data
+            data = self.data.applymap(lambda x: x.data)
+            data = self._expand_sampleset_in(data)
+            data = self._expand_dict_in(data)
+            return data
+
+    @staticmethod
+    def _expand_sampleset_in(data: pd.DataFrame) -> pd.DataFrame:
+        sampleset_columns = [c for c in data if isinstance(data[c][0], jm.SampleSet)]
+        if sampleset_columns:
+            extracted = pd.concat(
+                [data[c].apply(Table._extract) for c in sampleset_columns], axis=1
             )
-            sampleset_columns = [
-                c for c in data.columns if isinstance(data[c][0], jm.SampleSet)
-            ]
-            if sampleset_columns:
-                extracted = pd.concat(
-                    [data[c].apply(self._extract) for c in sampleset_columns], axis=1
+            data = pd.concat([data.drop(sampleset_columns, axis=1), extracted], axis=1)
+        return data
+
+    @staticmethod
+    def _expand_dict_in(data: pd.DataFrame) -> pd.DataFrame:
+        expanded = pd.DataFrame()
+        for c in data:
+            sample = data[c][0]
+            if isinstance(sample, dict):
+                expanded = pd.concat(
+                    [
+                        expanded,
+                        data.apply(lambda x: pd.Series(x[c]), axis=1).rename(
+                            columns=lambda x: f"{c}[{x}]"
+                        ),
+                    ]
                 )
-                data.drop(sampleset_columns, axis=1, inplace=True)
-                return pd.concat([data, extracted], axis=1)
-            else:
-                return data
+                data = data.drop(columns=[c])
+        return pd.concat([data, expanded], axis=1)
 
     @staticmethod
     def _extract(sampleset: jm.SampleSet) -> pd.Series[tp.Any]:
@@ -320,7 +337,7 @@ class Table(Container[pd.DataFrame]):
 
         This method extracts relevant data from a `jijmodeling.SampleSet`, such as the number of occurrences,
         energy, objective, constraint violations, number of samples, number of feasible samples, and the
-        execution time. The extracted data is returned as a list of DataNode objects.
+        execution time.
 
 
         Args:

@@ -95,9 +95,9 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         Returns:
             Experiment: The result of the benchmark as an Experiment object.
         """
-        savedir = (
-            savedir if isinstance(savedir, pathlib.Path) else pathlib.Path(savedir)
-        )
+        savedir = pathlib.Path(savedir)
+        savedir.mkdir(exist_ok=True, parents=True)
+        (savedir / "star.csv").touch(exist_ok=True)
         savedir /= self.name
         if inputs is None:
             inputs = [Experiment(autosave=autosave, savedir=savedir)]
@@ -163,16 +163,13 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         experiment: Experiment,
     ) -> Experiment:
         for solver in self.solver:
-            f = solver.function
             for params in self.params:
                 with experiment:
-                    f_name = str(f).split(f"{f.__class__.__name__} ")[-1].split(" ")[0]
                     info = RecordFactory()(
                         [
                             Date(),
-                            Parameter(f_name, "solver_name"),
+                            Parameter(solver.function.__qualname__, "solver_name"),
                             *params,
-                            Callable(solver.function, solver.name),
                         ]
                     )
                     ret = solver(params)
@@ -189,7 +186,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         return experiment
 
 
-def construct_benchmark_for(
+def benchmark_for(
     sampler: JijZeptBaseSampler,
     models: list[tuple[jm.Problem, jm.PH_VALUES_INTERFACE]],
     params: dict[str, tp.Iterable[tp.Any]],

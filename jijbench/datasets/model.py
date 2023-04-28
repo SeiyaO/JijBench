@@ -61,7 +61,7 @@ class InstanceDataFileStorage:
     ) -> dict[str, str]:
         return {pathlib.Path(file).name: file for file in self.get_files(size, n)}
 
-    def load_instance_data(
+    def get_instance_data(
         self,
         size: tp.Literal["small", "medium", "large"] = "small",
         n: int | tp.Literal["all"] = 1,
@@ -91,7 +91,7 @@ def get_models(
 ) -> list[tuple[jm.Problem, jm.InstanceData]]:
     storage = InstanceDataFileStorage(problem_name)
     problem = get_problem(problem_name)
-    files = storage.load_instance_data(size, n)
+    files = storage.get_instance_data(size, n)
     return list(zip([problem] * n, files))
 
 
@@ -130,4 +130,4 @@ def get_instance_data(
     n: int | tp.Literal["all"] = 1,
 ) -> list[jm.PH_VALUES_INTERFACE]:
     storage = InstanceDataFileStorage(problem_name)
-    return storage.load_instance_data(size, n)
+    return storage.get_instance_data(size, n)
