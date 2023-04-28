@@ -32,7 +32,6 @@ def run():
     st.title("JB Board")
 
     logdir = pathlib.Path(os.environ.get("logdir", DEFAULT_RESULT_DIR))
-
     session = Session(logdir)
 
     tab_names = ["Analysis", "Instance data", "Problem", "Solver"]

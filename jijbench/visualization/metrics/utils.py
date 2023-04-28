@@ -153,31 +153,21 @@ def _df_has_valid_multipliers_column(df: pd.DataFrame) -> bool:
     """
     Check that the `pd.DataFrame` instance has `multipliers` column in `JijBenchmark` format.
     """
-    if "multipliers" not in df.columns:
+
+    def element_is_valid(x: pd.Series) -> bool:
+        if all([isinstance(v, Number) for v in x]):
+            return True
+        else:
+            return False
+
+    df = df.filter(regex="multipliers")
+
+    if df.empty:
         return False
 
-    def element_is_valid(x: pd.Series, constraint_names: list[str]) -> bool:
-        multipliers = x["multipliers"]
-        if not isinstance(multipliers, dict):
-            return False
-        for key, value in multipliers.items():
-            if not isinstance(key, str):
-                return False
-            if not isinstance(value, Number):
-                return False
-        if list(multipliers.keys()) != constraint_names:
-            return False
-        return True
-
-    first_element = df["multipliers"].values[0]
-    if isinstance(first_element, dict):
-        constraint_names = list(first_element.keys())
-    else:
-        return False
     check_results = df.apply(
         element_is_valid,
         axis=1,
-        constraint_names=constraint_names,
     )
     return all(check_results.values)
 

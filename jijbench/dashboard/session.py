@@ -63,7 +63,7 @@ class State:
         st.session_state["selected_instance_data_map"] = {}
         st.session_state["selected_figure_for_instance_data"] = None
         st.session_state["selected_benchmark_results"] = []
-        st.session_state["is_benchmark_results_loaded"] = False
+        st.session_state["num_experiment_loaded"] = 0
 
     @property
     def selected_page(self) -> str:
@@ -170,9 +170,9 @@ class State:
             )
 
     @property
-    def is_benchmark_results_loaded(self) -> bool:
-        return st.session_state["is_benchmark_results_loaded"]
+    def num_experiment_loaded(self) -> int:
+        return st.session_state["num_experiment_loaded"]
 
-    @is_benchmark_results_loaded.setter
-    def is_benchmark_results_loaded(self, b: bool) -> None:
-        st.session_state["is_benchmark_results_loaded"] = b
+    @num_experiment_loaded.setter
+    def num_experiment_loaded(self, n: int) -> None:
+        st.session_state["num_experiment_loaded"] = n

@@ -260,12 +260,9 @@ class MetricsParallelPlot:
 
         # multiplires (If self.result has a valid multipliers column)
         if _df_has_valid_multipliers_column(result_table):
-            for constraint_name in result_table["multipliers"].values[0].keys():
-                data_to_create_df_parallelplot[
-                    constraint_name + "_multiplier"
-                ] = result_table.apply(
-                    _get_multiplier, axis=1, constraint_name=constraint_name
-                )
+            data_to_create_df_parallelplot.update(
+                result_table.filter(regex="multipliers").to_dict(orient="list")
+            )
 
         # num_feasible
         if _df_has_number_column_target_name(result_table, "num_feasible"):

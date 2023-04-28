@@ -8,8 +8,12 @@ from jijbench.elements.array import Array
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
-from jijbench.functions.metrics import (FeasibleRate, ResidualEnergy,
-                                        SuccessProbability, TimeToSolution)
+from jijbench.functions.metrics import (
+    FeasibleRate,
+    ResidualEnergy,
+    SuccessProbability,
+    TimeToSolution,
+)
 from jijbench.node.base import FunctionNode
 from jijbench.solver.jijzept import SampleSet
 
