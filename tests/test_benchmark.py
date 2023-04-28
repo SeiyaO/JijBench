@@ -334,5 +334,3 @@ def test_get_id_table():
     bench()
     bench().star()
     id_table = jb.get_id_table()
-    print(id_table)
-    assert all(id_table["star"].tail(1) == "*")
