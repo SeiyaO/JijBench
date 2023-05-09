@@ -190,11 +190,22 @@ def test_experiment_append():
         assert e.table.loc[index, "num"] == i
 
 
-def test_sample():
-    import typing as tp
+def test_table_view():
+    inputs = [
+        jb.ID(name="id1"),
+        jb.Date(name="date1"),
+        jb.Array(np.arange(5), name="array1"),
+        jb.Parameter({"a": 1}, name="param1"),
+        jb.Parameter({"b": 2}, name="param2"),
+    ]
 
-    import jijbench as jb
-    from jijbench.node.base import DataNode
+    record = jb.functions.RecordFactory()(inputs)
+    table = jb.functions.TableFactory()([record])
 
-    a: DataNode[tp.Any] = jb.Artifact({}, "sample")
-    a.operator
+    df = table.view()
+    assert "id1" in df.columns
+    assert "param1[a]" in df.columns
+    assert "param2[b]" in df.columns
+
+    assert df["param1[a]"][0] == 1
+    assert df["param2[b]"][0] == 2

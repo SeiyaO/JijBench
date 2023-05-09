@@ -326,7 +326,8 @@ class Table(Container[pd.DataFrame]):
                         data.apply(lambda x: pd.Series(x[c]), axis=1).rename(
                             columns=lambda x: f"{c}[{x}]"
                         ),
-                    ]
+                    ],
+                    axis=1,
                 )
                 data = data.drop(columns=[c])
         return pd.concat([data, expanded], axis=1)
