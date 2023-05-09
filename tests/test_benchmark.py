@@ -41,6 +41,10 @@ def f4(i: int, j: int = 1) -> int:
     return i + j
 
 
+def f5(i: dict[str, int], j: dict[str, int]) -> int:
+    return sum(i.values()) + sum(j.values())
+
+
 @pytest.mark.parametrize(
     "solver, params",
     [
@@ -48,6 +52,7 @@ def f4(i: int, j: int = 1) -> int:
         (f2, {"i": [1, 2]}),
         (f3, {"i": [1, 2]}),
         (f4, {"i": [1, 2], "j": [1, 2]}),
+        (f5, {"i": [{"a": 1}], "j": [{"b": 2}]}),
     ],
 )
 def test_benchmark(
