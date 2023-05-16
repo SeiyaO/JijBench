@@ -35,7 +35,7 @@ Tutorials will be provided in the future. Stay tuned!
 
 ## How to Contribute
 
-See [CONTRIBUITING.md](https://github.com/Jij-Inc/JijBench/blob/main/CONTRIBUTING.md) 
+See [CONTRIBUITING.md](CONTRIBUTING.md) 
 
 ---
 
