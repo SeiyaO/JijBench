@@ -141,6 +141,7 @@ def test_experiment_with_solver_outputing_jm_sampleset(
         "objective",
         "onehot1_violations",
         "onehot2_violations",
+        "total_violations",
         "num_samples",
         "num_feasible",
         "execution_time",
