@@ -291,18 +291,6 @@ class MetricsParallelPlot:
                     column_name=violation_column_name,
                 )
 
-        # Extract series about violations from data_to_create_df_parallelplot (key starts with 'samplemean_' and ends with '_violations') and calculates samplemean_total_violations by taking sum.
-        start, end = re.compile(r"^samplemean_"), re.compile(r"_violations$")
-        violation_series = [
-            series
-            for name, series in data_to_create_df_parallelplot.items()
-            if start.search(name) and end.search(name)
-        ]
-        if violation_series:
-            data_to_create_df_parallelplot["samplemean_total_violations"] = sum(
-                violation_series
-            )
-
         self.df_parallelplot = df_parallelplot = pd.DataFrame(
             data_to_create_df_parallelplot
         )

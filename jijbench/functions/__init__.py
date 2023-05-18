@@ -4,8 +4,7 @@ __path__ = extend_path(__path__, __name__)
 
 
 from jijbench.functions.concat import Concat
-from jijbench.functions.factory import (ArtifactFactory, RecordFactory,
-                                        TableFactory)
+from jijbench.functions.factory import ArtifactFactory, RecordFactory, TableFactory
 from jijbench.functions.math import Max, Mean, Min, Std
 
 __all__ = [
