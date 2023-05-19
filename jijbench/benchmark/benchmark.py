@@ -9,7 +9,6 @@ import jijmodeling as jm
 from typing_extensions import TypeGuard
 
 from jijbench.consts.default import DEFAULT_RESULT_DIR
-from jijbench.elements.base import Callable
 from jijbench.elements.date import Date
 from jijbench.elements.id import ID
 from jijbench.experiment.experiment import Experiment
@@ -80,6 +79,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
     def __call__(
         self,
         inputs: list[Experiment] | None = None,
+        solver_output_names: list[str] | None = None,
         concurrent: bool = False,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
@@ -95,15 +95,12 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         Returns:
             Experiment: The result of the benchmark as an Experiment object.
         """
-        savedir = pathlib.Path(savedir)
-        savedir.mkdir(exist_ok=True, parents=True)
-        (savedir / "star.csv").touch(exist_ok=True)
-        savedir /= self.name
         if inputs is None:
             inputs = [Experiment(autosave=autosave, savedir=savedir)]
 
         return super().__call__(
             inputs,
+            solver_output_names=solver_output_names,
             concurrent=concurrent,
             autosave=autosave,
             savedir=savedir,
@@ -131,6 +128,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
     def operate(
         self,
         inputs: list[Experiment],
+        solver_output_names: list[str] | None = None,
         concurrent: bool = False,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
@@ -146,14 +144,40 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         Returns:
             Experiment: An Experiment object representing the results of the operations performed by the benchmark.
         """
+        savedir = pathlib.Path(savedir)
+        savedir.mkdir(exist_ok=True, parents=True)
+        (savedir / "star.csv").touch(exist_ok=True)
+        savedir /= self.name
+
         concat: Concat[Experiment] = Concat()
         name = inputs[0].name
 
         experiment = concat(inputs, name=name, autosave=autosave, savedir=savedir)
         if concurrent:
-            return self._co()
+            experiment = self._co()
         else:
-            return self._seq(experiment)
+            experiment = self._seq(experiment)
+
+        if solver_output_names is not None:
+            a, t = experiment.data
+            outputs = t.data.filter(regex="solver_output")
+            for record in a.values():
+                record.update(
+                    {
+                        name: record.pop(k)
+                        for k, name in zip(outputs, solver_output_names)
+                    }
+                )
+
+            t.data.rename(
+                columns={
+                    c: name
+                    for c, name in zip(outputs, solver_output_names)
+                    if "solver_output" in str(c)
+                },
+                inplace=True,
+            )
+        return experiment
 
     def _co(self) -> Experiment:
         raise NotImplementedError
