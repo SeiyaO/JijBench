@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import typing as tp
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, is_dataclass
 
 import jijmodeling as jm
 import numpy as np
@@ -302,6 +302,7 @@ class Table(Container[pd.DataFrame]):
             data = self.data.applymap(lambda x: x.data)
             data = self._expand_sampleset_in(data)
             data = self._expand_dict_in(data)
+            data = self._expand_dataclass_in(data)
             return data
 
     @staticmethod
@@ -325,6 +326,24 @@ class Table(Container[pd.DataFrame]):
                         expanded,
                         data.apply(lambda x: pd.Series(x[c]), axis=1).rename(
                             columns=lambda x: f"{c}[{x}]"
+                        ),
+                    ],
+                    axis=1,
+                )
+                data = data.drop(columns=[c])
+        return pd.concat([data, expanded], axis=1)
+
+    @staticmethod
+    def _expand_dataclass_in(data: pd.DataFrame) -> pd.DataFrame:
+        expanded = pd.DataFrame()
+        for c in data:
+            sample = data[c][0]
+            if is_dataclass(sample):
+                expanded = pd.concat(
+                    [
+                        expanded,
+                        data.apply(lambda x: pd.Series(asdict(x[c])), axis=1).rename(
+                            columns=lambda x: f"{c}.{x}"
                         ),
                     ],
                     axis=1,
