@@ -19,6 +19,7 @@ import streamlit as st
 from plotly.colors import n_colors
 from st_aggrid import AgGrid, ColumnsAutoSizeMode, GridUpdateMode
 from st_aggrid.grid_options_builder import GridOptionsBuilder
+from streamlit.delta_generator import DeltaGenerator
 from streamlit_ace import st_ace
 from streamlit_elements import editor, elements
 from streamlit_tree_select import tree_select
@@ -190,10 +191,13 @@ class RoutingHandler:
             "id_table": st.empty(),
             "result_table": st.empty(),
             "evaluation_table": st.empty(),
+            "problem": st.empty(),
+            "metric_plot": st.empty(),
             "sampleset_analysis": st.empty(),
             "scatter": st.empty(),
             "parallel_coordinates": st.empty(),
         }
+        plot_components: dict[str, DeltaGenerator] = {}
 
         with components["id_table"].container():
             st.subheader("Experiment history")
@@ -223,7 +227,6 @@ class RoutingHandler:
             if is_benchmark_results_loaded:
                 session.state.num_experiment_loaded += 1
 
-        table_cols = st.columns(2)
         if session.state.num_experiment_loaded:
             benchmark_ids = session.state.selected_benchmark_ids
             params_table = _get_params_table(benchmark_ids, session.state.logdir)
@@ -234,6 +237,7 @@ class RoutingHandler:
                     benchmark_ids, session.state.logdir
                 )
                 table = pd.concat([params_table, response_table], axis=1)
+                st.dataframe(table)
                 gob = GridOptionsBuilder.from_dataframe(table)
                 gob.configure_columns(
                     params_table.columns,
@@ -286,7 +290,171 @@ class RoutingHandler:
                 )
                 st.markdown("<hr>", unsafe_allow_html=True)
 
-            # with ph_scatter.container():
+            with components["problem"].container():
+                st.subheader("Problems")
+
+                def get_unique_problems(x: pd.Series) -> pd.Series:
+                    problem_names = x.apply(lambda x: x.name)
+                    problem_names.name = f"{x.name}_name"
+                    return pd.concat([x, problem_names], axis=1).drop_duplicates(
+                        f"{x.name}_name"
+                    )[x.name]
+
+                problem_table = _get_problem_table(benchmark_ids, session.state.logdir)
+                problems = np.unique(
+                    [
+                        p
+                        for problems in problem_table.apply(get_unique_problems).values
+                        for p in problems
+                    ]
+                ).tolist()
+                for problem in problems:
+                    with st.expander(f"{problem.name}"):
+                        st.latex(problem._repr_latex_()[2:-2])
+                st.markdown("<hr>", unsafe_allow_html=True)
+
+            with components["metric_plot"].container():
+                st.subheader("SampleSet Analysis")
+                # line
+                st.subheader("Metric")
+                plot_components["line"] = st.empty()
+                plot_components["settings_line"] = st.empty()
+
+                with plot_components["settings_line"].container():
+                    array_options: list[str] = [
+                        c.split("_mean")[0]
+                        for c in evaluation_table.filter(regex="_mean").columns
+                    ]
+                    metric_options = [
+                        "success_probability",
+                        "feasible_rate",
+                        "residual_energy",
+                        "TTS[optimal]",
+                        "TTS[feasible]",
+                        "TTS[derived]",
+                    ]
+                    groupby_options: list[str] = params_table.columns.tolist()
+
+                    cols = st.columns(2)
+                    with cols[0]:
+                        groupby = st.multiselect(
+                            "Group by:",
+                            options=groupby_options,
+                            default=groupby_options[0],
+                            key="groupby",
+                        )
+                        x_labels = [o for o in groupby_options if o not in groupby]
+                    with cols[1]:
+                        base_y_labels = (
+                            st.multiselect(
+                                "Metrics:",
+                                options=array_options + metric_options,
+                                default=array_options[0],
+                                key="metric",
+                            )
+                            or array_options[0]
+                        )
+
+                figs = []
+                for base_y_label in base_y_labels:
+                    if base_y_label in array_options:
+                        if "violations" in base_y_label:
+                            y_label = base_y_label + "_min"
+                        else:
+                            y_label = base_y_label + "_mean"
+                    else:
+                        y_label = base_y_label
+
+                    fig = go.Figure()
+                    for i, (name, group) in enumerate(params_table.groupby(groupby)):
+                        if isinstance(name, str):
+                            name = [name]
+                        name = [str(n) for n in name]
+
+                        line_color = px.colors.sequential.Jet[
+                            i % len(px.colors.sequential.Jet)
+                        ]
+                        fill_color = px.colors.sequential.Jet[
+                            i % len(px.colors.sequential.Jet)
+                        ]
+
+                        x = (
+                            group[x_labels]
+                            .astype(str)
+                            .apply(lambda x: ", ".join(x), axis=1)
+                        )
+                        y = evaluation_table.loc[group.index, y_label]
+                        upper = (
+                            y + evaluation_table.loc[group.index, f"{base_y_label}_std"]
+                        )
+                        lower = (
+                            y - evaluation_table.loc[group.index, f"{base_y_label}_std"]
+                        )
+
+                        if "violations" in base_y_label:
+                            fig.add_traces(
+                                [
+                                    go.Scatter(
+                                        x=x,
+                                        y=y,
+                                        name=", ".join(name),
+                                        mode="markers+lines",
+                                        line=dict(color=line_color),
+                                    )
+                                ]
+                            )
+                        else:
+                            fig.add_traces(
+                                [
+                                    go.Scatter(
+                                        x=x,
+                                        y=y,
+                                        name=", ".join(name),
+                                        mode="markers+lines",
+                                        line=dict(color=line_color),
+                                    ),
+                                    go.Scatter(
+                                        x=x,
+                                        y=upper,
+                                        name=", ".join(name),
+                                        showlegend=False,
+                                        mode="lines",
+                                        fillcolor=_rgb_to_rgba(fill_color, 0.2),
+                                        line=dict(color=_rgb_to_rgba(fill_color, 0.0)),
+                                    ),
+                                    go.Scatter(
+                                        x=x,
+                                        y=lower,
+                                        fill="tonexty",
+                                        name=", ".join(name),
+                                        showlegend=False,
+                                        mode="lines",
+                                        fillcolor=_rgb_to_rgba(fill_color, 0.2),
+                                        line=dict(color=_rgb_to_rgba(fill_color, 0.0)),
+                                    ),
+                                ]
+                            )
+                        fig.update_layout(
+                            title=f"{y_label.replace('_mean', '').capitalize()} grouped by {groupby}",
+                            xaxis=dict(
+                                automargin=True,
+                                title=", ".join(x_labels),
+                                type="category",
+                                showgrid=True,
+                            ),
+                            yaxis=dict(
+                                automargin=True, title=base_y_label, showgrid=True
+                            ),
+                            coloraxis=dict(colorscale="jet"),
+                            legend=dict(x=1, y=1, xanchor="left", yanchor="top"),
+                        )
+                    figs.append(fig)
+
+                with plot_components["line"].container():
+                    for fig in figs:
+                        st.plotly_chart(fig, use_container_width=True)
+
+            # with components["scatter"].container():
             #     st.subheader("Scatter")
             #     cols = st.columns(3)
             #     with cols[0]:
@@ -295,236 +463,270 @@ class RoutingHandler:
             #         ylabel = st.selectbox("Y:", options=options, index=1)
             #     with cols[2]:
             #         color = st.selectbox("Color:", options=options, index=2)
-
             #     fig = px.scatter(results_table, x=xlabel, y=ylabel, color=color)
             #     fig.update_layout(margin=dict(t=10))
             #     st.plotly_chart(fig, use_container_width=True)
-
             #     st.markdown("<hr>", unsafe_allow_html=True)
 
-            # with ph_parallel_coordinates.container():
-            #     st.subheader("Parallel coordinates")
-            #     selected_columns = st.multiselect(
-            # "Columns", options=options, default=options[:5]
-            #     )
-            #     color = st.selectbox("Color", options=options)
-            #     if color not in selected_columns:
-            #         selected_columns.append(color)
-            #     fig = px.parallel_coordinates(
-            #         results_table[selected_columns],
-            #         color=color,
-            #     )
-            #     fig.update_layout(margin=dict(l=50))
-            #     st.plotly_chart(fig, use_container_width=True)
+            # parallel_coordinates
+            with components["parallel_coordinates"].container():
+                categorical_columns = params_table.select_dtypes(
+                    include="object"
+                ).columns.tolist()
 
-            #     st.markdown("<hr>", unsafe_allow_html=True)
+                for name, _ in params_table.groupby(categorical_columns):
+                    plot_components[
+                        f"parallel_coordinates_{'_'.join(name)}"
+                    ] = st.empty()
+
+                metrics = ["feasible_rate"]
+                filterd_evaluation_table = pd.concat(
+                    [evaluation_table.filter(regex="_min"), evaluation_table[metrics]],
+                    axis=1,
+                ).rename(columns=lambda x: x.replace("_min", ""))
+                cols = st.columns(4)
+                with cols[0]:
+                    color_options = filterd_evaluation_table.columns
+                    color = st.selectbox(
+                        "Color:",
+                        options=color_options,
+                        index=color_options.get_loc("objective"),
+                    )
+
+                for name, group in params_table.groupby(categorical_columns):
+                    parcoords_table = pd.concat(
+                        [
+                            group,
+                            filterd_evaluation_table.loc[group.index],
+                        ],
+                        axis=1,
+                    )
+                    max_column_length = max([len(str(c)) for c in parcoords_table])
+
+                    fig = px.parallel_coordinates(
+                        parcoords_table.reset_index(drop=True),
+                        color=color,
+                        color_continuous_scale="tealrose",
+                    )
+                    fig.update_traces(labelangle=30)
+                    fig.update_coloraxes(colorbar=dict(titleside="right"))
+                    fig.update_layout(
+                        margin=dict(l=100, t=3.85 * max_column_length + 25),
+                        title_text=", ".join(name),
+                        title_y=0.98,
+                    )
+
+                    with plot_components[f"parallel_coordinates_{'_'.join(name)}"]:
+                        st.plotly_chart(fig, use_container_width=True)
+
+                # st.markdown("<hr>", unsafe_allow_html=True)
 
             with components["sampleset_analysis"].container():
-                st.subheader("SampleSet Analysis")
-                st.subheader("Constraint Violations")
+                st.subheader("Constraint violations")
 
-                violations_analysis_cols = st.columns(2)
-                plot_settings_cols = st.columns(2)
-                plot_components = {}
+                # violations_analysis_cols = st.columns(2)
 
-                with violations_analysis_cols[0]:
-                    # bar
-                    plot_components["bar"] = st.empty()
-                    plot_components["settings_bar"] = st.empty()
-                    # st.markdown("<hr>", unsafe_allow_html=True)
+                # bar
+                plot_components["bar"] = st.empty()
+                plot_components["settings_bar"] = st.empty()
+                # st.markdown("<hr>", unsafe_allow_html=True)
+                with plot_components["settings_bar"]:
+                    agg_options = ["min", "max", "mean", "std"]
+                    groupby_options: list[str] = params_table.columns.tolist()
+                    cols = st.columns(4)
+                    with cols[0]:
+                        agg = (
+                            st.selectbox(
+                                "Select a function for aggregating violations:",
+                                options=agg_options,
+                                index=0,
+                            )
+                            or "min"
+                        )
+                    with cols[1]:
+                        groupby = (
+                            st.selectbox("Group by:", options=groupby_options, index=0)
+                            or groupby_options[0]
+                        )
+                table = pd.concat([params_table, evaluation_table], axis=1)
+                unselected_options = [c for c in params_table if c != groupby]
+                violations_table = table.filter(
+                    regex="|".join(groupby_options + [f"violations_{agg}"])
+                )
+                violations_table = violations_table.rename(
+                    columns={
+                        c: c.replace(f"_violations_{agg}", "")
+                        for c in violations_table.columns
+                        if c.endswith(f"violations_{agg}")
+                    }
+                )
+                violations_table = violations_table.astype(
+                    {c: str for c in groupby_options}
+                )
+                stacked = violations_table.set_index(
+                    params_table.columns.tolist()
+                ).stack()
+                stacked.name = f"violations_{agg}"
+                stacked = stacked.reset_index(unselected_options)
+                fig = px.bar(
+                    stacked,
+                    x=stacked.index.get_level_values(-1),
+                    y=stacked[f"violations_{agg}"],
+                    color=stacked.index.get_level_values(groupby),
+                    barmode="group",
+                    hover_data=unselected_options,
+                    color_discrete_sequence=px.colors.sequential.Jet,
+                )
+                with plot_components["bar"].container():
+                    st.plotly_chart(fig, use_container_width=True)
 
-                    with plot_components["settings_bar"]:
-                        agg_options = ["min", "max", "mean", "std"]
-                        groupby_options: list[str] = params_table.columns.tolist()
+            constraint_heatmap = st.columns(2)
+            # constraint violations
+            with constraint_heatmap[0]:
+                numeric_columns = params_table.select_dtypes("number").columns
+                categorical_columns = params_table.select_dtypes("object").columns
+                st.subheader("Heatmap for constraint violations")
+                for name, _ in params_table.groupby(categorical_columns.tolist()):
+                    plot_components[f"heatmap_violations_{'_'.join(name)}"] = st.empty()
 
-                        with plot_settings_cols[0]:
-                            cols = st.columns(2)
-                            with cols[0]:
-                                agg = (
-                                    st.selectbox(
-                                        "Select a function for aggregating violations:",
-                                        options=agg_options,
-                                        index=0,
-                                    )
-                                    or "min"
-                                )
-                            with cols[1]:
-                                groupby = (
-                                    st.selectbox(
-                                        "Group by:", options=groupby_options, index=0
-                                    )
-                                    or groupby_options[0]
-                                )
+                violations_table = evaluation_table.filter(regex="violations_min")
 
-                    table = pd.concat([params_table, evaluation_table], axis=1)
-                    unselected_options = [c for c in params_table if c != groupby]
-                    violations_table = table.filter(
-                        regex="|".join(groupby_options + [f"violations_{agg}"])
+                cols = st.columns(2)
+                with cols[0].container():
+                    x_labels = st.multiselect(
+                        "x:",
+                        options=numeric_columns,
+                        default=numeric_columns[0],
+                        key="constraint_violations",
                     )
-
-                    violations_table = violations_table.rename(
-                        columns={
-                            c: c.replace(f"_violations_{agg}", "")
-                            for c in violations_table.columns
-                            if c.endswith(f"violations_{agg}")
-                        }
+                for name, group in params_table.groupby(categorical_columns.tolist()):
+                    fig = px.imshow(
+                        violations_table.loc[group.index].T,
+                        x=group[x_labels]
+                        .astype(str)
+                        .apply(lambda x: ", ".join(x), axis=1),
+                        y=violations_table.loc[group.index]
+                        .rename(columns=lambda x: x.replace("_violations_min", ""))
+                        .columns,
+                        labels=dict(x=f"{', '.join(x_labels)}", y="Constraint name"),
+                        color_continuous_scale="deep_r",
+                        aspect="auto",
                     )
-                    violations_table = violations_table.astype(
-                        {c: str for c in groupby_options}
+                    fig.update_layout(
+                        title_text=", ".join(name),
+                        title_x=0,
+                        xaxis=dict(automargin=True, type="category"),
+                        yaxis=dict(automargin=True),
                     )
-                    stacked = violations_table.set_index(
-                        params_table.columns.tolist()
-                    ).stack()
-                    stacked.name = f"violations_{agg}"
-                    stacked = stacked.reset_index(unselected_options)
-
-                    fig = px.bar(
-                        stacked,
-                        x=stacked.index.get_level_values(-1),
-                        y=stacked[f"violations_{agg}"],
-                        color=stacked.index.get_level_values(groupby),
-                        barmode="group",
-                        hover_data=unselected_options,
-                        color_discrete_sequence=px.colors.sequential.Jet,
-                    )
-
-                    with plot_components["bar"].container():
+                    with plot_components[
+                        f"heatmap_violations_{'_'.join(name)}"
+                    ].container():
                         st.plotly_chart(fig, use_container_width=True)
+                # st.markdown("<hr>", unsafe_allow_html=True)
 
-                with violations_analysis_cols[1]:
-                    # line
-                    plot_components["line"] = st.empty()
-                    plot_components["settings_line"] = st.empty()
+            # constraint expr values
+            with constraint_heatmap[1]:
+                st.subheader("Heatmap for constraint expression values")
+                for name, _ in params_table.groupby(categorical_columns.tolist()):
+                    plot_components[
+                        f"heatmap_expression_values_{'_'.join(name)}"
+                    ] = st.empty()
 
-                    with plot_components["settings_line"]:
-                        array_options: list[str] = [
-                            c.split("_mean")[0]
-                            for c in evaluation_table.filter(regex="_mean").columns
-                        ]
-                        metric_options = [
-                            "success_probability",
-                            "feasible_rate",
-                            "residual_energy",
-                            "TTS[optimal]",
-                            "TTS[feasible]",
-                            "TTS[derived]",
-                        ]
-                        with plot_settings_cols[1]:
-                            cols = st.columns(3)
-                            with cols[0]:
-                                x = (
-                                    st.selectbox(
-                                        "X:", options=groupby_options, index=0, key="x"
-                                    )
-                                    or groupby_options[0]
-                                )
-                            with cols[1]:
-                                base_y = (
-                                    st.selectbox(
-                                        "Y:",
-                                        options=array_options + metric_options,
-                                        index=0,
-                                        key="y",
-                                    )
-                                    or array_options[0]
-                                )
-                                if base_y in array_options:
-                                    y = base_y + "_mean"
-                                else:
-                                    y = base_y
-                            with cols[2]:
-                                unselected_options = [c for c in params_table if c != x]
-                                groupby = st.selectbox(
-                                    "Group by:",
-                                    options=unselected_options,
-                                    index=0,
-                                    key="groupby",
-                                )
+                def expand(x: jm.SampleSet) -> pd.Series:
+                    violations = x.evaluation.constraint_violations or {}
+                    violations_argmin_map = {
+                        k: np.argmin(v) for k, v in violations.items()
+                    }
 
-                        unselected_options = [
-                            c for c in params_table if c not in (x, groupby)
-                        ]
-                        with plot_settings_cols[1]:
-                            cols = st.columns(len(unselected_options))
-                            index: list[str] = []
-                            for col, option in zip(cols, unselected_options):
-                                with col:
-                                    unique_values = (
-                                        params_table[option].unique().tolist()
-                                    )
-                                    index.append(
-                                        st.selectbox(
-                                            f"{option}:",
-                                            options=unique_values,
-                                            index=0,
-                                        )
-                                        or unique_values[0]
-                                    )
-
-                    index_x = tuple(index + [x])
-                    index_y = tuple(index + [y])
-                    index_lower_y = tuple(index + [f"{base_y}_std"])
-
-                    fig = go.Figure()
-                    for i, (name, group) in enumerate(table.groupby(groupby)):
-                        line_color = px.colors.sequential.Jet[
-                            i % len(px.colors.sequential.Jet)
-                        ]
-                        fill_color = px.colors.sequential.Jet[
-                            i % len(px.colors.sequential.Jet)
-                        ]
-
-                        stacked = (
-                            group.set_index(unselected_options).stack().sort_index()
-                        )
-                        lower = (
-                            stacked.loc[index_y].values
-                            - stacked.loc[index_lower_y].values
-                        )
-                        upper = (
-                            stacked.loc[index_y].values
-                            + stacked.loc[index_lower_y].values
+                    expr_values_map = {k: {} for k in violations}
+                    for const_name in violations:
+                        argmin = violations_argmin_map[const_name]
+                        expr_values_map[const_name].update(
+                            x.evaluation.constraint_expr_values[argmin][const_name]
                         )
 
-                        fig.add_traces(
-                            [
-                                go.Scatter(
-                                    x=stacked.loc[index_x].values,
-                                    y=stacked.loc[index_y].values,
-                                    name=name,
-                                    mode="markers+lines",
-                                    line=dict(color=line_color),
-                                ),
-                                go.Scatter(
-                                    x=stacked.loc[index_x].values,
-                                    y=upper,
-                                    name=name,
-                                    showlegend=False,
-                                    mode="lines",
-                                    fillcolor=_rgb_to_rgba(fill_color, 0.2),
-                                    line=dict(color=_rgb_to_rgba(fill_color, 0.0)),
-                                ),
-                                go.Scatter(
-                                    x=stacked.loc[index_x].values,
-                                    y=lower,
-                                    fill="tonexty",
-                                    name=name,
-                                    showlegend=False,
-                                    mode="lines",
-                                    fillcolor=_rgb_to_rgba(fill_color, 0.2),
-                                    line=dict(color=_rgb_to_rgba(fill_color, 0.0)),
-                                ),
-                            ]
-                        )
-                    fig.update_layout(xaxis=dict(title=x), yaxis=dict(title=base_y))
-                    fig.update_coloraxes(colorscale="Jet")
+                    return expr_values_map
 
-                    with plot_components["line"].container():
+                concat: jb.functions.Concat[jb.Experiment] = jb.functions.Concat()
+                results = concat(
+                    [
+                        jb.load(benchmark_id, savedir=session.state.logdir)
+                        for benchmark_id in benchmark_ids
+                    ]
+                )
+                _, t = results.data
+                sampleset_column = [
+                    c for c in t.data if isinstance(t.data[c][0], jb.SampleSet)
+                ][0]
+                sampleset_table = t.data.filter([sampleset_column]).applymap(
+                    lambda x: x.data
+                )
+                sampleset_table = pd.concat([params_table, sampleset_table], axis=1)
+
+                sampleset_table = pd.concat(
+                    [params_table, sampleset_table[sampleset_column].apply(expand)],
+                    axis=1,
+                )
+
+                cols = st.columns(2)
+                with cols[0].container():
+                    const_name = st.selectbox(
+                        "Select constraint:",
+                        options=sampleset_table[sampleset_column][0].keys(),
+                        index=0,
+                    )
+                with cols[1].container():
+                    x_labels = st.multiselect(
+                        "x:",
+                        options=numeric_columns,
+                        default=numeric_columns[0],
+                        key="constraint_expr_values",
+                    )
+
+                for name, group in sampleset_table.groupby(
+                    categorical_columns.tolist()
+                ):
+                    index = list(
+                        map(
+                            lambda x: str(x),
+                            group[sampleset_column][0][const_name].keys(),
+                        )
+                    )
+                    x = (
+                        group[x_labels]
+                        .astype(str)
+                        .apply(lambda x: ", ".join(x), axis=1)
+                    )
+                    expr_values = np.array(
+                        group[sampleset_column]
+                        .apply(lambda x: list(x[const_name].values()))
+                        .tolist(),
+                        dtype=np.float64,
+                    ).T
+
+                    fig = px.imshow(
+                        expr_values,
+                        x=x,
+                        y=index,
+                        color_continuous_scale="deep_r",
+                        labels=dict(x=f"{', '.join(x_labels)}", y="Index"),
+                        aspect="auto",
+                    )
+                    fig.update_layout(
+                        title_text=", ".join(name),
+                        title_x=0,
+                        xaxis=dict(automargin=True, type="category"),
+                        yaxis=dict(automargin=True),
+                        coloraxis=dict(
+                            colorbar=dict(title=const_name, titleside="right")
+                        ),
+                    )
+
+                    with plot_components[
+                        f"heatmap_expression_values_{'_'.join(name)}"
+                    ].container():
                         st.plotly_chart(fig, use_container_width=True)
-
-                for col in st.columns(2):
-                    with col:
-                        st.markdown("<hr>", unsafe_allow_html=True)
+                # st.markdown("<hr>", unsafe_allow_html=True)
 
             # tmp
             # concat: jb.functions.Concat[jb.Experiment] = jb.functions.Concat()
@@ -599,6 +801,22 @@ def _get_params_table(benchmark_ids: list[str], savedir: pathlib.Path) -> pd.Dat
     for c in expected_problem_columns:
         table[c] = table[c].apply(lambda x: x.name)
     return table
+
+
+@st.cache_data
+def _get_problem_table(benchmark_ids: list[str], savedir: pathlib.Path) -> pd.DataFrame:
+    table = jb.load(benchmark_ids[0], savedir=savedir).params_table
+    expected_problem_columns = [c for c in table if isinstance(table[c][0], jm.Problem)]
+    for benchmark_id in benchmark_ids[1:]:
+        params_table = jb.load(benchmark_id, savedir=savedir).params_table
+        problem_columns = [
+            c for c in params_table if isinstance(params_table[c][0], jm.Problem)
+        ]
+        for c, expected in zip(problem_columns, expected_problem_columns):
+            params_table = params_table.rename(columns={c: expected})
+
+        table = pd.concat([table, params_table])
+    return table[expected_problem_columns]
 
 
 @st.cache_data
