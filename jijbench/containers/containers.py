@@ -357,6 +357,9 @@ class Table(Container[pd.DataFrame]):
         if constraint_violations:
             for k, v in constraint_violations.items():
                 data[f"{k}_violations"] = np.array(v)
+            data["total_violations"] = np.sum(
+                list(constraint_violations.values()), axis=0
+            )
 
         data["num_samples"] = sum(sampleset.record.num_occurrences)
         data["num_feasible"] = sum(sampleset.feasible().record.num_occurrences)
