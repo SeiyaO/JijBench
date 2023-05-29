@@ -172,7 +172,7 @@ def test_get_benchmark_ids():
 
     benchmark_ids = jb.get_benchmark_ids()
 
-    assert np.isnan(benchmark_ids).all()
+    assert np.isnan(np.array(benchmark_ids)).all()
 
 
 @pytest.mark.parametrize("only_star", [True, False])
