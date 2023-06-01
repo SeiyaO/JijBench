@@ -4,6 +4,7 @@ This script is reffred to the URL: https://mkdocstrings.github.io/recipes/ .
 """
 
 from pathlib import Path
+
 import mkdocs_gen_files
 
 SOURCE_DIR = "jijbench"
@@ -11,7 +12,6 @@ SOURCE_DIR = "jijbench"
 nav = mkdocs_gen_files.Nav()
 
 for path in sorted(Path(SOURCE_DIR).rglob("*.py")):
-
     module_python_file_path = path.relative_to(SOURCE_DIR)
     module_path = module_python_file_path.with_suffix("")
     doc_path = module_python_file_path.with_suffix(".md")

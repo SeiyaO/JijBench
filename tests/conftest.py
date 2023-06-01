@@ -82,6 +82,75 @@ def jm_sampleset(jm_sampleset_dict: dict) -> jm.SampleSet:
 
 
 @pytest.fixture
+def jm_sampleset_dict_no_constraint() -> dict[str, tp.Any]:
+    return {
+        "record": {
+            "solution": {
+                "x": [
+                    (([0, 1], [0, 1]), [1, 1], (2, 2)),
+                    (([0, 1], [1, 0]), [1, 1], (2, 2)),
+                    (([], []), [], (2, 2)),
+                    (([0, 1], [0, 0]), [1, 1], (2, 2)),
+                ]
+            },
+            "num_occurrences": [4, 3, 2, 1],
+        },
+        "evaluation": {
+            "energy": [3.0, 24.0, 0.0, 20.0],
+            "objective": [3.0, 24.0, 0.0, 17.0],
+            "constraint_violations": {},
+            "penalty": {},
+        },
+        "measuring_time": {"solve": None, "system": None, "total": None},
+    }
+
+
+@pytest.fixture
+def jm_sampleset_no_constraint(jm_sampleset_dict_no_constraint: dict) -> jm.SampleSet:
+    sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict_no_constraint)
+    solving_time = jm.SolvingTime(
+        **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
+    )
+    sampleset.measuring_time.solve = solving_time
+    return sampleset
+
+
+@pytest.fixture
+def jm_sampleset_dict_no_obj_no_constraint() -> dict[str, tp.Any]:
+    return {
+        "record": {
+            "solution": {
+                "x": [
+                    (([0, 1], [0, 1]), [1, 1], (2, 2)),
+                    (([0, 1], [1, 0]), [1, 1], (2, 2)),
+                    (([], []), [], (2, 2)),
+                    (([0, 1], [0, 0]), [1, 1], (2, 2)),
+                ]
+            },
+            "num_occurrences": [4, 3, 2, 1],
+        },
+        "evaluation": {
+            "energy": [3.0, 24.0, 0.0, 20.0],
+            "constraint_violations": {},
+            "penalty": {},
+        },
+        "measuring_time": {"solve": None, "system": None, "total": None},
+    }
+
+
+@pytest.fixture
+def jm_sampleset_no_obj_no_constraint(
+    jm_sampleset_dict_no_obj_no_constraint: dict,
+) -> jm.SampleSet:
+    sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict_no_obj_no_constraint)
+    solving_time = jm.SolvingTime(
+        **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
+    )
+    sampleset.measuring_time.solve = solving_time
+    return sampleset
+
+
+@pytest.fixture
 def sa_sampler() -> jz.JijSASampler:
     config_path = pathlib.Path(__file__).parent / "config.toml"
     sampler = jz.JijSASampler(config=config_path)
