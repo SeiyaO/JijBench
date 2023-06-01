@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from matplotlib import axes, figure
 
-from jijbench.visualization.figure.timeseries import TimeSeries
+from jijbench.visualization import TimeSeries
 
 params = {
     "list case": ("data", [1, 2], [3, 4]),

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from matplotlib import axes, collections, figure
 
-from jijbench.visualization.figure.graph import Graph, GraphType
+from jijbench.visualization import Graph, GraphType
 
 params = {
     "undirected case": ([[0, 1], [1, 2]], GraphType.UNDIRECTED, nx.Graph),

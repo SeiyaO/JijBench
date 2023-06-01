@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from matplotlib import axes, figure, patches
 
-from jijbench.visualization.figure.schedule import Schedule
+from jijbench.visualization import Schedule
 
 params = {
     "list case": ("data", [1, 2], [3, 4], [5.5, 6.6]),
