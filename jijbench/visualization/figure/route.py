@@ -11,12 +11,70 @@ from jijbench.visualization.figure.interface_plotly import Figure
 
 
 class Route(Figure):
+    """Visualize route by plotly.
+
+    Attributes:
+        nodes (dict[str | Number, tuple[Number, Number]]): the dict of nodes. the key is label, and the value is tuple of two coordinates (x, y).
+        routes (dict[str, list[str | Number]]): the dict of routes. the key is route name, and the value is the list of node label represents the order of visits.
+        savefig (bool): If True, save the figure.
+        savedir (str): the directory to save the figure.
+        savescale (int): corresponds to the resolution of the figure.
+
+    Example:
+        ```python
+        from jijbench.visualization import Route
+
+        route = Route(savefig=True)
+        route.add_nodes(
+            node_pos={
+                0: (0.0, 0.0),
+                1: (1.0, 2.0),
+                2: (3.0, 4.0),
+                3: (-1.0, -2.0),
+                4: (-1.0, 0.0),
+            }
+        )
+        route.add_route(route=[0, 1, 2, 0])
+        route.add_route(route=[0, 3, 4, 0])
+        fig = route.create_figure(
+            title="Title",
+            height=1200,
+            width=1200,
+            xaxis_title="xaxis",
+            yaxis_title="yaxis",
+            shownodelabel=True,
+            showlegend=True,
+            savedir=".",
+            savename="Savename",
+            savescale=1,
+        )
+        fig.show()
+        ```
+
+        You can change the appearance of the figure by `update_layout` method.
+        The example below changes the fontsize of the title.
+        For other settings, please refer to the plotly reference.
+
+        ```python
+        fig.update_layout(title_font={"size": 30})
+        fig.show()
+            ```
+
+    """
+
     def __init__(
         self,
         savefig: bool = True,
         savedir: str = ".",
         savescale: int = 2,
     ) -> None:
+        """Initialize the Route instance with the given parameters.
+
+        Args:
+            savefig (bool): If True, save the figure. Defaults to True.
+            savedir (str): the directory to save the figure. Defaults to `.`.
+            savescale (int): corresponds to the resolution of the figure. Defaults to 2.
+        """
         self._savefig = savefig
         self._savedir = savedir
         self._savescale = savescale
@@ -27,6 +85,12 @@ class Route(Figure):
         self,
         node_pos: dict[str | Number, tuple[Number, Number]],
     ) -> None:
+        """Add nodes to nodes attribute.
+
+        Args:
+            node_pos (dict[str | Number, tuple[Number, Number]]): the dict of nodes. the key is label, and the value is tuple of two coordinates (x, y).
+        """
+
         self._nodes.update(node_pos)
 
     def add_route(
@@ -34,6 +98,11 @@ class Route(Figure):
         route: list[str | Number],
         route_name: str | None = None,
     ) -> None:
+        """Add route to routes attribute.
+
+        Args:
+            route (list[str | Number]): the list of node label represents the order of visits.
+        """
         for node in route:
             if node not in self._nodes:
                 raise ValueError(
@@ -50,6 +119,7 @@ class Route(Figure):
         width: Number | None = None,
         xaxis_title: str | None = None,
         yaxis_title: str | None = None,
+        shownodelabel: bool | None = None,
         showlegend: bool | None = None,
         savefig: bool | None = None,
         savedir: str | None = None,
@@ -64,6 +134,7 @@ class Route(Figure):
             width (Number | None): the width of the figure. If Defaults None is given, it will be set to 600.
             xaxis_title (str | None): the title of the x axis. If Defaults None is given, it will be set to x.
             yaxis_title (str | None): the title of the y axis. If Defaults None is given, it will be set to y.
+            shownodelabel (bool | None): If True, show the node label. If the default None is given, it will be set to False.
             showlegend (bool | None): If True, show the legend. If the default None is given, it will be set to True.
             savefig (bool | None): If True, save the figure. If the default None is given, the value given to the constructor will be used.
             savedir (str | None): the directory to save the figure. If the default None is given, the value given to the constructor will be used.
@@ -81,6 +152,8 @@ class Route(Figure):
             xaxis_title = "x"
         if yaxis_title is None:
             yaxis_title = "y"
+        if shownodelabel is None:
+            shownodelabel = False
         if showlegend is None:
             showlegend = True
         if savefig is None:
@@ -93,16 +166,26 @@ class Route(Figure):
             savescale = self._savescale
 
         fig = go.Figure()
-        x_node, y_node = self._get_node_coordinate()
+        node_labels, x_node, y_node = self._get_node_coordinate()
+        text = node_labels if shownodelabel else None
+        hovertext = [
+            f"label={label}<br>{xaxis_title}={x}<br>{yaxis_title}={y}"
+            for label, x, y in zip(node_labels, x_node, y_node)
+        ]
         # plot node
         fig.add_trace(
             go.Scatter(
                 x=x_node,
                 y=y_node,
-                mode="markers",
+                mode="markers+text",
+                text=text,
+                textposition="top center",
+                hovertext=hovertext,
+                hoverinfo="text",
                 name="node",
             )
         )
+
         for route_name in self._routes.keys():
             x_route, y_route = self._get_routes_coordinate(route_name)
             # plot route
@@ -143,16 +226,39 @@ class Route(Figure):
 
         return fig
 
-    def _get_node_coordinate(self) -> tuple[list[Number], list[Number]]:
-        x, y = [], []
-        for pos in self._nodes.values():
+    def _get_node_coordinate(
+        self,
+    ) -> tuple[list[str | Number], list[Number], list[Number]]:
+        """Formats data in nodes attributes for plotly.
+
+        Example:
+            Let us consider the following nodes:
+                self._nodes = {0: (0.1, 0.2), 1: (0.3, 0.4)}
+            Then, returns the following:
+                labels = [0, 1]
+                x = [0.1, 0.3]
+                y = [0.2, 0.4]
+        """
+        labels, x, y = [], [], []
+        for label, pos in self._nodes.items():
+            labels.append(label)
             x.append(pos[0])
             y.append(pos[1])
-        return x, y
+        return labels, x, y
 
     def _get_routes_coordinate(
         self, route_name: str
     ) -> tuple[list[Number], list[Number]]:
+        """Formats data in routes attributes for plotly.
+
+        Example:
+            Let us consider the following nodes and routes:
+                self._nodes = {0: (0.0, 0.0), 1: (1.0, 2.0), 2: (3.0, 4.0)}
+                self._routes = {"route_name": [0, 1, 2, 0]}
+            Then, returns the following for route_name="route_name":
+                x = [0.0, 1.0, 3.0, 0.0]
+                y = [0.0, 2.0, 4.0, 0.0]
+        """
         nodes = self._nodes
         route = self._routes[route_name]
         x, y = [], []
@@ -160,6 +266,14 @@ class Route(Figure):
             x.append(nodes[node_id][0])
             y.append(nodes[node_id][1])
         return x, y
+
+    @property
+    def nodes(self):
+        return self._nodes
+
+    @property
+    def routes(self):
+        return self._routes
 
     @property
     def savefig(self):
@@ -172,11 +286,3 @@ class Route(Figure):
     @property
     def savescale(self):
         return self._savescale
-
-    @property
-    def nodes(self):
-        return self._nodes
-
-    @property
-    def routes(self):
-        return self._routes

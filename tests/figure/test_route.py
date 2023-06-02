@@ -45,7 +45,8 @@ def test_add_route_with_invalid_node():
 def test_get_node_coordinate():
     route = Route()
     route.add_nodes(node_pos={0: (0.1, 0.2), 1: (0.3, 0.4)})
-    x, y = route._get_node_coordinate()
+    labels, x, y = route._get_node_coordinate()
+    assert labels == [0, 1]
     assert x == [0.1, 0.3]
     assert y == [0.2, 0.4]
 
@@ -73,13 +74,40 @@ def test_create_figure_default_params():
             1: (1.0, 2.0),
             2: (3.0, 4.0),
             3: (-1.0, -2.0),
-            4: (-3.0, -4.0),
+            4: (-1.0, 0.0),
         }
     )
     route.add_route(route=[0, 1, 2, 0])
     route.add_route(route=[0, 3, 4, 0])
     fig = route.create_figure()
     # fig.show() # If you remove the comment out, you can check the diagram on the browser.
+
+    assert isinstance(fig, plotly.graph_objects.Figure)
+
+
+def test_create_figure_set_params():
+    route = Route(savefig=False)
+    route.add_nodes(
+        node_pos={
+            0: (0.0, 0.0),
+            1: (1.0, 2.0),
+            2: (3.0, 4.0),
+            3: (-1.0, -2.0),
+            4: (-1.0, 0.0),
+        }
+    )
+    route.add_route(route=[0, 1, 2, 0])
+    route.add_route(route=[0, 3, 4, 0])
+    fig = route.create_figure(
+        title="OriginalTitle",
+        height=1200,  # larger than default
+        width=1200,  # larger than default
+        xaxis_title="Originalxaxis_title",
+        yaxis_title="Originalyaxis_title",
+        shownodelabel=True,
+        showlegend=False,
+    )
+    # fig.show()  # If you remove the comment out, you can check the diagram on the browser.
 
     assert isinstance(fig, plotly.graph_objects.Figure)
 
@@ -127,29 +155,3 @@ def test_save_setting_by_method(tmpdir):
     )  # This setting applies
 
     assert os.path.exists(os.path.join(tmpdir, "OriginalName.png"))
-
-
-def test_create_figure_set_params():
-    route = Route(savefig=False)
-    route.add_nodes(
-        node_pos={
-            0: (0.0, 0.0),
-            1: (1.0, 2.0),
-            2: (3.0, 4.0),
-            3: (-1.0, -2.0),
-            4: (-3.0, -4.0),
-        }
-    )
-    route.add_route(route=[0, 1, 2, 0])
-    route.add_route(route=[0, 3, 4, 0])
-    fig = route.create_figure(
-        title="OriginalTitle",
-        height=1200,  # larger than default
-        width=1200,  # larger than default
-        xaxis_title="Originalxaxis_title",
-        yaxis_title="Originalyaxis_title",
-        showlegend=False,
-    )
-    # fig.show() # If you remove the comment out, you can check the diagram on the browser.
-
-    assert isinstance(fig, plotly.graph_objects.Figure)
