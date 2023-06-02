@@ -58,7 +58,7 @@ class Route(Figure):
         ```python
         fig.update_layout(title_font={"size": 30})
         fig.show()
-            ```
+        ```
 
     """
 
