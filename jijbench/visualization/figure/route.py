@@ -7,8 +7,10 @@ import plotly
 import plotly.express as px
 import plotly.graph_objs as go
 
+from jijbench.visualization.figure.interface_plotly import Figure
 
-class Route:
+
+class Route(Figure):
     def __init__(
         self,
         savefig: bool = True,
@@ -46,17 +48,41 @@ class Route:
         title: str | None = None,
         height: Number | None = None,
         width: Number | None = None,
+        xaxis_title: str | None = None,
+        yaxis_title: str | None = None,
+        showlegend: bool | None = None,
         savefig: bool | None = None,
         savedir: str | None = None,
         savename: str | None = None,
         savescale: int | None = None,
     ) -> plotly.graph_objects.Figure:
+        """Create a figure using plotly.
+
+        Args:
+            title (str | None): the title of the figure. If Defaults None is given, it will be set to Route.
+            height (Number | None): the height of the figure. If Defaults None is given, it will be set to 600.
+            width (Number | None): the width of the figure. If Defaults None is given, it will be set to 600.
+            xaxis_title (str | None): the title of the x axis. If Defaults None is given, it will be set to x.
+            yaxis_title (str | None): the title of the y axis. If Defaults None is given, it will be set to y.
+            showlegend (bool | None): If True, show the legend. If the default None is given, it will be set to True.
+            savefig (bool | None): If True, save the figure. If the default None is given, the value given to the constructor will be used.
+            savedir (str | None): the directory to save the figure. If the default None is given, the value given to the constructor will be used.
+            savename (str | None): the name of the figure. Since it is automatically saved as png, no extension is required.
+                If Defaults None is given, it will be same as `title`.
+            savescale (int | None): corresponds to the resolution of the figure. If the default None is given, the value given to the constructor will be used.
+        """
         if title is None:
             title = "Route"
         if height is None:
             height = 600
         if width is None:
             width = 600
+        if xaxis_title is None:
+            xaxis_title = "x"
+        if yaxis_title is None:
+            yaxis_title = "y"
+        if showlegend is None:
+            showlegend = True
         if savefig is None:
             savefig = self._savefig
         if savedir is None:
@@ -93,6 +119,9 @@ class Route:
         fig.update_layout(
             height=height,
             width=width,
+            xaxis_title=xaxis_title,
+            yaxis_title=yaxis_title,
+            showlegend=showlegend,
             template="plotly_white",  # Change background color from default color to white
             title={  # Change the position of the title from the default top left to center top
                 "y": 0.95,

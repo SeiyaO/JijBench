@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 
 class Figure(metaclass=ABCMeta):
-    # Display a figure using matplotlib
+    # Display a figure using matplotlib.
     @abstractmethod
     def show(self):
         raise NotImplementedError

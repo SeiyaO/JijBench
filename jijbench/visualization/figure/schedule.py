@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
-from jijbench.visualization.figure.interface import Figure
+from jijbench.visualization.figure.interface_matplotlib import Figure
 
 # TODO: docstringの追加
 
