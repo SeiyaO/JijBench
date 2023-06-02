@@ -339,3 +339,29 @@ def test_get_id_table():
     bench()
     bench().star()
     id_table = jb.get_id_table()
+
+
+@pytest.mark.parametrize(
+    "solver, params, solver_output_names",
+    [
+        (f1, {}, ["a"]),
+        (f2, {"i": [1, 2]}, ["a"]),
+        (f3, {"i": [1, 2]}, ["a", "b"]),
+        (f4, {"i": [1, 2], "j": [1, 2]}, ["a"]),
+        (f5, {"i": [{"a": 1}], "j": [{"b": 2}]}, ["a", "b"]),
+    ][2:3],
+)
+def test_benchmark_for_renamed_solver_output(
+    solver: tp.Callable[..., tp.Any],
+    params: dict[str, tp.Iterable[tp.Any]],
+    solver_output_names: list[str],
+):
+    bench = jb.Benchmark(solver=solver, params=params, name="test")
+
+    res = bench(solver_output_names=solver_output_names, autosave=True)
+
+    for name in solver_output_names:
+        assert name in res.table
+
+        for record in res.artifact.values():
+            assert name in record
