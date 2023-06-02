@@ -145,5 +145,7 @@ nav:
   - Home: index.md
   - Getting started:
     - Installation: getting-started.md
+    - Experiment: experiment.md
+    - Benchmark: benchmark.md
     - Changelog: https://github.com/Jij-Inc/JijBench/releases
   - Reference: reference/
