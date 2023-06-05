@@ -1,10 +1,22 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, is_dataclass
+
 import numpy as np
 import pandas as pd
 import pytest
 
 import jijbench as jb
+
+
+@dataclass
+class SamplerParameters:
+    int_param: int
+    float_param: float
+    str_param: str
+    bool_param: bool
+    list_param: list
+    dict_param: dict
 
 
 def test_record():
@@ -191,12 +203,21 @@ def test_experiment_append():
 
 
 def test_table_view():
+    parameters = SamplerParameters(
+        int_param=1,
+        float_param=2.0,
+        str_param="a",
+        bool_param=True,
+        list_param=[1, 2, 3],
+        dict_param={"a": 1, "b": 2},
+    )
     inputs = [
         jb.ID(name="id1"),
         jb.Date(name="date1"),
         jb.Array(np.arange(5), name="array1"),
         jb.Parameter({"a": 1}, name="param1"),
         jb.Parameter({"b": 2}, name="param2"),
+        jb.Parameter(parameters, name="param3"),
     ]
 
     record = jb.functions.RecordFactory()(inputs)
@@ -209,3 +230,15 @@ def test_table_view():
 
     assert df["param1[a]"][0] == 1
     assert df["param2[b]"][0] == 2
+
+    # Do not keep the original dataclass
+    assert "param3" not in df.columns
+
+    # Expand dataclass
+    assert df["param3.int_param"][0] == 1
+    assert df["param3.float_param"][0] == 2.0
+    assert df["param3.str_param"][0] == "a"
+    assert df["param3.bool_param"][0] == np.bool_(True)
+    assert df["param3.list_param"][0] == [1, 2, 3]
+    # Do not expand dictionaries in dataclass
+    assert df["param3.dict_param"][0] == {"a": 1, "b": 2}
