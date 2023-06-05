@@ -30,7 +30,7 @@ experiment.name
 ```
 
 ### Changing a Save Directory
-By default, an Experiment object will automatically save data to the default directory defined in the `DEFAULT_RESULT_DIR`. However, you can change the saving directory when instantiating the Experiment object.
+By default, an Experiment object will automatically save data to the default directory defined in the `DEFAULT_RESULT_DIR`, which is ./.jb_results. However, you can change the saving directory when instantiating the Experiment object.
 
 ```python
 experiment = Experiment(savedir="path/to/experiment")

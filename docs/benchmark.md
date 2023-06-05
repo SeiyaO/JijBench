@@ -36,6 +36,13 @@ solvers = [my_solver, my_solver2, my_solver3]
 benchmark = jb.Benchmark(solvers, params)
 ```
 
+### Custom Naming
+If you want to specify the name of your benchmark, pass the name as a string:
+
+```python
+bench = Benchmark(solver, params, name="my_benchmark")
+```
+
 ## Execution
 ### Simple Execution
 A benchmark is executed by calling the instance.
@@ -44,52 +51,71 @@ A benchmark is executed by calling the instance.
 experiment = bench()
 ```
 
-By enabling `autosave`, the benchmark results will be automatically saved in the specified directory. `autosave` is enabled by default.
+With autosave enabled, which is the default setting, benchmark results automatically save to a specified directory. By default, these results are saved in `DEFAULT_RESULT_DIR` (i.e., ./.jb_results). To change the directory where the experiment results are stored, use the savedir argument:
 
+```python
+experiment = bench(savedir='path/to/benchmark')
+```
 
 ## Result Analysis
 ### Obtaining Experiment Results as table
 The results of a benchmark execution are returned as an Experiment object. This object contains the solver output results for combination of each parameters.  
-The Experiment object can be accessed through its data attribute:
-
-```python
-results.table
-```
+For a more detailed understanding of Experiments, please refer to the comprehensive documentation provided in the Experiment class description.
 
 ### Changing Solver Output Column Names
 The column names for the solver output are based on the name of the solver specified in the constructor. This can be changed using the solver_name parameter:
 
 ```python
-benchmark = Benchmark(solver, params, solver_name='my_solver')
+experiment = bench(solver_output_names=["response"])
 ```
 
 ### If the Solver Output is a jijmodeling.SampleSet
-In case the output from a solver is a jijmodeling.SampleSet object, each sample, along with its energy and occurrence count, is automatically included in the results table:
+If the output from the solver is a jijmodeling.SampleSet object, basic information about the SampleSet, such as energy and objective function values, is automatically expanded into each row of the table:
 
 ```python
+def my_solve(problem, instance_data) -> jm.SampleSet:
+    # Obtain a SampleSet by solving the problem
+    return sampleset
+
+bench = Benchmark(my_solver, params)
+experiment = bench()
+
+# The SampleSet is automatically expanded into the table
+experiment.table["energy"]
+experiment.table["objective"]
 ```
 
 ## Saving and Loading
-### Saving Experiment Results
-The results of a benchmark can be saved using the save method. The user can choose between saving in JSON or Pickle format:
-
-```python
-results.save('my_savedir', format='json')
-```
 ### Saved Directory Structure
-In the saved directory, a subdirectory is created for each combination of solver and parameters. This makes it easy to manage a large number of results:
+If autosave=True during the benchmark run, the experimental results are automatically saved. It is important to note that the directory structure in which the experiment results are saved is slightly different from that of Experiment:
 
 ```bash
-my_savedir/
-    solver1_param1=1_param2=4/
-        results.json
-    solver1_param1=2_param2=5/
-        results.json
+path/to/benchmark/(i.e., ./.jb_results)
+|
+└───my_benchmark/
+    |
+    ├───my_experiment_1/
+    |    |
+    |    ├───artifact/
+    |    |   └───artifact.dill
+    |    |
+    |    └───table/
+    |        └───table.dill
+    |
+    ├───my_experiment_2/
+    |    |
+    |    ├───artifact/
+    |    |   └───artifact.dill
+    |    |
+    |    └───table/
+    |        └───table.dill
+    |
     ...
 ```
-This structure can be changed with the savedir parameter:
+
+### Loading Experiment Results
+To load all the experiment results tied to a benchmark name, use the `load` method and specify the benchmark name as the first argument:
 
 ```python
-results.save('my_savedir', savedir='custom_dir')
+experiment = jb.load("my_benchmark")
 ```
-For more detailed explanations and examples for each section, please refer to the detailed description of each section.
