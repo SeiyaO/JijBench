@@ -324,9 +324,9 @@ class Table(Container[pd.DataFrame]):
                 expanded = pd.concat(
                     [
                         expanded,
-                        data.apply(lambda x: pd.Series(x[c]), axis=1).rename(
-                            columns=lambda x: f"{c}[{x}]"
-                        ),
+                        data.apply(
+                            lambda x: pd.Series(x[c], dtype=object), axis=1
+                        ).rename(columns=lambda x: f"{c}[{x}]"),
                     ],
                     axis=1,
                 )
@@ -342,9 +342,9 @@ class Table(Container[pd.DataFrame]):
                 expanded = pd.concat(
                     [
                         expanded,
-                        data.apply(lambda x: pd.Series(asdict(x[c])), axis=1).rename(
-                            columns=lambda x: f"{c}.{x}"
-                        ),
+                        data.apply(
+                            lambda x: pd.Series(asdict(x[c]), dtype=object), axis=1
+                        ).rename(columns=lambda x: f"{c}.{x}"),
                     ],
                     axis=1,
                 )
