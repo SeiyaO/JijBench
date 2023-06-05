@@ -21,119 +21,6 @@ def pre_post_process():
         shutil.rmtree(norm_path)
 
 
-def solve():
-    d = jm.Placeholder("d", dim=2)
-    x = jm.Binary("x", shape=d.shape)
-    i = jm.Element("i", d.shape[0])
-    j = jm.Element("j", d.shape[1])
-    problem = jm.Problem("simple_problem")
-    problem += jm.Sum([i, j], d[i, j] * x[i, j])
-    problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
-    problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
-    jm_sampleset_dict = {
-        "record": {
-            "solution": {
-                "x": [
-                    (([0, 1], [0, 1]), [1, 1], (2, 2)),
-                    (([0, 1], [1, 0]), [1, 1], (2, 2)),
-                    (([], []), [], (2, 2)),
-                    (([0, 1], [0, 0]), [1, 1], (2, 2)),
-                ]
-            },
-            "num_occurrences": [4, 3, 2, 1],
-        },
-        "evaluation": {
-            "energy": [3.0, 24.0, 0.0, 20.0],
-            "objective": [3.0, 24.0, 0.0, 17.0],
-            "constraint_violations": {
-                "onehot1": [0.0, 0.0, 2.0, 0.0],
-                "onehot2": [0.0, 0.0, 2.0, 2.0],
-            },
-            "penalty": {},
-        },
-        "measuring_time": {"solve": None, "system": None, "total": None},
-    }
-    jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
-    solving_time = jm.SolvingTime(
-        **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
-    )
-    jm_sampleset.measuring_time.solve = solving_time
-    return jm_sampleset
-
-
-def solve_no_constraint():
-    d = jm.Placeholder("d", dim=2)
-    x = jm.Binary("x", shape=d.shape)
-    i = jm.Element("i", d.shape[0])
-    j = jm.Element("j", d.shape[1])
-    problem = jm.Problem("simple_problem")
-    problem += jm.Sum([i, j], d[i, j] * x[i, j])
-    problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
-    problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
-    jm_sampleset_dict = {
-        "record": {
-            "solution": {
-                "x": [
-                    (([0, 1], [0, 1]), [1, 1], (2, 2)),
-                    (([0, 1], [1, 0]), [1, 1], (2, 2)),
-                    (([], []), [], (2, 2)),
-                    (([0, 1], [0, 0]), [1, 1], (2, 2)),
-                ]
-            },
-            "num_occurrences": [4, 3, 2, 1],
-        },
-        "evaluation": {
-            "energy": [3.0, 24.0, 0.0, 20.0],
-            "objective": [3.0, 24.0, 0.0, 17.0],
-            "constraint_violations": {},
-            "penalty": {},
-        },
-        "measuring_time": {"solve": None, "system": None, "total": None},
-    }
-    jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
-    solving_time = jm.SolvingTime(
-        **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
-    )
-    jm_sampleset.measuring_time.solve = solving_time
-    return jm_sampleset
-
-
-def solve_no_obj_no_constraint():
-    d = jm.Placeholder("d", dim=2)
-    x = jm.Binary("x", shape=d.shape)
-    i = jm.Element("i", d.shape[0])
-    j = jm.Element("j", d.shape[1])
-    problem = jm.Problem("simple_problem")
-    problem += jm.Sum([i, j], d[i, j] * x[i, j])
-    problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
-    problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
-    jm_sampleset_dict = {
-        "record": {
-            "solution": {
-                "x": [
-                    (([0, 1], [0, 1]), [1, 1], (2, 2)),
-                    (([0, 1], [1, 0]), [1, 1], (2, 2)),
-                    (([], []), [], (2, 2)),
-                    (([0, 1], [0, 0]), [1, 1], (2, 2)),
-                ]
-            },
-            "num_occurrences": [4, 3, 2, 1],
-        },
-        "evaluation": {
-            "energy": [3.0, 24.0, 0.0, 20.0],
-            "constraint_violations": {},
-            "penalty": {},
-        },
-        "measuring_time": {"solve": None, "system": None, "total": None},
-    }
-    jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
-    solving_time = jm.SolvingTime(
-        **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
-    )
-    jm_sampleset.measuring_time.solve = solving_time
-    return jm_sampleset
-
-
 def fig_contain_target_data(fig, label, values):
     for data in fig.data[0].dimensions:
         if data["label"] == label and (data["values"] == values).all():
@@ -141,10 +28,13 @@ def fig_contain_target_data(fig, label, values):
     return False
 
 
-def test_metrics_plot_parallelplot_num_feasible():
+def test_metrics_plot_parallelplot_num_feasible(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={"multipliers": [{}, {}]},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -157,10 +47,13 @@ def test_metrics_plot_parallelplot_num_feasible():
     assert fig_contain_target_data(fig, "num_feasible", expect_arr)
 
 
-def test_metrics_plot_parallelplot_samplemean_objective():
+def test_metrics_plot_parallelplot_samplemean_objective(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={"multipliers": [{}, {}]},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -178,10 +71,13 @@ def test_metrics_plot_parallelplot_samplemean_objective():
     assert fig_contain_target_data(fig, "samplemean_objective", expect_arr)
 
 
-def test_metrics_plot_parallelplot_samplemean_violations():
+def test_metrics_plot_parallelplot_samplemean_violations(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -209,10 +105,15 @@ def test_metrics_plot_parallelplot_samplemean_violations():
     )
 
 
-def test_metrics_plot_parallelplot_samplemean_violations_no_constraint():
+def test_metrics_plot_parallelplot_samplemean_violations_no_constraint(
+    jm_sampleset_no_constraint: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset_no_constraint
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve_no_constraint],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -228,14 +129,17 @@ def test_metrics_plot_parallelplot_samplemean_violations_no_constraint():
     assert no_samplemean_total_violations(fig)
 
 
-def test_metrics_plot_parallelplot_multipliers():
+def test_metrics_plot_parallelplot_multipliers(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     params = {
         "multipliers": [{"onehot1": 1, "onehot2": 2}, {"onehot1": 3, "onehot2": 4}]
     }
 
     bench = jb.Benchmark(
         params=params,
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -245,34 +149,59 @@ def test_metrics_plot_parallelplot_multipliers():
     assert fig_contain_target_data(fig, "multipliers[onehot2]", np.array([2, 4]))
 
 
-params = {
-    "have_constraint_sampleset": (solve, "samplemean_total_violations"),
-    "no_constraint_sampleset": (solve_no_constraint, "samplemean_objective"),
-    "no_obj_no_constraint_sampleset": (solve_no_obj_no_constraint, None),
-}
+def test_metrics_plot_parallelplot_arg_color_column_default(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
 
-
-# TODO 後で直す
-@pytest.mark.parametrize(
-    "solver, expect",
-    list(params.values()),
-    ids=list(params.keys()),
-)
-def test_metrics_plot_parallelplot_arg_color_column_default(solver, expect):
     bench = jb.Benchmark(
         params={},
-        solver=[solver],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
     fig = mplot.parallelplot_experiment()
-    assert fig.layout.coloraxis.colorbar.title.text == expect
+    assert fig.layout.coloraxis.colorbar.title.text == "samplemean_total_violations"
 
 
-def test_metrics_plot_parallelplot_arg_color_column():
+def test_metrics_plot_parallelplot_arg_color_column_default_no_constraint(
+    jm_sampleset_no_constraint: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset_no_constraint
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
+    )
+    result = bench()
+    mplot = MetricsParallelPlot(result)
+    fig = mplot.parallelplot_experiment()
+    assert fig.layout.coloraxis.colorbar.title.text == "samplemean_objective"
+
+
+def test_metrics_plot_parallelplot_arg_color_column_default_no_obj_no_constraint(
+    jm_sampleset_no_obj_no_constraint: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset_no_obj_no_constraint
+
+    bench = jb.Benchmark(
+        params={},
+        solver=[func],
+    )
+    result = bench()
+    mplot = MetricsParallelPlot(result)
+    fig = mplot.parallelplot_experiment()
+    assert fig.layout.coloraxis.colorbar.title.text is None
+
+
+def test_metrics_plot_parallelplot_arg_color_column(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
+    bench = jb.Benchmark(
+        params={},
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -283,10 +212,13 @@ def test_metrics_plot_parallelplot_arg_color_column():
     assert fig.layout.coloraxis.colorbar.title.text == "samplemean_onehot1_violations"
 
 
-def test_metrics_plot_parallelplot_arg_color_midpoint():
+def test_metrics_plot_parallelplot_arg_color_midpoint(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -297,10 +229,15 @@ def test_metrics_plot_parallelplot_arg_color_midpoint():
     assert fig.layout.coloraxis.cmid == 5
 
 
-def test_metrics_plot_parallelplot_arg_color_midpoint_default():
+def test_metrics_plot_parallelplot_arg_color_midpoint_default(
+    jm_sampleset: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={"multipliers": [{}, {}]},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -331,10 +268,13 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_title(title, expect):
+def test_metrics_plot_parallelplot_arg_title(title, expect, jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -356,10 +296,15 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_height(height, expect):
+def test_metrics_plot_parallelplot_arg_height(
+    height, expect, jm_sampleset: jm.SampleSet
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -381,10 +326,13 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_width(width, expect):
+def test_metrics_plot_parallelplot_arg_width(width, expect, jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -406,10 +354,15 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_axis_label_pos(axis_label_pos, expect):
+def test_metrics_plot_parallelplot_arg_axis_label_pos(
+    axis_label_pos, expect, jm_sampleset: jm.SampleSet
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -423,10 +376,15 @@ params = {
 }
 
 
-def test_metrics_plot_parallelplot_arg_axis_label_pos_invalid_value():
+def test_metrics_plot_parallelplot_arg_axis_label_pos_invalid_value(
+    jm_sampleset: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -444,10 +402,15 @@ def test_metrics_plot_parallelplot_arg_axis_label_pos_invalid_value():
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_axis_label_fontsize(fontsize, expect):
+def test_metrics_plot_parallelplot_arg_axis_label_fontsize(
+    fontsize, expect, jm_sampleset: jm.SampleSet
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -455,10 +418,13 @@ def test_metrics_plot_parallelplot_arg_axis_label_fontsize(fontsize, expect):
     assert fig.data[0].labelfont.size == expect
 
 
-def test_metrics_plot_parallelplot_arg_additional_axes():
+def test_metrics_plot_parallelplot_arg_additional_axes(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -471,10 +437,15 @@ def test_metrics_plot_parallelplot_arg_additional_axes():
     assert fig_contain_target_data(fig, "num_samples", expect_num_samples)
 
 
-def test_metrics_plot_parallelplot_arg_additional_axes_not_number():
+def test_metrics_plot_parallelplot_arg_additional_axes_not_number(
+    jm_sampleset: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -484,10 +455,15 @@ def test_metrics_plot_parallelplot_arg_additional_axes_not_number():
         )
 
 
-def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function():
+def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function(
+    jm_sampleset: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -528,10 +504,15 @@ def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function():
     )
 
 
-def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_return_not_number():
+def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_return_not_number(
+    jm_sampleset: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
 
@@ -548,10 +529,15 @@ def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_retur
         )
 
 
-def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_error_in_func():
+def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_error_in_func(
+    jm_sampleset: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
 
@@ -565,10 +551,13 @@ def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_error
         )
 
 
-def test_metrics_plot_parallelplot_arg_display_axes_list():
+def test_metrics_plot_parallelplot_arg_display_axes_list(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -584,10 +573,15 @@ def test_metrics_plot_parallelplot_arg_display_axes_list():
     assert fig.data[0].dimensions[1].label == "samplemean_onehot1_violations"
 
 
-def test_metrics_plot_parallelplot_property_parallelplot_axes_list():
+def test_metrics_plot_parallelplot_property_parallelplot_axes_list(
+    jm_sampleset: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -598,10 +592,15 @@ def test_metrics_plot_parallelplot_property_parallelplot_axes_list():
     assert mplot.parallelplot_axes_list == expect_name_list
 
 
-def test_metrics_plot_parallelplot_property_parallelplot_axes_list_before_call_parallelplot():
+def test_metrics_plot_parallelplot_property_parallelplot_axes_list_before_call_parallelplot(
+    jm_sampleset: jm.SampleSet,
+):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)
@@ -609,10 +608,13 @@ def test_metrics_plot_parallelplot_property_parallelplot_axes_list_before_call_p
     assert mplot.parallelplot_axes_list == []
 
 
-def test_metrics_plot_parallelplot_arg_rename_map():
+def test_metrics_plot_parallelplot_arg_rename_map(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     mplot = MetricsParallelPlot(result)

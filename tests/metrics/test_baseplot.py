@@ -8,54 +8,17 @@ import jijbench as jb
 from jijbench.visualization import BasePlot, construct_experiment_from_samplesets
 
 
-def solve():
-    d = jm.Placeholder("d", dim=2)
-    x = jm.Binary("x", shape=d.shape)
-    i = jm.Element("i", d.shape[0])
-    j = jm.Element("j", d.shape[1])
-    problem = jm.Problem("simple_problem")
-    problem += jm.Sum([i, j], d[i, j] * x[i, j])
-    problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
-    problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
-    jm_sampleset_dict = {
-        "record": {
-            "solution": {
-                "x": [
-                    (([0, 1], [0, 1]), [1, 1], (2, 2)),
-                    (([0, 1], [1, 0]), [1, 1], (2, 2)),
-                    (([], []), [], (2, 2)),
-                    (([0, 1], [0, 0]), [1, 1], (2, 2)),
-                ]
-            },
-            "num_occurrences": [4, 3, 2, 1],
-        },
-        "evaluation": {
-            "energy": [3.0, 24.0, 0.0, 20.0],
-            "objective": [3.0, 24.0, 0.0, 17.0],
-            "constraint_violations": {
-                "onehot1": [0.0, 0.0, 2.0, 0.0],
-                "onehot2": [0.0, 0.0, 2.0, 2.0],
-            },
-            "penalty": {},
-        },
-        "measuring_time": {"solve": None, "system": None, "total": None},
-    }
-    jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
-    solving_time = jm.SolvingTime(
-        **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
-    )
-    jm_sampleset.measuring_time.solve = solving_time
-    return jm_sampleset
-
-
 def simple_func_for_boxplot(x: pd.Series) -> dict:
     return {"data1": np.array([1, 2, 3, 4]), "data2": np.array([1, 2, 3, 4])}
 
 
-def test_base_plot_boxplot_return_value():
+def test_base_plot_boxplot_return_value(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     num_multipliers = 2
     params = {"multipliers": [{} for _ in range(num_multipliers)]}
-    solver_list = [solve]
+    solver_list = [func]
 
     expect_num_fig = len(params["multipliers"]) * len(solver_list)
 
@@ -71,12 +34,15 @@ def test_base_plot_boxplot_return_value():
     assert type(fig_ax_tuple[0][1]) == axes.Subplot
 
 
-def test_base_plot_boxplot_call_maplotlib_boxplot(mocker):
+def test_base_plot_boxplot_call_maplotlib_boxplot(mocker, jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     m = mocker.patch("matplotlib.axes.Subplot.boxplot")
 
     num_multipliers = 2
     params = {"multipliers": [{} for _ in range(num_multipliers)]}
-    solver_list = [solve]
+    solver_list = [func]
 
     expect_num_call = len(params["multipliers"]) * len(solver_list)
 
@@ -91,12 +57,15 @@ def test_base_plot_boxplot_call_maplotlib_boxplot(mocker):
     assert m.call_count == expect_num_call
 
 
-def test_base_plot_boxplot_arg_figsize():
+def test_base_plot_boxplot_arg_figsize(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     figwidth, figheight = 8, 4
 
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     bplot = BasePlot(result)
@@ -110,14 +79,17 @@ def test_base_plot_boxplot_arg_figsize():
     assert fig.get_figheight() == 4
 
 
-def test_base_plot_boxplot_arg_title(mocker):
+def test_base_plot_boxplot_arg_title(mocker, jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     m = mocker.patch("matplotlib.figure.Figure.suptitle")
 
     title = ["title1", "title2"]
 
     num_multipliers = 2
     params = {"multipliers": [{} for _ in range(num_multipliers)]}
-    solver_list = [solve]
+    solver_list = [func]
 
     bench = jb.Benchmark(
         params=params,
@@ -137,7 +109,10 @@ def test_base_plot_boxplot_arg_title(mocker):
     )
 
 
-def test_base_plot_boxplot_arg_title_fontsize(mocker):
+def test_base_plot_boxplot_arg_title_fontsize(mocker, jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     m = mocker.patch("matplotlib.figure.Figure.suptitle")
 
     title = ["title1", "title2"]
@@ -145,7 +120,7 @@ def test_base_plot_boxplot_arg_title_fontsize(mocker):
 
     num_multipliers = 2
     params = {"multipliers": [{} for _ in range(num_multipliers)]}
-    solver_list = [solve]
+    solver_list = [func]
 
     bench = jb.Benchmark(
         params=params,
@@ -166,10 +141,13 @@ def test_base_plot_boxplot_arg_title_fontsize(mocker):
     )
 
 
-def test_base_plot_boxplot_arg_xticklabels():
+def test_base_plot_boxplot_arg_xticklabels(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     bplot = BasePlot(result)
@@ -183,14 +161,17 @@ def test_base_plot_boxplot_arg_xticklabels():
     assert xticklabels[1].get_text() == "data2"
 
 
-def test_base_plot_boxplot_arg_xticklabels_size(mocker):
+def test_base_plot_boxplot_arg_xticklabels_size(mocker, jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     m = mocker.patch("matplotlib.axes.Subplot.set_xticklabels")
     xticklabels_size = 10
     data = {"data1": np.array([1, 2, 3, 4]), "data2": np.array([1, 2, 3, 4])}
 
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     bplot = BasePlot(result)
@@ -202,14 +183,17 @@ def test_base_plot_boxplot_arg_xticklabels_size(mocker):
     m.assert_called_once_with(data.keys(), size=10, rotation=None)
 
 
-def test_base_plot_boxplot_arg_xticklabels_rotation(mocker):
+def test_base_plot_boxplot_arg_xticklabels_rotation(mocker, jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     m = mocker.patch("matplotlib.axes.Subplot.set_xticklabels")
     xticklabels_rotation = 10
     data = {"data1": np.array([1, 2, 3, 4]), "data2": np.array([1, 2, 3, 4])}
 
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     bplot = BasePlot(result)
@@ -221,12 +205,15 @@ def test_base_plot_boxplot_arg_xticklabels_rotation(mocker):
     m.assert_called_once_with(data.keys(), size=None, rotation=10)
 
 
-def test_base_plot_boxplot_arg_ylabel():
+def test_base_plot_boxplot_arg_ylabel(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     ylabel = "ylabel"
 
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     bplot = BasePlot(result)
@@ -239,7 +226,10 @@ def test_base_plot_boxplot_arg_ylabel():
     assert ax.get_ylabel() == "ylabel"
 
 
-def test_base_plot_boxplot_arg_ylabel_size(mocker):
+def test_base_plot_boxplot_arg_ylabel_size(mocker, jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     m = mocker.patch("matplotlib.axes.Subplot.set_ylabel")
 
     ylabel = "ylabel"
@@ -247,7 +237,7 @@ def test_base_plot_boxplot_arg_ylabel_size(mocker):
 
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     bplot = BasePlot(result)
@@ -256,12 +246,15 @@ def test_base_plot_boxplot_arg_ylabel_size(mocker):
     m.assert_called_once_with("ylabel", size=ylabel_size)
 
 
-def test_base_plot_boxplot_arg_yticks_default(mocker):
+def test_base_plot_boxplot_arg_yticks_default(mocker, jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     m = mocker.patch("matplotlib.ticker.MaxNLocator.__init__", return_value=None)
 
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     bplot = BasePlot(result)
@@ -270,12 +263,15 @@ def test_base_plot_boxplot_arg_yticks_default(mocker):
     m.assert_called_with(integer=True)
 
 
-def test_base_plot_boxplot_arg_yticks():
+def test_base_plot_boxplot_arg_yticks(jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     yticks = [0, 10]
 
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     bplot = BasePlot(result)
@@ -287,12 +283,15 @@ def test_base_plot_boxplot_arg_yticks():
     assert (ax.get_yticks() == [0, 10]).all()
 
 
-def test_base_plot_boxplot_arg_kwargs(mocker):
+def test_base_plot_boxplot_arg_kwargs(mocker, jm_sampleset: jm.SampleSet):
+    def func() -> jm.SampleSet:
+        return jm_sampleset
+
     m = mocker.patch("matplotlib.axes.Subplot.boxplot")
 
     bench = jb.Benchmark(
         params={},
-        solver=[solve],
+        solver=[func],
     )
     result = bench()
     bplot = BasePlot(result)
