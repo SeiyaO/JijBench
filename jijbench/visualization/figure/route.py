@@ -114,13 +114,13 @@ class Route(Figure):
 
     def create_figure(
         self,
-        title: str | None = None,
-        height: Number | None = None,
-        width: Number | None = None,
-        xaxis_title: str | None = None,
-        yaxis_title: str | None = None,
-        shownodelabel: bool | None = None,
-        showlegend: bool | None = None,
+        title: str = "Route",
+        height: Number = 600,
+        width: Number = 600,
+        xaxis_title: str = "x",
+        yaxis_title: str = "y",
+        shownodelabel: bool = False,
+        showlegend: bool = True,
         savefig: bool | None = None,
         savedir: str | None = None,
         savename: str | None = None,
@@ -129,33 +129,19 @@ class Route(Figure):
         """Create a figure using plotly.
 
         Args:
-            title (str | None): the title of the figure. If Defaults None is given, it will be set to Route.
-            height (Number | None): the height of the figure. If Defaults None is given, it will be set to 600.
-            width (Number | None): the width of the figure. If Defaults None is given, it will be set to 600.
-            xaxis_title (str | None): the title of the x axis. If Defaults None is given, it will be set to x.
-            yaxis_title (str | None): the title of the y axis. If Defaults None is given, it will be set to y.
-            shownodelabel (bool | None): If True, show the node label. If the default None is given, it will be set to False.
-            showlegend (bool | None): If True, show the legend. If the default None is given, it will be set to True.
+            title (str): the title of the figure. Defaults to Route.
+            height (Number): the height of the figure. Defaults to 600.
+            width (Number): the width of the figure. Defaults to 600.
+            xaxis_title (str): the title of the x axis. Defaults to x.
+            yaxis_title (str): the title of the y axis. Defaults to y.
+            shownodelabel (bool): If True, show the node label. Defaults to False.
+            showlegend (bool): If True, show the legend. Defaults to True.
             savefig (bool | None): If True, save the figure. If the default None is given, the value given to the constructor will be used.
             savedir (str | None): the directory to save the figure. If the default None is given, the value given to the constructor will be used.
             savename (str | None): the name of the figure. Since it is automatically saved as png, no extension is required.
                 If Defaults None is given, it will be same as `title`.
             savescale (int | None): corresponds to the resolution of the figure. If the default None is given, the value given to the constructor will be used.
         """
-        if title is None:
-            title = "Route"
-        if height is None:
-            height = 600
-        if width is None:
-            width = 600
-        if xaxis_title is None:
-            xaxis_title = "x"
-        if yaxis_title is None:
-            yaxis_title = "y"
-        if shownodelabel is None:
-            shownodelabel = False
-        if showlegend is None:
-            showlegend = True
         if savefig is None:
             savefig = self._savefig
         if savedir is None:
@@ -198,7 +184,6 @@ class Route(Figure):
                 )
             )
 
-        fig.update_layout(title=title)
         fig.update_layout(
             height=height,
             width=width,
@@ -206,12 +191,13 @@ class Route(Figure):
             yaxis_title=yaxis_title,
             showlegend=showlegend,
             template="plotly_white",  # Change background color from default color to white
-            title={  # Change the position of the title from the default top left to center top
-                "y": 0.95,
-                "x": 0.5,
-                "xanchor": "center",
-                "yanchor": "top",
-            },
+            title=dict(
+                text=title,
+                y=0.95,
+                x=0.5,
+                xanchor="center",
+                yanchor="top",
+            ),  # Change the position of the title from the default top left to center top
             font=dict(family="Arial"),  # Change font to Arial
             xaxis=dict(
                 linewidth=1, mirror=True, linecolor="black"
@@ -229,7 +215,7 @@ class Route(Figure):
     def _get_node_coordinate(
         self,
     ) -> tuple[list[str | Number], list[Number], list[Number]]:
-        """Formats data in nodes attributes for plotly.
+        """Format data in nodes attributes for plotly.
 
         Example:
             Let us consider the following nodes:
@@ -249,7 +235,7 @@ class Route(Figure):
     def _get_routes_coordinate(
         self, route_name: str
     ) -> tuple[list[Number], list[Number]]:
-        """Formats data in routes attributes for plotly.
+        """Format data in routes attributes for plotly.
 
         Example:
             Let us consider the following nodes and routes:

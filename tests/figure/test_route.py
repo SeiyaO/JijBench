@@ -80,7 +80,7 @@ def test_create_figure_default_params():
     route.add_route(route=[0, 1, 2, 0])
     route.add_route(route=[0, 3, 4, 0])
     fig = route.create_figure()
-    # fig.show() # If you remove the comment out, you can check the diagram on the browser.
+    # fig.show()  # If you remove the comment out, you can check the diagram on the browser.
 
     assert isinstance(fig, plotly.graph_objects.Figure)
 
