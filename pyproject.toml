@@ -14,7 +14,7 @@ log_auto_indent = true
 testpaths = ["tests"]
 
 [tool.poetry]
-authors = ["Jij Inc. <info@j-ij.com>"] 
+authors = ["Jij Inc. <info@j-ij.com>"]
 classifiers = [
   "Operating System :: POSIX :: Linux",
   "Programming Language :: Python",
@@ -25,21 +25,22 @@ classifiers = [
   "Operating System :: POSIX",
   "Operating System :: Unix",
   "Operating System :: MacOS",
-] 
-description = "Experiment management and benchmark tools for mathematical optimization" 
-documentation = "https://jij-inc.github.io/JijBench" 
-homepage = "https://www.j-ij.com/" 
-include = ["jijbench/*.py", "jijbench/*.json", "jijbench/*.JSON"] 
-license = "MIT" 
-name = "jijbench" 
-readme = "README.md" 
-repository = "https://github.com/Jij-Inc/JijBench" 
+]
+description = "Experiment management and benchmark tools for mathematical optimization"
+documentation = "https://jij-inc.github.io/JijBench"
+homepage = "https://www.j-ij.com/"
+include = ["jijbench/*.py", "jijbench/*.json", "jijbench/*.JSON"]
+license = "MIT"
+name = "jijbench"
+readme = "README.md"
+repository = "https://github.com/Jij-Inc/JijBench"
 version = "0.0.0" # using poetry-dynamic-versioning
 
 [tool.poetry.dependencies]
 dill = "^0.3.6"
 jijmodeling = "^0.11.1"
 jijzept = "^1.14.0"
+kaleido = "0.2.1"
 matplotlib = "^3.7.1"
 nbformat = "^5.8.0"
 networkx = "^2.0"
@@ -76,7 +77,7 @@ mkdocs-literate-nav = "^0.6.0"
 mkdocs-material = "^9.1.5"
 mkdocs-minify-plugin = "^0.6.4"
 mkdocs-section-index = "^0.3.5"
-mkdocstrings = {extras = ["python"], version = ">=0.19"}
+mkdocstrings = { extras = ["python"], version = ">=0.19" }
 
 [tool.poetry.scripts]
 jb-board = "jijbench.dashboard.cli:main"
