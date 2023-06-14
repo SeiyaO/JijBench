@@ -148,4 +148,6 @@ nav:
     - Experiment: experiment.md
     - Benchmark: benchmark.md
     - Changelog: https://github.com/Jij-Inc/JijBench/releases
+  - Tutorials:
+    - Parameter Search for TSP: tutorials_parameter-search_TSP.md
   - Reference: reference/
