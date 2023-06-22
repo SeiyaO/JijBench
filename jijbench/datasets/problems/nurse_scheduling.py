@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import warnings
+
 import jijmodeling as jm
+from jijmodeling.deprecation.deprecation import JijFutureWarning
 
 
 def nurse_scheduling():
@@ -42,7 +45,10 @@ def nurse_scheduling():
     q = jm.Placeholder("q", ndim=3)
     # p[i, d, t] = 1, 人iは日にちdにtype tの仕事をしたくない
     p = jm.Placeholder("p", ndim=3)
-    u = jm.Placeholder("u", shape=(D, T))  # 日にちd, type tの必要人数
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=JijFutureWarning)
+        u = jm.Placeholder("u", shape=(D, T))  # 日にちd, type tの必要人数
     v_min = jm.Placeholder("v_min", ndim=2).set_latex(
         r"\mathrm{v\_min}"
     )  # 人員不足のペナルティーの重み

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import warnings
+
 import jijmodeling as jm
+from jijmodeling.deprecation.deprecation import JijFutureWarning
 
 
 def travelling_salesman_with_time_windows():
@@ -10,8 +13,10 @@ def travelling_salesman_with_time_windows():
     # 距離行列
     dist = jm.Placeholder("d", ndim=2)  # 距離行列
     N = jm.Placeholder("N")
-    e = jm.Placeholder("e", shape=(N,))  # ready time
-    l = jm.Placeholder("l", shape=(N,))  # due time
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=JijFutureWarning)
+        e = jm.Placeholder("e", shape=(N,))  # ready time
+        l = jm.Placeholder("l", shape=(N,))  # due time
     x = jm.BinaryVar("x", shape=(N, N))
     t = jm.IntegerVar("t", shape=(N,), lower_bound=e, upper_bound=l)
 
