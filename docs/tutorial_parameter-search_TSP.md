@@ -1,60 +1,79 @@
 # 概要
-
 巡回セールスマン問題(TSP)を例に取り、JijBenchの使用例を見せる.
-制約条件の未定乗数を変化させた際に, 実行可能解の個数と, 目的関数の平均値の変化の関係性をベンチマークによって確認する.
+制約条件の未定乗数を変化させた際に, 実行可能解の個数と, 実行可能解の目的関数の平均値の変化の関係性をベンチマークによって確認する.
 
 # 巡回セールスマン問題(TSP)
 
-TSPとは, セールスマンが, ある都市を起点にして, 点在する都市を1回ずつ訪問し, 最後に起点の都市に戻る経路を考える際に、移動にかかるコストを最小化する問題のことである.
+TSPとは, セールスマンが, ある都市を起点にして, 点在する都市を1回ずつ訪問し, 最後に起点の都市に戻る経路を考える際に、移動距離を最小化する問題のことである.
 
 # TSPの定式化
-1人のセールスマンが$N$個の都市を巡回する場合のTSPを数理最適化問題として定式化する.
+1人のセールスマンが$`N`$個の都市を巡回する場合のTSPを数理最適化問題として定式化する.
 
-- $N$個の都市をそれぞれ$c_{i}\,(i\in\{1, \cdots, N\})$で表す,
-- 都市$c_{i}$と都市$c_{j}$の間の距離を$d_{ij}$で表す,
-- セールスマンが都市を訪れる時刻を$t\in\{0,\cdots,N\}$で表す,
-- 時刻$t$にセールスマンが都市$c_{i}$を訪れているかどうかを,
-次で定義するバイナリ変数を$x_{i,t}$によって表す:
-$$
+- $`N`$個の都市をそれぞれ$`i\in\{1, \cdots, N\}`$で表す,
+- 都市$`i`$と都市$`j`$の間の距離を$`d_{ij}`$で表す,
+- セールスマンが都市を訪れる順序を$`o\in\{0,\cdots,N\}`$で表す,
+- 時刻$`t`$にセールスマンが都市$`i`$を訪れているかどうかを,
+次で定義するバイナリ変数を$`x_{i,o}`$によって表す:
+```math
 x_{i,t} :=
 \begin{cases}
-1 & (\text{時刻$t$に都市$c_{i}$を訪れている}) \\
+1 & (\text{$`o`$番目に都市$`i`$を訪れている}) \\
 0 & (\text{otherwise})
 \end{cases}
-$$
-すると, 時刻$t$に都市$c_{i}$を訪れ, 時刻$t+1$に都市$c_{j}$を訪れる場合の移動距離は
-$$
+```
+すると, $`t`$番目に都市$`i`$を訪れ, $`o+1`$番目に都市$`j`$を訪れる場合の移動距離は
+```math
 d_{ij}x_{t,i}x_{t+1,j}
-$$
+```
 と表すことができる.
-よって, $N$個の都市を巡回する際の総移動距離は, $N+1$番目に訪れる都市は最初に出発する都市であることに注意すると, 次で表されることがわかる:
-$$
+よって, $`N`$個の都市を巡回する際の総移動距離は, $`N+1`$番目に訪れる都市は最初に出発する都市であることに注意すると, 次で表されることがわかる:
+```math
 \sum_{t=1}^{N}\sum_{i=1}^{N}\sum_{j=1}^{N}d_{ij}x_{t,i}x_{(t+1\mod N),\,j} 
-$$
+```
 この関数の値を最小化することが目的となる.
 しかし, 今の設定のTSPでは次の2つの満たすべき条件がある:
 
 1. 位置に関する条件(onehot_location condition); 1つの都市には1度しか訪れない,
-$$
-\sum_{t=1}^{N}x_{t,i} = 1 \quad (\forall i\in\{1, \cdots, N\})
-$$
+```math
+\sum_{t=1}^{N}x_{o,i} = 1 \quad (\forall i\in\{1, \cdots, N\})
+```
 2. 時刻に関する条件(onehot_time condition); ある時刻にセールスマンが訪れている都市は1つだけ.
-$$
-\sum_{i=1}^{N}x_{t,i} = 1 \quad (\forall t\in\{1, \cdots, N\})
-$$
+```math
+\sum_{i=1}^{N}x_{o,i} = 1 \quad (\forall o\in\{1, \cdots, N\})
+```
 
-したがって, TSPはこれらの制約条件のもとで目的関数の値を最小化する$\{x_{t,i}\}_{(i,t)}$を求める条件付き組合せ最適化問題として定式化される.
+したがって, TSPはこれらの制約条件のもとで目的関数の値を最小化する$`\{x_{o,i}\}_{(o,i)}`$を求める制約付き最適化問題として定式化される.
 
 # JijのプロダクトによるTSPの最適化計算
 
 Jijのプロダクトを使って, 上で定式化したTSPの数理モデルの構築し, それをQUBOへ変換した後, 最適化計算を行う.
-[OpenJij](https://openjij.github.io/OpenJij/index.html), [JijModeling](https://www.documentation.jijzept.com/docs/jijmodeling/), [JijModeling-Transpiler](https://www.documentation.jijzept.com/docs/jijmodelingtranspiler/)のドキュメントが参考になる.
+各プロダクトの詳細については, 次の[OpenJij](https://openjij.github.io/OpenJij/index.html), [JijModeling](https://www.documentation.jijzept.com/docs/jijmodeling/), [JijModeling-Transpiler](https://www.documentation.jijzept.com/docs/jijmodelingtranspiler/)のドキュメントをご参照ください.
+
+はじめに, 使用するライブラリをまとめてインストール, インポートしておく.
+
+```bash
+pip install jijmodeling
+pip install openjij
+pip install jijmodeling.transpiler
+pip install jijbench
+pip install numpy
+pip install itertools
+pip install matplotlib.pyplot
+```
+
+```python
+import jijmodeling as jm
+import openjij as oj
+import jijmodeling.transpiler as jmt
+import jijbench as jb
+import numpy as np
+import itertools
+import matplotlib.pyplot as plt
+```
 
 ## jijmodelingを用いた数理モデルの構築
 最適化問題を記述するためのモデリングツールであるJijModelingを用いて, TSPのモデルを構築する.
-```bash
-pip install jijmodeling
-```
+
 jijmodelingでは, `jm.Problem`インスタンスを作成して、それに目的関数や`jm.Constraint`で表される制約条件を追加していく.  その際には, 以下のようなクラスを用いる:
 - `jm.Placeholder`; 定数を表す,
 - `jm.Binary`; バイナリ変数を表す,
@@ -88,16 +107,48 @@ JijModelingで記述された数理モデルは, notebook上ではLaTeX
 problem
 ```
 
+![TSP_problem_LaTeX](assets/images/tutorials/TSP_problem_LaTeX.png)
+
 ## JijModeling-Transpilerを用いた数理モデルのQUBOへの変換と, OpenJijを用いた最適化計算
 
-構築した数理モデルを引き渡して最適化計算を行う関数を定義する. (この関数を後でベンチマークする.)
-ここではOpenJijとJijModeling-Transpilerを用いる.
+JijModeling-TranspilerはJijModelingによって構築した数理モデルをQUBOやPUBOなどの他の形式へと変換するトランスパイラーであり, OpenJijはイジングモデルとQUBOのヒューリスティック最適化のライブラリである.
 
-OpenJijはイジングモデルとQUBOのヒューリスティック最適化のライブラリであり, JijModeling-TranspilerはJijModelingによって構築した数理モデルを他のモデリングツールへと変換するトランスパイラーである.
-```bash
-pip install openjij
-pip install jijmodeling.transpiler
+これらを用いて, 前節で構築したTSPの数理モデルを元に最適化計算を行う.
+
+まず, 数理モデルをJijModeling-Transpilerを用いてQUBO形式に変換する.
+
+```python
+import jijmodeling.transpiler as jmt
+
+compiled_model = jmt.core.compile_model(model, feed_dict)
+pubo_builder = jmt.core.pubo.transpile_to_pubo(compiled_model) 
+Q,offset = pubo_builder.get_qubo_dict(multipliers=multipliers) 
 ```
+
+ここで得られた`Q`がQUBO形式の辞書である.
+この`Q`を用いて最適化計算をopenjijを用いて行う.
+
+```python
+import openjij as oj
+
+num_leads = 1
+sampler = oj.SASampler(num_reads=num_reads)
+```
+
+openjijでは, このSamplerクラスによって最適化計算の手法を決める. 今回はSimulated Annealing(SA)を用いた.
+また, `num_leads`はアニーリングの試行回数を表す. 今回は例として1回に設定した.
+
+```python
+response = sampler.sample_qubo(Q=Q)
+result = jmt.core.pubo.decode_from_openjij(response, pubo_builder, compiled_model) 
+```
+
+
+
+
+
+
+
 
 JijModeling-Transpilerを用いて, 先ほどJijModelingを用いて構築した数理モデルをQUBOに変換し, 
 それをOpenJijのSamplerクラスのインスタンスによって計算する関数`TSP_solver`を次のように定義する.
@@ -125,7 +176,7 @@ def TSP_solver(model, feed_dict, multipliers):
 
 上で定義した`problem`クラスと`TSP_solver`を用いてTSPを解く実演をする. 
 
-まず$n$個の都市をランダムにとり, それぞれの都市間の距離を表す配列を求める関数を定義する.
+まず$`n`$個の都市をランダムにとり, それぞれの都市間の距離を表す配列を求める関数を定義する.
 
 ```python
 import numpy as np
@@ -196,15 +247,53 @@ plt.show()
 # JijBenchを用いたベンチマーク
 
 この章の本題である, JijBenchを用いた, パラメータを変化させた時のベンチマークを実演する.
-```bash
-pip install jijbench
-```
+JijBenchにはベンチマークテストを行うためのクラスとして, ExperimentクラスBenchmarkクラスの二つがあるが, ここではBenchmarkクラスを用いる. 
 
-ここでは例として, 未定乗数を変化させた時のベンチマークを行う.
-まず, ベンチマークする未定乗数のリストを作成する関数を定義する.
+Benchmarkクラスでは, 次のように, ベンチマークしたい関数と, 辞書に格納した変化させたい引数を渡す.
 
 ```python
-import itertools
+#Pre-defined solver
+def my_solver(param1, param2):
+    return param1 + param2
+ 
+#Parameters: ベンチマークする関数の各引数の名前をキー, 代入する値を並べたリストを値とする辞書
+my_params = {
+    "params1":[1,2,3], #params1に代入してベンチマークする値のリスト
+    "params2":[4,5,6], #params2に代入してベンチマークする値のリスト
+}
+
+import jijbench as jb
+
+bench = jb.Benchmark(
+    solver=my_solver, 
+    params=my_params, 
+    )
+```
+
+ここでは例として, TSPにおいて未定乗数を変化させた時のベンチマークを行う.
+
+まず, 前節でTSPを解いた手続きを, 問題とパラメータを引数として結果を返す関数`TSP_solver`として定義する. そしてこれをベンチマークの対象である関数とする.
+
+```python
+
+num_reads = 1
+
+def TSP_solver(model, feed_dict, multipliers):
+    compiled_model = jmt.core.compile_model(model, feed_dict) 
+    pubo_builder = jmt.core.pubo.transpile_to_pubo(compiled_model) 
+    Q,offset = pubo_builder.get_qubo_dict(multipliers=multipliers)
+    sampler = oj.SASampler(num_reads=num_reads)
+    response = sampler.sample_qubo(Q=Q)
+    result = jmt.core.pubo.decode_from_openjij(response, pubo_builder, compiled_model) 
+    return result
+```
+
+`TSP_solver`は, 数理モデルとして`jm.Problem`インスタンス, 係数と未定乗数として辞書を引数として, その最適化計算の結果を返す関数である. 
+
+続いて, ベンチマークする未定乗数のリストを作成する関数を定義する.
+
+```python
+import itertool
 import numpy as np
 
 def make_multipliers_list(lower_bound, upper_bound, dividing_number, constraint1, constraint2):
