@@ -38,8 +38,8 @@ version = "0.0.0" # using poetry-dynamic-versioning
 
 [tool.poetry.dependencies]
 dill = "^0.3.6"
-jijmodeling = "^0.11.1"
-jijzept = "^1.14.0"
+jijmodeling = "^0.13.1"
+jijzept = "^1.15.2"
 kaleido = "0.2.1"
 matplotlib = "^3.7.1"
 nbformat = "^5.8.0"

@@ -6,18 +6,18 @@ import jijmodeling as jm
 def travelling_salesman():
     # 問題
     problem = jm.Problem("travelling-salesman")
-    dist = jm.Placeholder("d", dim=2)
+    dist = jm.Placeholder("d", ndim=2)
     N = jm.Placeholder("N")
 
-    x = jm.Binary("x", shape=(N, N))
-    i = jm.Element("i", N)
-    j = jm.Element("j", N)
+    x = jm.BinaryVar("x", shape=(N, N))
+    i = jm.Element("i", belong_to=N)
+    j = jm.Element("j", belong_to=N)
 
-    t = jm.Element("t", N)
+    t = jm.Element("t", belong_to=N)
 
     # Objective Funtion
     sum_list = [t, i, j]
-    obj = jm.Sum(sum_list, dist[i, j] * x[t, i] * x[(t + 1) % N, j])
+    obj = jm.sum(sum_list, dist[i, j] * x[t, i] * x[(t + 1) % N, j])
     problem += obj
 
     # const1: onehot for time
