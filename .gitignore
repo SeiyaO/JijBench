@@ -148,4 +148,5 @@ __marker__*
 
 notebooks/
 
-.streamlit
+.streamlitnode_modules/
+node_modules/

@@ -105,6 +105,7 @@ markdown_extensions:
   - attr_list
   - def_list
   - footnotes
+  - markdown_katex
   - md_in_html
   - toc:
       permalink: true
@@ -149,5 +150,5 @@ nav:
     - Benchmark: benchmark.md
     - Changelog: https://github.com/Jij-Inc/JijBench/releases
   - Tutorials:
-    - Parameter Search for TSP: tutorials_parameter-search_TSP.md
+    - Parameter Search for TSP: tutorial_parameter-search_TSP.md
   - Reference: reference/
