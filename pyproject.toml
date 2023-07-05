@@ -53,6 +53,7 @@ streamlit-ace = "^0.1.1"
 streamlit-aggrid = "^0.3.4"
 streamlit-elements = "^0.1.0"
 streamlit-tree-select = "^0.0.5"
+markdown-katex = "^202112.1034"
 
 [tool.poetry.group.tests.dependencies]
 coverage = "^7.2.2"
