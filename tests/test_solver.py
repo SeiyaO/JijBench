@@ -82,12 +82,12 @@ def test_user_defined_model():
     problem = jm.Problem("sample")
     a = jm.Placeholder("a")
     b = jm.Placeholder("b")
-    c = jm.Placeholder("c", 1)
-    i = jm.Element("i", 5)
+    c = jm.Placeholder("c", ndim=1)
+    i = jm.Element("i", belong_to=5)
     x = jm.DecisionVariable("x", 5)
 
     problem = jm.Problem("sample")
-    problem += a + jm.Sum(i, c[i] * x[i])
+    problem += a + jm.sum(i, c[i] * x[i])
     problem += jm.Constraint("const", x[:] == b)
 
     instance_data: jm.PH_VALUES_INTERFACE = {"a": 1, "b": 2.0, "c": [1, 2]}
@@ -99,12 +99,12 @@ def test_invalid_user_defined_model():
     problem = jm.Problem("sample")
     a = jm.Placeholder("a")
     b = jm.Placeholder("b")
-    c = jm.Placeholder("c", 1)
-    i = jm.Element("i", 5)
+    c = jm.Placeholder("c", ndim=1)
+    i = jm.Element("i", belong_to=5)
     x = jm.DecisionVariable("x", 5)
 
     problem = jm.Problem("sample")
-    problem += a + jm.Sum(i, c[i] * x[i])
+    problem += a + jm.sum(i, c[i] * x[i])
     problem += jm.Constraint("const", x[:] == b)
 
     instance_data: jm.PH_VALUES_INTERFACE = {"a": 1, "c": [1, 2]}
