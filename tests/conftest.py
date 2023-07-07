@@ -15,12 +15,12 @@ import jijbench as jb
 
 @pytest.fixture
 def onehot_problem() -> jm.Problem:
-    d = jm.Placeholder("d", dim=1)
-    x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
-    i = jm.Element("i", d.shape[0])
+    d = jm.Placeholder("d", ndim=1)
+    x = jm.BinaryVar("x", shape=(d.shape[0].set_latex("n")))
+    i = jm.Element("i", belong_to=d.shape[0])
     problem = jm.Problem("problem")
-    problem += jm.Sum(i, d[i] * x[i])
-    problem += jm.Constraint("onehot1", jm.Sum(i, x[i]) == 1)
+    problem += jm.sum(i, d[i] * x[i])
+    problem += jm.Constraint("onehot1", jm.sum(i, x[i]) == 1)
     return problem
 
 

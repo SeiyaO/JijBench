@@ -4,23 +4,23 @@ import jijmodeling as jm
 
 
 def knapsack():
-    w = jm.Placeholder("w", dim=1)
-    v = jm.Placeholder("v", dim=1)
+    w = jm.Placeholder("w", ndim=1)
+    v = jm.Placeholder("v", ndim=1)
     n = jm.Placeholder("n")
     c = jm.Placeholder("c")
-    x = jm.Binary("x", shape=(n,))
+    x = jm.BinaryVar("x", shape=(n,))
 
     # i: itemの添字
-    i = jm.Element("i", n)
+    i = jm.Element("i", belong_to=n)
 
     problem = jm.Problem("knapsack")
 
     # objective function
-    obj = jm.Sum(i, v[i] * x[i])
+    obj = jm.sum(i, v[i] * x[i])
     problem += -1 * obj
 
     # Constraint: knapsack 制約
-    const = jm.Constraint("knapsack-constraint", jm.Sum(i, w[i] * x[i]) - c <= 0)
+    const = jm.Constraint("knapsack-constraint", jm.sum(i, w[i] * x[i]) - c <= 0)
     problem += const
 
     return problem
