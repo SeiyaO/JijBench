@@ -1,8 +1,9 @@
 # Abstract
-In this chapter, we will show an example of use of JijBench with the traveling salesman problem as an example.
+In this chapter, we will show an example of use of JijBench with the parameter search for the traveling salesman problem.
 
-We will compare a route derived from optimization calculations with a casually chosen multiplier with the optimal route found by benchmarking results of optimization calculations with varying multipliers.
-Then we will confirm that the efficiency is improved as a result.
+To get a better solution in optimization, it's often necessary to adjust the parameters.
+In optimization of TSP by Ising optimization, which is discussed here, we need to adjust parameters, called multiplier, that determines the weights of the constraints in order to get a better feasible solution.
+We use grid search to determine the multiplier, and JijBench simplifies this process.
 
 
 # Introduction to the Traveling Salesman Problem (TSP)
@@ -22,16 +23,16 @@ Let's formulate the TSP in the case when a single salesman travels N cities as a
 ```math
 x_{t,i} :=
 \begin{cases}
-1 & (\text{the salesman visit city $i$ $t$-th}), \\
+1 & (\text{the salesman visit city $i$ at the $t$-th step}), \\
 0 & (\text{otherwise}).
 \end{cases}
 ```
-Then, when the salesman visit city $`i`$ $`t`$-th and city $`j`$ $`(t+1)`$-th the travel distance is 
+Then, when the salesman visit city $`i`$ at the $`t`$-th step and city $`j`$ at the $`(t+1)`$-th step, the travel distance is 
 ```math
 d_{ij}x_{t,i}x_{t+1,j}.
 ```
 
-Therefore, noting that $`(N+1)`$th city is the first city, total travel distance traveled around those $`N`$ cities is expressed as
+Therefore, noting that $`(N+1)`$-th city is the first city, total travel distance traveled around those $`N`$ cities is expressed as
 
 ```math
 \sum_{t=1}^{N}\sum_{i=1}^{N}\sum_{j=1}^{N}d_{ij}x_{t,i}x_{(t+1\mod N),\,j}. 
@@ -50,9 +51,9 @@ But, in this setting, we have two constraint.
 
 Hence TSP is formulated as a constrained optimization problem to find $`\{x_{t,i}\}_{(t,i)}`$ that minimizes the value of the objective function under these constraints.
 
-# Optimization Calculations with Jij's Product
+# Optimization with Jij's Product
 
-Using Jij's products, we construct the mathematical model of TSP formulated above, convert it to QUBO, and demonstrate the optimization calculations.
+Using Jij's products, we construct the mathematical model of TSP formulated above, convert it to QUBO, and perform Ising optimization.
 
 For more details about each product, please refer to the following documents: [OpenJij](https://openjij.github.io/OpenJij/index.html), [JijModeling](https://www.documentation.jijzept.com/docs/jijmodeling/), [JijModeling-Transpiler](https://www.documentation.jijzept.com/docs/jijmodelingtranspiler/).
 
@@ -72,14 +73,7 @@ pip install itertools
 We construct the mathematical model of TSP by JijModeling.
 
 JijModeling is a modeling tool to describe optimization problems. 
-When we use JijModeling, we make `jm.Problem` instance then add the objective functions and constraint represented by `jm.Constraint` instance to it.
-
-We use classes the following classes:
-
-- `jm.Placeholder`; represents constants,
-- `jm.Binary`; represents binary variables,
-- `jm.Sum`; represents summation, 
-- `jm.Element`; represents range of indices summand over.
+JijModeling enable us to consturct mathematical model with an intuitive interface that is similar to mathematical formulas.
 
 Then we can construct the mathematical model of TSP as follows:
 
@@ -87,16 +81,24 @@ Then we can construct the mathematical model of TSP as follows:
 import jijmodeling as jm
 
 def tsp_model():
-    d = jm.Placeholder("d", dim=2) #各都市間の距離を表す2次元配列
-    n = d.shape[0].set_latex("n") #都市の数
-    x = jm.Binary("x", shape=(n, n)) #バイナリ変数のn行n列の2次元配列
-    i, j = jm.Element("i", n), jm.Element("j", n)
-    t = jm.Element("t", n)
-
+    # 2-dimensional array that represents the distances between each city
+    d = jm.Placeholder("d", dim=2) 
+    # number of cities
+    N = d.shape[0].set_latex("N") 
+    # n×n matrix with binary variable component represented by 2-dimensional array
+    x = jm.Binary("x", shape=(N, N)) 
+    # domain of index i,j
+    i, j = jm.Element("i", N), jm.Element("j", N) 
+    # domain of index t
+    t = jm.Element("t", N) 
+    
     problem = jm.Problem("tsp")
-    problem += jm.Sum([i, j, t], d[i,j] * x[i, t] * x[j, (t+1)%n]) 
-    problem += jm.Constraint("onecity", x[:, t] == 1, forall=t)
-    problem += jm.Constraint("onetime", x[i, :] == 1, forall=i)
+    # objective function
+    problem += jm.Sum([i, j, t], d[i,j] * x[t, i] * x[(t+1)%N, j]) 
+    # onehot_city constraint
+    problem += jm.Constraint("onehot_city", jm.Sum(i, x[t, i]) == 1, forall=t) 
+    # onehot_time constraint
+    problem += jm.Constraint("onehot_time", jm.Sum(t, x[t, i]) == 1, forall=i) 
 
     return problem
 
@@ -104,251 +106,102 @@ problem = tsp_model()
 ```
 
 We can check the model constructed by JijModeling in LaTeX format on notebook.
+
 ```python
 problem
 ```
 
 ![TSP_problem_LaTeX](assets/images/tutorials/TSP_problem_LaTeX.png)
 
+The mathematical model of TSP has been constructed.
 
-## Setting Example Problem Data
+## Setting Problem Data
 
-We construct settings of example problem such as city distribution that are substituted in mathematical TSP model.
+Next we define a funciton that gives positions of cities and distances between each cities.
 
-For example, we place ten cities at ramdom.
+We don't have specific distribution of cities, so we take points that represents cities at random.
 
 ```python
 import numpy as np
 
-n = 10 #number of cities
-
-np.random.seed(3)
-x_sample = np.random.uniform(0, 1, n) 
-y_sample = np.random.uniform(0, 1, n) 
-
-plt.plot(x_sample, y_sample, 'o')
-plt.xlim(0, 1)
-plt.ylim(0, 1)
+def tsp_distance(N):
+    np.random.seed(3)
+    # take N points on x-axis at random
+    x = np.random.uniform(0, 1, N) 
+    # take N points on y-axis at random
+    y = np.random.uniform(0, 1, N) 
+    XX, YY = np.meshgrid(x, y) 
+    # calculate distances between each cities
+    distance = np.sqrt((XX - XX.T)**2 + (YY - YY.T)**2) 
+    return distance, (x, y)
 ```
 
-![city_distribution_example](assets/images/tutorials/city_distribution_example.png)
+Defined function `tsp_distance` performs following procedure.
 
-Let `distance_sample` be the matrix which has $`d_{ij}`$ as $`(i,j)`$ component. 
-`distance_sample` can be expressed by 2D array as follows.
+1. Recieve number of cities $`N`$.
+2. Take $`N`$ cities on $`x`$-$`y`$ plane at random.
+3. Calculate the distances between each cities $`d_{i,j}`$.
+4. Return a matrix which has $`d_{i,j}`$ as $`(i,j)`$ elements and coordinates of cities. 
 
-```python
-XX_sample, YY_sample = np.meshgrid(x_sample, y_sample) 
-distance_sample = np.sqrt((XX_sample - XX_sample.T)**2 + (YY_sample - YY_sample.T)**2)
+We use the information of coordinate of cities later when we plot the route outputted by optimization.
+
+## Ising Optimization via QUBO Formulation
+
+Now that let us define a function that perform optimization of TSP.
+
+There are many methods to solve optimization problems. In this case, we adopt the method that involves transpiling the mathematical model to QUBO and performing Ising optimization on it. In this process, we use JijModeling-Transpiler and OpenJij.
+
+### QUBO Formulation
+
+Before defining a function to perform optimization calculations, let us introduce QUBO formulation.
+
+To solve constrained optimization problem such as TSP, we need to transpile them to formulation that has no constraint, called QUBO (Quadoratic Unconstraint Binary Optimization)  
+
+When one transpiles constrained optimization problems such as TSP, it is common to add terms that square each constraint to the objective function, so that the objective function incorporates information about the constraints. This method is called the Penalty method.
+
+In this case, our modified objective function take form as below:
+
+```math
+\begin{align*}
+H(\{x_{t,i}\}) = \sum_{i=0}^{N-1}\sum_{j=0}^{N-1}\sum_{t=0}^{N-1}d_{i,j}x_{t,i}x_{t+1,j} + \sum_{i=0}^{N-1}A_{i}\left(\sum_{t=0}^{N-1}x_{t,i}-1\right)^{2} + \sum_{t=0}^{N-1}B_{t}\left(\sum_{i=0}^{N-1}x_{t,i}-1\right)^{2}
+\end{align*}
 ```
 
-We compile the number of cities and `distance_sample` as a dictionary `instance_data_sample`.
+Note that 
 
-```python
-instance_data_sample = {"n":n, "d":distance_sample} 
-```
+- the second term of right hand side $`\sum_{i=0}^{N-1}A_{i}\left(\sum_{t=0}^{N-1}x_{t,i}-1\right)^{2}`$ represents the penalty about the "onehot_city" constraint, 
+- the third term $`\sum_{t=0}^{N-1}B_{t}\left(\sum_{i=0}^{N-1}x_{t,i}-1\right)^{2}`$ represents the penalty the "onehot_time" constraint,
+- the constants $`\{A_{i}\}_{i=0}^{N-1}, \{B_{t}\}_{t=0}^{N-1}`$ are multipliers.
 
-As an example, we take both of multipliers for the two constraints(onehot_city, onehot_time) to be 0.5. 
+By applying Ising optimization to this new objective function, we can expect to find a good solution that satisfies the constraints and aims to lower the value of the objective function.
 
-```python
-multipliers_sample = {"onehot_city":1.0,"onehot_time":1.0}  
-```
+### Transpiling to QUBO by JijModeling-Transpiler and Ising Optimization by OpenJij
 
-After demonstrating optimization of this example, we vary multipliers and do a benchmarking survey.
+Now that we define a function that transpiles the mathematical TSP model to QUBO and performs Ising optimization of it.
 
-## Transpiling the Mathematical Model to QUBO by JijModeling-Transpiler
+In order to achieve this aim, we use JijModeling-Transpiler and OpenJij. JijModeling-Transpiler is a transpiler that convert mathematical models constructed by JijModeling into other formats such as QUBO and PUBO. OpenJij is a heuristic optimization library of the Ising model and QUBO.
 
-We transpile the mathematical TSP model and problem data to QUBO so that the solver can handle them. 
+Using these library, we define a fuction `tsp_solver` that performs following procedure.
 
-In order to achieve this aim, we use JijModeling-Transpiler, which is a transpiler that convert mathematical models constructed by JijModeling into other formats such as QUBO and PUBO.
+1. Recieve following data and compile them; 
+    - mathematical model constructed by JijModeling (`model`)
+    - problem data
+        - number and distribution of cities (`instance_data`)
+        - multipliers (`multipliers`)
+    - number of calculation results we get (`num_reads`)
+2. Transpile compiled data into QUBO by JijModeling-Transpiler.
+3. Ising optimization of obtained QUBO by OpenJij and get the response.
+4. Decode the response and return results.
+
+This is coded as follows.
 
 ```python
 import jijmodeling.transpiler as jmt
-
-compiled_model_sample = jmt.core.compile_model(problem, instance_data_sample) #Compiling the model and problem data.
-pubo_builder_sample = jmt.core.pubo.transpile_to_pubo(compiled_model_sample) #Transpiling the compiled model to PUBO format.
-Q_sample,offset_sample = pubo_builder_sample.get_qubo_dict(multipliers=multipliers_sample) #Generating QUBO from PUBO.
-```
-
-`Q_sample` is the problem data written in QUBO format.
-
-## Demonstrating Optimization Calculation with OpenJij
-
-Next, we calculate optimization 
-OpenJij is a heuristic optimization library of the Ising model and QUBO.
-
-In OpenJij, we create a instance of `Sampler` class and add problem in Ising model or QUBO format as dictionary data to it. 
-Here we use `oj.SASampler` class to use simulated annealing(SA) algorithm. `num_leads` represents number of iteration, let it be 1 as example.
-
-```python
 import openjij as oj
 
-num_reads = 1
-sampler = oj.SASampler(num_reads=num_reads)
-```
-
-Now, let us perform the optimization calculation of QUBO using OpenJij. 
-
-`Sample_qubo(Q)` is used to perform optimization calculations for QUBO.
-Apply `.sample_qubo(Q)` method for `sampler` and substitute `Q_sample`.
-
-```python
-response_sample = sampler.sample_qubo(Q=Q_sample)
-```
-
-`response_sample` has information obtained by calculation such as solution and its energy.
-Use `decode` method to decode this.
-
-```python
-result_sample = jmt.core.pubo.decode_from_openjij(response_sample, pubo_builder_sample, compiled_model_sample) 
-```
-
-Now that let us check the solution route. 
-
-> Please note that the route shown here may be different from the one you will see when you try it. This is because the algorithms handled by OpenJij are heuristic stochastic algorithms thus returned solution may differ by each try. 
-
-The obtained solution is stored in `solution` in `result_sample.record` as a sparse matrix. The first two elements are critical.
-
-
-```python
-sparse_index_sample,value,_ = result_sample.record.solution['x'][0] # Obtaining the matrix representing the solution
-order_indices_sample, city_indices_sample = sparse_index_sample
-
-print(order_indices_sample)
-print(city_indices_sample)
-```
-Then we have the outputs such as following. 
-```python
-[0, 1, 5, 7, 3, 2, 8, 4, 9, 6]
-[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-```
-
-This outputs indicate that the salesman visits city `city_indices_sample[i]` `order_indices_sample[i]`-th.
-
-Sorting in order of earliest to latest would makes it easier to understand.
-
-```python
-sorted_order_indices_sample, sorted_city_indices_sample = zip(*sorted(zip(*sparse_index_sample))) 
-
-print(sorted_order_indices_sample)
-print(sorted_city_indices_sample)
-```
-
-```python
-(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-(0, 1, 5, 4, 7, 2, 9, 3, 6, 8)
-```
-
-This result shows that the order the salesman visits cities is $`0\to 1\to 5\to 4\to 7\to 2\to 9\to 3\to 6\to 8`$.
-
-## Visualization of Route
-
-JijBench, later we will use to do a benchmarking servey, has visualization tools too. Let us plot the obtained route `sorted_city_indices_sample` by JijBench.
-
-To visualize the route, create an instance of `Route` class. Then add information about nodes as dictionary data and vertex connecting nodes as tuple data to it, finaly plot them.
-In our case, nodes are cities, vertices are parts of route.
-
-```python
-from jijbench.visualization import Route
-
-route = Route(savefig=True) # Creating an instance of `Route` class
-
-route.add_nodes( 
-    node_pos={
-        sorted_city_indices_sample[i]:(x_sample[sorted_city_indices_sample[i]], y_sample[sorted_city_indices_sample[i]]) for i in range(n)
-    } 
-    # Dictionary whose keys are name of nodes and values are coordinate of node.
-)
-
-first_city = (sorted_city_indices_sample[0],)
-solution_route = sorted_city_indices_sample + first_city　# Add the first city to the solution route to make it circuit. 
-route.add_route(route=solution_route, route_name="Solution Route") 
-
-fig = route.create_figure( 
-    title_text="TSP solution",
-    height=1200,
-    width=1200,
-    xaxis_title="xaxis",
-    yaxis_title="yaxis",
-    shownodelabel=True,
-    showlegend=True,
-    savedir=".",
-    savename="Savename",
-    savescale=1,
-)
-fig.show()
-```
-
-The results are as follows.
-
-![TSP_solution_sample](assets/images/tutorials/TSP_solution_sample.png)
-
-It seems not to be efficient. To find more efficient route we vary values of multiplier and do a benchmark survey.
-
-# Benchmarking by JijBench
-
-As the main subject of this chapter, we will demonstrate the benchmarks when the parameters are varied using JijBench.
-We will show the benchmarks for TSP with varying the multipliers as an example.
-
-JijBench have two classes, `Experiment` class and `Benchmark` class, to do a benchmark test. We use `Benchmark` class in this case. 
-
-## How to Use the Benchmark Class
-
-To create an instance of `Benchmark` class, we need following data:
-
-- functions we want to benchmark,
-- parameters list we vary.
-
-```python
-#Pre-defined solver
-def my_solver(param1, param2):
-    return param1 + param2
- 
-#Parameters: dictionary whose keys are names of argument of the function we benchmark and values are values we substitute into the function.
-my_params = {
-    "params1":[1,2,3], # List that consists of values that are substitute into params1.
-    "params2":[4,5,6], # List that consists of values that are substitute into params2.
-}
-
-import jijbench as jb
-
-bench = jb.Benchmark(
-    solver=my_solver, 
-    params=my_params, 
-    )
-```
-
-In the example above, `bench` contains the $`3 \times 3=9`$ results of calculations for the function `my_solver` when `param1` is assigned to $`1,2,3`$ respectively and `param2` to $`4,5,6`$ respectively.
-
-In our case, we prepare following objects:
-
-- A function which receive the following data and returns optimization result;
-    - the mathematical model of TSP,
-    - problem data (such as number of cities and distances of between each cities),
-    - multipliers,
-    - number of iteration per once.
-- Dictionary that store values we substitute into multipliers. 
-
-## Definition of Function to Benchmark
-
-We define a function which was set as `my_solver` in the previous example.
-
-We showed the following procedure in demonstrating of optimization calculation of TSP:
-
-1. Recieve following data and compile them; 
-    - mathematical model constructed by JijModeling
-    - problem data
-        - distribution of cities
-        - multiplier
-2. Transpile compiled data into QUBO by JijModeling-Transpiler.
-3. Calculate QUBO by an instance of `Sampler` class and obtain the results.
-4. Decode the results.
-
-The function `TSP_solver`, which summarizes the above procedure, is defined as follows.
-
-```python
-def TSP_samplelver(model, feed_dict, multipliers, num_reads):
-    compiled_model = jmt.core.compile_model(model, feed_dict) 
-    pubo_builder = jmt.core.pubo.transpile_to_pubo(compiled_model) 
+def tsp_solver(problem, instance_data, multipliers, num_reads):
+    compiled_model = jmt.core.compile_model(problem, instance_data)
+    pubo_builder = jmt.core.pubo.transpile_to_pubo(compiled_model)
     Q,offset = pubo_builder.get_qubo_dict(multipliers=multipliers)
     sampler = oj.SASampler(num_reads=num_reads)
     response = sampler.sample_qubo(Q=Q)
@@ -356,35 +209,61 @@ def TSP_samplelver(model, feed_dict, multipliers, num_reads):
     return result
 ```
 
-## Creation of a Dictionary of Parameters to Be Varied
+A few more explanation about the arguments of `tsp_solver`.
 
-Next, we create dictionary of parameters to be varied.
-In this case, we vary only multipliers, remain distribution of cities.
+- `problem`: we pass the mathematical model of TSP constructed by JijModeling to this.
+- `instance_data`: we pass a dictionary to this. The dictionary contains two key-value pairs; one is about the number of cities, and the other is about the distances between each city.
+- `multiplier`: we pass a dictionary to this. The dictionary contains key-value pairs whose keys are the name of the constraints and correspond values are the numerical values of multiplier.
+- `num_read`: we pass a numerical value to this. This value represents the number of samples (calculation results) we get. Ising optimization is heuristic stochastic algorithms, for this reason, we get several samples.  
 
-The cities are placed at 10 random points on the plane, as in the demonstration of the TSP calculation.
+Show an example of `tsp_solver` usage.
 
 ```python
-def tsp_distance(n):
-    np.random.seed(3)
-    x = np.random.uniform(0, 1, n) 
-    y = np.random.uniform(0, 1, n) 
-    XX, YY = np.meshgrid(x, y) 
-    distance = np.sqrt((XX - XX.T)**2 + (YY - YY.T)**2)
-    return distance, (x, y)
+problem = tsp_model()
+# number of cities
+N_sample = 10 
+d_sample, positions_sample = tsp_distance(N_sample) 
+instance_data_sample = {"N":N_sample, "d":d_sample} 
+multipliers_sample = {"onehot_city":1.0,"onehot_time":1.0} 
+num_reads_sample = 30
 
-N = 10 # Number of cities.
-d, positions = tsp_distance(N) 
-instance_data = {"N":N, "d":d}
+result_sample = tsp_solver(problem, instance_data_sample, multipliers_sample, num_reads_sample)
 ```
+
+<!-- Note that `multipliers_sample = {"onehot_city":1.0,"onehot_time":1.0}` means that we set $`A_{i} = 1 \,\,(\forall i)`$ and $`B_{t} = 1 \,\, (\forall t)`$. -->
+
+# Parameter Search and Benchmark by JijBench
+
+As the main subject of this chapter, we will demonstrate parameter search and benchmark using JijBench.
+We will show the benchmark for TSP with varying the multipliers as an example.
+
+## Purpose of Parameter Search
+
+Before performing a parameter search for multipliers, let us explain the reason for this.
+
+Multipliers are constants by which squared constraints terms are multiplied. 
+Thus the larger multiplier, the greater the penalty for violating the constraints. 
+As a result, the larger the multiplier, the more the solver tries to avoid penalty and it gets easier for us to get feasible solutions (solutions that satisfy the constraints). 
+
+However, at this time, minimization of the total travel distance, which is the original objective function of TSP, is not focused on.
+Therefore, it is necessary for us to adjust multipliers to obtain a feasible solution with a small travel distance.
+In the previous example of the use of `tsp_solver`, both "onehot_time" and "onehot_city" were set to $`1.0`$ as appropriate, but we are goint to perform parameter tuning by gridsearch to find a better multiplier pair.
+
+JijBench strongly supports us to do this process. 
+
+## Creation of a Dictionary of Parameters to Be Varied
+
+First, we create a dictionary that contain parameters to be varied.
+In this case, we vary only multipliers, remain distribution of cities.
 
 Take an example list of values that will be substituted into multipliers as follows:
 
 ```python
 import itertools
 
-onecity_multipliers = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-onetime_multipliers = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-multipliers_list = [{"onecity":p0, "onetime":p1} for p0, p1 in itertools.product(onecity_multipliers, onetime_multipliers)]
+onehot_city_multipliers = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+onehot_time_multipliers = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+multipliers_list = [{"onehot_city":p0, "onehot_time":p1} for p0, p1 in itertools.product(onehot_city_multipliers, onehot_time_multipliers)]
 ```
 
 Also let the number of iteration be 30 as an example.
@@ -393,26 +272,30 @@ Also let the number of iteration be 30 as an example.
 num_reads = 30
 ```
 
+## Demonstration of Parameter Search
 
-## Demonstration of benchmarking
+Finaly, we demonstrate parameter search with JijBench. 
 
-Finaly, we demonstrate benchmarking with JijBench. 
-Specify `TSP_solver` as the function to be benchmarking `solver`, and dictionary whose keys are `TSP_solver` arguments `model`, `feed_dict` and `multipliers` and values are lists that consist of variables to be benchmarked by assigning them as `params`.
+In order to do this, we construct instance of `jb.Benchmark` class by passing a function as `solver` and a dictionary as `params` to it. 
+
+In our case, we use JijBench as follows:
 
 ```python
 import jijbench as jb
 
 bench = jb.Benchmark(
-    solver=TSP_samplelver,
+    solver=tsp_solver, 
     params={
         "model":[problem],
         "feed_dict":[instance_data],
         "multipliers":multipliers_list,
         "num_reads":[num_reads],
-    }
+    }  
 )
 experiment = bench()
 ```
+
+i.e. the function we pass is the function we want to observe the parameter search result. The dictionary we pass has key-value pairs whose keys are the names of arguments of the function and values are the lists that contain parameters.
 
 We can check the result of this experiment as a pandas.DataFrame with the table method.
 
@@ -421,12 +304,11 @@ df = experiment.table
 df
 ```
 
-# Observation of the Benchmarking Result
+# Observation of the Parameter Search Result
 
-Let us check benchmark results, we did in the last section, when varying the multipliers and look for a 
-"better" solution.
+Let us check the parameter search results.
 
-Apply `evaluation` for `experiment` and we can calculate various evaluation index.
+Apply `evaluation` for `experiment` and we can calculate various evaluation metrics.
 
 ```python
 evaluation = jb.Evaluation()
@@ -435,7 +317,11 @@ eval_result = evaluation([experiment])
 print(eval_result.table.columns)
 ```
 
-We observe how the ratio of feasible solutions (`feasible_rate`) to the all obtained solutions and the mean value of the objective function (`objective_mean`) change by ploting on heatmaps.
+As you can see, there are many evaluation metrics.
+
+In this case, we observe how the ratio of feasible solutions (`feasible_rate`) to the all obtained solutions and the mean value of the objective function (`objective_mean`) change by plotting them on heatmaps.
+
+## Plotting the Heatmap
 
 To plot them on heatmaps, we use `HeatMap()`.
 ```python
@@ -449,8 +335,8 @@ Then apply `Heatmap()` for the `eval_result` and assign the items that you want 
 heatmap = HeatMap(eval_result)
 fig = heatmap.create_figure(
     color_column="feasible_rate",
-    x_column="multipliers[onecity]",
-    y_column="multipliers[onetime]",
+    x_column="multipliers[onehot_city]",
+    y_column="multipliers[onehot_time]",
     title_text = "Heatmap of `feasible_rate`",
 )
 fig.show()
@@ -464,8 +350,8 @@ fig.show()
 heatmap = HeatMap(eval_result)
 fig = heatmap.create_figure(
     color_column="objective_mean",
-    x_column="multipliers[onecity]",
-    y_column="multipliers[onetime]",
+    x_column="multipliers[onehot_city]",
+    y_column="multipliers[onehot_time]",
     title_text = "Heatmap of `objective_meanvalue`",
 )
 fig.show()
@@ -475,15 +361,15 @@ fig.show()
 
 Now let's look at this heat map to find the multiplier pairs for which a feasible solution has been found (i.e. `feasible_rate`$`>0`$) and for which the mean value of the objective function is the smallest.
 
-There is a useful for us function that shows the parameters of the box domain you point by cursor in the heatmap, as below figure.
+There is a function useful to us that displays the parameters of the box domain you point to with the cursor in the heatmap, as shown in the figure below
 
 ![feasible_rate_hoverdata](assets/images/tutorials/feasible_rate_hoverdata.png)
 
 Using this function to examine two heatmaps, find multipliers with the smallest mean value of the objective function among those for which feasible solutions have been obtained.
 
-In this case it turns out that the best multipliers are `onecity`$`= 0.7`$, `onetime`$`=0.3 `$
+In this case it turns out that the best multipliers are `onehot_city`$`= 0.7`$, `onehot_time`$`=0.3 `$
 
-> Please let me repeat that the algorithms handled by OpenJij are heuristic stochastic algorithms thus returned solution may differ by each try. However, major changes should not occur, and the results should be generally similar.
+> Please let me note that the algorithms handled by OpenJij are heuristic stochastic algorithms thus returned solution may differ by each try. However, major changes should not occur, and the results should be generally similar.
 
 The return value of the solver and the sampleset for the multiplier pair $`(0.7,0.3)`$ are obtained as follows.
 
@@ -491,7 +377,7 @@ The return value of the solver and the sampleset for the multiplier pair $`(0.7,
 # get the sampleset of specified multipliers
 artifact, table = experiment.data
 data = table.data.applymap(lambda x: x.data)
-sampleset = data[data['multipliers'].apply(lambda x: x == {'onecity': 0.7, 'onetime': 0.3})]["solver_output[0]"][0]
+sampleset = data[data['multipliers'].apply(lambda x: x == {'onehot_city': 0.7, 'onehot_time': 0.3})]["solver_output[0]"][0]
 ```
 
 The sampleset has the result for `num_reads` times. We can get the feasible solutions by `feasible()` method and furthermore the solution with the lowest objective function value among them by `lowest()` method.
@@ -500,22 +386,39 @@ The sampleset has the result for `num_reads` times. We can get the feasible solu
 best_sample = sampleset.feasible().lowest()
 ```
 
-Then let us plot the route of `best_sample`.
+Then let us plot the route of `best_sample` in the next section as the end of this chapter.
+
+## Visualization of Route
+
+JijBench has visualization tools too. Let us plot the obtained route of `best_sample` by JijBench.
+
+First we represent the coordinates of cities as a dictionary and the obtained route as a list.
 
 ```python
-sparse_index,value,_ = best_sample.record.solution['x'][0] 
-order_indices, city_indices = sparse_index
-sorted_order_indices, sorted_city_indices = zip(*sorted(zip(*sparse_index))) 
+# dictionary whose keys are indices of cities and values are coordinate of cities.
+city_pos={i: pos for i, pos in enumerate(zip(*positions))}
 
+# get the indices of cities and order.
+(city_indices, order_indices), solution_value, solution_shape = best_sample.record.solution['x'][0] 
+# sort the city indices in order of visitation.
+sorted_city_indices = sorted(city_indices, key=lambda x: order_indices[x]) 
+# add the first city to make the route a circuit.
+solution_route = sorted_city_indices + sorted_city_indices[:1] 
+```
+
+Then to visualize this obtained route, create an instance of `Route` class. Then add information about nodes as dictionary data and vertex connecting nodes as tuple data to it, finaly plot them.
+
+In our case, nodes are cities, vertices are parts of route.
+
+```python
+from jijbench.visualization import Route
+
+# create an instance of `Route` class
 route = Route(savefig=True) 
-
-node_pos={
-        sorted_city_indices[i]:(positions[0][sorted_city_indices[i]], positions[1][sorted_city_indices[i]]) for i in range(n)
-    } 
-
-first_city = (sorted_city_indices[0],)
-solution_route = sorted_city_indices + first_city
-route.add_route(route=solution_route)
+# add the information about the distribution of cities to the instance 
+route.add_nodes(node_pos=city_pos)
+# add the information about the route to the instance
+route.add_route(route=solution_route, route_name="Solution Route") 
 
 fig = route.create_figure( 
     title_text="Title",
@@ -534,4 +437,4 @@ fig.show()
 
 ![best_sample_route](assets/images/tutorials/best_sample_route.png)
 
-This route certainly appear to travel around the cities more efficiently than the one we got in previous demonstration.
+This route certainly appear to travel around the cities efficiently.
