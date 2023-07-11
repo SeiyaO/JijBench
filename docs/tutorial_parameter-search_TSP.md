@@ -203,8 +203,8 @@ def tsp_solver(problem, instance_data, multipliers, num_reads):
     compiled_model = jmt.core.compile_model(problem, instance_data)
     pubo_builder = jmt.core.pubo.transpile_to_pubo(compiled_model)
     Q,offset = pubo_builder.get_qubo_dict(multipliers=multipliers)
-    sampler = oj.SASampler(num_reads=num_reads)
-    response = sampler.sample_qubo(Q=Q)
+    sampler = oj.SASampler()
+    response = sampler.sample_qubo(Q=Q, num_reads=num_reads)
     result = jmt.core.pubo.decode_from_openjij(response, pubo_builder, compiled_model) 
     return result
 ```
@@ -402,7 +402,7 @@ First we represent the coordinates of cities as a dictionary and the obtained ro
 city_pos={i: pos for i, pos in enumerate(zip(*positions))}
 
 # get the indices of cities and order.
-(city_indices, order_indices), solution_value, solution_shape = best_sample.record.solution['x'][0] 
+(order_indices, city_indices), solution_value, solution_shape = best_sample.record.solution['x'][0] 
 # sort the city indices in order of visitation.
 sorted_city_indices = sorted(city_indices, key=lambda x: order_indices[x]) 
 # add the first city to make the route a circuit.
