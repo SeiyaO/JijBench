@@ -2,7 +2,7 @@
 In this chapter, we will show an example of use of JijBench with the parameter search for the traveling salesman problem.
 
 To get a better solution in optimization, it's often necessary to adjust the parameters.
-In optimization of TSP by Ising optimization, which is discussed here, we need to adjust parameters, called multiplier, that determines the weights of the constraints in order to get a better feasible solution.
+In Ising optimization of TSP, we need to adjust parameters that determines the weights of the constraints in order to get a better feasible solution.
 We use grid search to determine the multiplier, and JijBench simplifies this process.
 
 
@@ -69,7 +69,7 @@ pip install matplotlib.pyplot
 pip install itertools
 ```
 
-## Constructiong the Mathematical Model with JijModeling
+## Constructing the Mathematical Model with JijModeling
 We construct the mathematical model of TSP by JijModeling.
 
 JijModeling is a modeling tool to describe optimization problems. 
@@ -153,7 +153,7 @@ There are many methods to solve optimization problems. In this case, we adopt th
 
 ### QUBO Formulation
 
-Before defining a function to perform optimization calculations, let us introduce QUBO formulation.
+Before defining a function to perform optimization, let us introduce QUBO formulation.
 
 To solve constrained optimization problem such as TSP, we need to transpile them to formulation that has no constraint, called QUBO (Quadoratic Unconstraint Binary Optimization)  
 
@@ -184,7 +184,7 @@ In order to achieve this aim, we use JijModeling-Transpiler and OpenJij. JijMode
 Using these library, we define a fuction `tsp_solver` that performs following procedure.
 
 1. Recieve following data and compile them; 
-    - mathematical model constructed by JijModeling (`model`)
+    - mathematical model constructed by JijModeling (`problem`)
     - problem data
         - number and distribution of cities (`instance_data`)
         - multipliers (`multipliers`)
@@ -211,10 +211,10 @@ def tsp_solver(problem, instance_data, multipliers, num_reads):
 
 A few more explanation about the arguments of `tsp_solver`.
 
-- `problem`: we pass the mathematical model of TSP constructed by JijModeling to this.
-- `instance_data`: we pass a dictionary to this. The dictionary contains two key-value pairs; one is about the number of cities, and the other is about the distances between each city.
-- `multiplier`: we pass a dictionary to this. The dictionary contains key-value pairs whose keys are the name of the constraints and correspond values are the numerical values of multiplier.
-- `num_read`: we pass a numerical value to this. This value represents the number of samples (calculation results) we get. Ising optimization is heuristic stochastic algorithms, for this reason, we get several samples.  
+- `problem`: a mathematical model of TSP constructed by JijModeling.
+- `instance_data`: a dictionary that contains two key-value pairs; one is about the number of cities, and the other is about the distances between each city.
+- `multiplier`: a dictionary that contains key-value pairs whose keys are the name of the constraints and corresponding values are the numerical values of multiplier.
+- `num_read`:  a numerical value that represents the number of samples (calculation results) we get. Ising optimization is heuristic stochastic algorithms, for this reason, we get several samples.  
 
 Show an example of `tsp_solver` usage.
 
@@ -234,8 +234,8 @@ result_sample = tsp_solver(problem, instance_data_sample, multipliers_sample, nu
 
 # Parameter Search and Benchmark by JijBench
 
-As the main subject of this chapter, we will demonstrate parameter search and benchmark using JijBench.
-We will show the benchmark for TSP with varying the multipliers as an example.
+As the main subject of this chapter, we will demonstrate parameter search using JijBench.
+We will show the parameter search for TSP with varying the multipliers as an example.
 
 ## Purpose of Parameter Search
 
@@ -247,7 +247,7 @@ As a result, the larger the multiplier, the more the solver tries to avoid penal
 
 However, at this time, minimization of the total travel distance, which is the original objective function of TSP, is not focused on.
 Therefore, it is necessary for us to adjust multipliers to obtain a feasible solution with a small travel distance.
-In the previous example of the use of `tsp_solver`, both "onehot_time" and "onehot_city" were set to $`1.0`$ as appropriate, but we are goint to perform parameter tuning by gridsearch to find a better multiplier pair.
+In the previous example of the use of `tsp_solver`, both "onehot_time" and "onehot_city" were set to $`1.0`$,  but we are goint to perform parameter tuning by gridsearch to find a better multiplier pair.
 
 JijBench strongly supports us to do this process. 
 
@@ -266,9 +266,12 @@ onehot_time_multipliers = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 multipliers_list = [{"onehot_city":p0, "onehot_time":p1} for p0, p1 in itertools.product(onehot_city_multipliers, onehot_time_multipliers)]
 ```
 
-Also let the number of iteration be 30 as an example.
+Let the other data,  such as number of cities, distance between cities, number of iterations, be set as in the previous example.
 
 ```python
+N = 10 
+d, positions = tsp_distance(N) 
+instance_data = {"N":N, "d":d} 
 num_reads = 30
 ```
 
@@ -286,8 +289,8 @@ import jijbench as jb
 bench = jb.Benchmark(
     solver=tsp_solver, 
     params={
-        "model":[problem],
-        "feed_dict":[instance_data],
+        "problem":[problem],
+        "instance_data":[instance_data],
         "multipliers":multipliers_list,
         "num_reads":[num_reads],
     }  
@@ -437,4 +440,4 @@ fig.show()
 
 ![best_sample_route](assets/images/tutorials/best_sample_route.png)
 
-This route certainly appear to travel around the cities efficiently.
+This route appear to travel around the cities fairly efficiently.
